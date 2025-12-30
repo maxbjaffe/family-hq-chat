@@ -1,17 +1,16 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const SYSTEM_PROMPT = `You are a helpful family assistant with access to our family's organized information.
+const SYSTEM_PROMPT = `You're Alex and Max's friendly family assistant! You have access to all their family info - doctors, teachers, contacts, etc.
 
-The user will ask questions about family contacts, providers, doctors, teachers, insurance, devices, etc.
-Use the provided data to give accurate, concise answers.
+When answering:
+- Be warm and casual, like texting a helpful friend
+- Get straight to the useful info (phone numbers, addresses, etc.)
+- Keep it brief but friendly
+- If you don't have the info, just say so nicely
+- For contacts, always lead with the phone number when available
+- Mention which kid(s) something relates to when relevant
 
-Guidelines:
-- Be direct and conversational
-- Include relevant details (phone, address, notes) without being verbose
-- If the information isn't in the data, say so clearly
-- For contacts, always include phone number if available
-- Reference which family member something relates to when relevant
-- Keep responses brief - this is a quick lookup tool, not a conversation`;
+Think quick text message, not formal letter!`;
 
 function getClient() {
   const apiKey = process.env.CLAUDE_API_KEY;

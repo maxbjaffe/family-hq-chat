@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import ChatInput from "@/components/ChatInput";
 import MessageList from "@/components/MessageList";
 import { MessageType } from "@/components/Message";
@@ -39,7 +40,7 @@ export default function Home() {
         const errorMessage: MessageType = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data.error || "Sorry, something went wrong.",
+          content: data.error || "Oops, something went wrong!",
         };
         setMessages((prev) => [...prev, errorMessage]);
       }
@@ -47,7 +48,7 @@ export default function Home() {
       const errorMessage: MessageType = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Sorry, I couldn't connect to the server.",
+        content: "Hmm, couldn't connect. Try again in a sec!",
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -56,9 +57,16 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      <header className="flex items-center justify-center p-4 border-b bg-white">
-        <h1 className="text-lg font-semibold text-gray-900">Family HQ</h1>
+    <div className="flex flex-col h-screen bg-gradient-to-b from-amber-50 to-orange-50">
+      <header className="flex items-center gap-3 p-4 border-b border-amber-200 bg-white/80 backdrop-blur-sm">
+        <Image
+          src="/IMG_3028.JPG"
+          alt="Family HQ"
+          width={40}
+          height={40}
+          className="rounded-full"
+        />
+        <h1 className="text-lg font-semibold text-amber-900">Family HQ</h1>
       </header>
       <MessageList messages={messages} isLoading={isLoading} />
       <ChatInput onSend={handleSend} disabled={isLoading} />
