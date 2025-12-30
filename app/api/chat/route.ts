@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchPeopleAndProviders, formatPeopleForContext } from "@/lib/notion";
+import { fetchAllFamilyData } from "@/lib/notion";
 import { generateResponse, ChatMessage } from "@/lib/claude";
 
 export async function POST(request: NextRequest) {
@@ -13,9 +13,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch data from Notion
-    const people = await fetchPeopleAndProviders();
-    const formattedData = formatPeopleForContext(people);
+    // Fetch all family data from Notion (people, health, assets, accounts)
+    const formattedData = await fetchAllFamilyData();
 
     // Build conversation history (limit to last 10 messages to control token usage)
     const conversationHistory: ChatMessage[] = [
