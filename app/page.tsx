@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import ChatInput from "@/components/ChatInput";
 import MessageList from "@/components/MessageList";
 import { MessageType } from "@/components/Message";
@@ -8,15 +8,6 @@ import { MessageType } from "@/components/Message";
 export default function Home() {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
 
   const handleSend = async (content: string) => {
     const userMessage: MessageType = {
@@ -70,7 +61,6 @@ export default function Home() {
         <h1 className="text-lg font-semibold text-gray-900">Family HQ</h1>
       </header>
       <MessageList messages={messages} isLoading={isLoading} />
-      <div ref={messagesEndRef} />
       <ChatInput onSend={handleSend} disabled={isLoading} />
     </div>
   );
