@@ -57,16 +57,19 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-amber-50 to-orange-50">
-      <header className="flex items-center gap-3 p-4 border-b border-amber-200 bg-white/80 backdrop-blur-sm">
+    <div className="flex flex-col h-screen bg-slate-50">
+      <header className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200">
         <Image
           src="/IMG_3028.JPG"
           alt="Family HQ"
-          width={40}
-          height={40}
-          className="rounded-full"
+          width={36}
+          height={36}
+          className="rounded-full ring-2 ring-slate-100"
         />
-        <h1 className="text-lg font-semibold text-amber-900">Family HQ</h1>
+        <div>
+          <h1 className="text-base font-semibold text-slate-800">Family HQ</h1>
+          <p className="text-xs text-slate-400">Always here to help</p>
+        </div>
       </header>
       <MessageList messages={messages} isLoading={isLoading} />
       <ChatInput onSend={handleSend} disabled={isLoading} />

@@ -19,19 +19,19 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 p-4 bg-white/80 backdrop-blur-sm border-t border-amber-200">
+    <form onSubmit={handleSubmit} className="flex gap-3 p-4 bg-white border-t border-slate-200">
       <input
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Ask me anything..."
+        placeholder="Ask anything..."
         disabled={disabled}
-        className="flex-1 px-4 py-3 bg-white border border-amber-200 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:bg-gray-50 placeholder:text-amber-400"
+        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent focus:bg-white disabled:bg-slate-100 placeholder:text-slate-400 transition-all"
       />
       <button
         type="submit"
         disabled={disabled || !input.trim()}
-        className="px-5 py-3 bg-amber-500 text-white rounded-full font-medium hover:bg-amber-600 disabled:bg-amber-200 disabled:cursor-not-allowed transition-colors shadow-sm"
+        className="px-5 py-3 bg-teal-500 text-white rounded-xl font-medium hover:bg-teal-600 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
       >
         Send
       </button>
