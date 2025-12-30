@@ -17,14 +17,18 @@ export default function Home() {
       content,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setIsLoading(true);
 
     try {
+      // Build history for API (exclude IDs, just role and content)
+      const history = messages.map(({ role, content }) => ({ role, content }));
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content }),
+        body: JSON.stringify({ message: content, history }),
       });
 
       const data = await response.json();
@@ -57,17 +61,17 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50">
-      <header className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-teal-50/30">
+      <header className="flex items-center gap-3 px-4 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
         <Image
           src="/IMG_3028.JPG"
           alt="Family HQ"
           width={36}
           height={36}
-          className="rounded-full ring-2 ring-slate-100"
+          className="rounded-full ring-2 ring-purple-100"
         />
         <div>
-          <h1 className="text-base font-semibold text-slate-800">Family HQ</h1>
+          <h1 className="text-base font-semibold bg-gradient-to-r from-slate-800 to-purple-900 bg-clip-text text-transparent">Family HQ</h1>
           <p className="text-xs text-slate-400">Always here to help</p>
         </div>
       </header>

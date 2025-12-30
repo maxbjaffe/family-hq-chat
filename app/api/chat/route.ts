@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchPeopleAndProviders, formatPeopleForContext } from "@/lib/notion";
-import { generateResponse } from "@/lib/claude";
+import { generateResponse, ChatMessage } from "@/lib/claude";
 
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json();
+    const { message, history } = await request.json();
 
     if (!message || typeof message !== "string") {
       return NextResponse.json(
@@ -17,8 +17,14 @@ export async function POST(request: NextRequest) {
     const people = await fetchPeopleAndProviders();
     const formattedData = formatPeopleForContext(people);
 
+    // Build conversation history (limit to last 10 messages to control token usage)
+    const conversationHistory: ChatMessage[] = [
+      ...(Array.isArray(history) ? history.slice(-9) : []),
+      { role: "user", content: message },
+    ];
+
     // Generate response with Claude
-    const response = await generateResponse(formattedData, message);
+    const response = await generateResponse(formattedData, conversationHistory);
 
     return NextResponse.json({ response });
   } catch (error) {

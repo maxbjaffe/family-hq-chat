@@ -29,8 +29,8 @@ export default function Message({ message }: MessageProps) {
       <div
         className={`max-w-[78%] rounded-2xl px-4 py-2.5 ${
           isUser
-            ? "bg-teal-500 text-white rounded-br-sm shadow-sm"
-            : "bg-white text-slate-700 rounded-bl-sm shadow-sm border border-slate-100"
+            ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-br-sm shadow-md"
+            : "bg-white/90 backdrop-blur-sm text-slate-700 rounded-bl-sm shadow-sm border border-slate-100"
         }`}
       >
         <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{message.content}</p>
