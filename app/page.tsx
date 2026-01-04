@@ -45,6 +45,7 @@ export default function Home() {
       content,
     };
 
+    const assistantMessageId = (Date.now() + 1).toString();
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setIsLoading(true);
@@ -59,30 +60,62 @@ export default function Home() {
         body: JSON.stringify({ message: content, history }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        const assistantMessage: MessageType = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data.response,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      } else {
+      if (!response.ok) {
+        const data = await response.json();
         const errorMessage: MessageType = {
-          id: (Date.now() + 1).toString(),
+          id: assistantMessageId,
           role: "assistant",
           content: data.error || "Oops, something went wrong!",
         };
         setMessages((prev) => [...prev, errorMessage]);
+        return;
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No reader available");
+
+      const decoder = new TextDecoder();
+      let streamedContent = "";
+
+      // Add empty assistant message that we'll update as we stream
+      setMessages((prev) => [
+        ...prev,
+        { id: assistantMessageId, role: "assistant", content: "" },
+      ]);
+      setIsLoading(false); // Hide loading indicator once streaming starts
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        streamedContent += decoder.decode(value, { stream: true });
+
+        // Update the assistant message with streamed content
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId
+              ? { ...msg, content: streamedContent }
+              : msg
+          )
+        );
       }
     } catch {
       const errorMessage: MessageType = {
-        id: (Date.now() + 1).toString(),
+        id: assistantMessageId,
         role: "assistant",
         content: "Hmm, couldn't connect. Try again in a sec!",
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => {
+        // If we already added an empty assistant message, update it
+        const existing = prev.find((m) => m.id === assistantMessageId);
+        if (existing) {
+          return prev.map((msg) =>
+            msg.id === assistantMessageId ? errorMessage : msg
+          );
+        }
+        return [...prev, errorMessage];
+      });
     } finally {
       setIsLoading(false);
     }

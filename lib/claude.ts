@@ -29,23 +29,24 @@ export interface ChatMessage {
   content: string;
 }
 
+let anthropicClient: Anthropic | null = null;
+
 function getClient() {
-  const apiKey = process.env.CLAUDE_API_KEY;
-  if (!apiKey) {
-    throw new Error("CLAUDE_API_KEY not configured");
+  if (!anthropicClient) {
+    const apiKey = process.env.CLAUDE_API_KEY;
+    if (!apiKey) {
+      throw new Error("CLAUDE_API_KEY not configured");
+    }
+    anthropicClient = new Anthropic({ apiKey });
   }
-  return new Anthropic({ apiKey });
+  return anthropicClient;
 }
 
-export async function generateResponse(
+function buildMessages(
   notionData: string,
   conversationHistory: ChatMessage[]
-): Promise<string> {
-  const anthropic = getClient();
-
-  // Build messages array with conversation history
-  const messages: Anthropic.MessageParam[] = conversationHistory.map((msg, index) => {
-    // First user message includes the Notion data context
+): Anthropic.MessageParam[] {
+  return conversationHistory.map((msg, index) => {
     if (index === 0 && msg.role === "user") {
       return {
         role: "user" as const,
@@ -57,6 +58,14 @@ export async function generateResponse(
       content: msg.content,
     };
   });
+}
+
+export async function generateResponse(
+  notionData: string,
+  conversationHistory: ChatMessage[]
+): Promise<string> {
+  const anthropic = getClient();
+  const messages = buildMessages(notionData, conversationHistory);
 
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -69,4 +78,28 @@ export async function generateResponse(
   return textBlock && "text" in textBlock
     ? textBlock.text
     : "Sorry, I couldn't generate a response.";
+}
+
+export async function* generateResponseStream(
+  notionData: string,
+  conversationHistory: ChatMessage[]
+): AsyncGenerator<string, void, unknown> {
+  const anthropic = getClient();
+  const messages = buildMessages(notionData, conversationHistory);
+
+  const stream = anthropic.messages.stream({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1024,
+    system: SYSTEM_PROMPT,
+    messages,
+  });
+
+  for await (const event of stream) {
+    if (
+      event.type === "content_block_delta" &&
+      event.delta.type === "text_delta"
+    ) {
+      yield event.delta.text;
+    }
+  }
 }

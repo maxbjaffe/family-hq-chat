@@ -10,6 +10,11 @@ const HEALTH_DB_ID = "0a6bcb34-36d5-4eec-a740-a8f345e6885a";
 const ASSETS_DB_ID = "a2965033-3736-40e3-8df9-3c0a364d6eb5";
 const ACCOUNTS_DB_ID = "939921db-95bc-463e-8de9-1f218fe2b84f";
 
+// Simple in-memory cache for Notion data
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+let cachedData: string | null = null;
+let cacheTimestamp: number = 0;
+
 interface RichTextItem {
   plain_text?: string;
 }
@@ -201,8 +206,15 @@ async function fetchAccounts(): Promise<string> {
   return `## ACCOUNTS & POLICIES\n\n${formatted.join("\n\n---\n\n")}`;
 }
 
-// Fetch all data and combine
+// Fetch all data and combine (with caching)
 export async function fetchAllFamilyData(): Promise<string> {
+  const now = Date.now();
+
+  // Return cached data if still valid
+  if (cachedData && now - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedData;
+  }
+
   const [people, health, assets, accounts] = await Promise.all([
     fetchPeople(),
     fetchFamilyHealth(),
@@ -210,7 +222,19 @@ export async function fetchAllFamilyData(): Promise<string> {
     fetchAccounts(),
   ]);
 
-  return [people, health, assets, accounts].filter(Boolean).join("\n\n\n");
+  const data = [people, health, assets, accounts].filter(Boolean).join("\n\n\n");
+
+  // Update cache
+  cachedData = data;
+  cacheTimestamp = now;
+
+  return data;
+}
+
+// Force cache invalidation (useful after updates)
+export function invalidateCache(): void {
+  cachedData = null;
+  cacheTimestamp = 0;
 }
 
 // Keep old exports for backward compatibility
