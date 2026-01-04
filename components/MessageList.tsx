@@ -17,8 +17,21 @@ const QUICK_ACTIONS = [
   "What's missing?",
 ];
 
+const GREETINGS = [
+  "Hey! Ready when you are.",
+  "What's up? I've got all the family info ready!",
+  "Hey there! Need a phone number, doctor info, or something else?",
+  "Hi! Ask me anything about the fam.",
+  "Ready to help! What do you need?",
+];
+
+function getGreeting(): string {
+  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+}
+
 export default function MessageList({ messages, isLoading, onQuickAction }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const greetingRef = useRef<string>(getGreeting());
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -27,22 +40,23 @@ export default function MessageList({ messages, isLoading, onQuickAction }: Mess
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center text-center mt-16">
-          <div className="relative">
-            <div className="absolute -inset-2 bg-gradient-to-r from-purple-200 to-teal-200 rounded-full blur-lg opacity-60" />
+        <>
+          {/* Greeting message bubble */}
+          <div className="flex justify-start items-end gap-2.5">
             <Image
               src="/IMG_3028.JPG"
-              alt="Family HQ"
-              width={88}
-              height={88}
-              className="relative rounded-full ring-4 ring-white shadow-lg"
+              alt="Assistant"
+              width={32}
+              height={32}
+              className="rounded-full ring-2 ring-white shadow-sm flex-shrink-0"
             />
+            <div className="max-w-[78%] rounded-2xl rounded-bl-sm px-4 py-2.5 bg-white/90 backdrop-blur-sm text-slate-700 shadow-sm border border-slate-100">
+              <p className="text-[15px] leading-relaxed">{greetingRef.current}</p>
+            </div>
           </div>
-          <p className="text-lg font-medium text-slate-700 mt-6">What can I help you find?</p>
-          <p className="text-slate-400 mt-1 text-sm">
-            Doctors, teachers, contacts &amp; more
-          </p>
-          <div className="flex flex-wrap justify-center gap-2 mt-8 max-w-sm">
+
+          {/* Quick actions */}
+          <div className="flex flex-wrap gap-2 ml-10 mt-2">
             {QUICK_ACTIONS.map((action, index) => (
               <button
                 key={action}
@@ -57,7 +71,7 @@ export default function MessageList({ messages, isLoading, onQuickAction }: Mess
               </button>
             ))}
           </div>
-        </div>
+        </>
       )}
       {messages.map((message) => (
         <Message key={message.id} message={message} />
