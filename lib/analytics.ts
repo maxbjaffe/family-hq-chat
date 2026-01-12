@@ -1,20 +1,21 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-let supabaseClient: SupabaseClient | null = null;
+let analyticsClient: SupabaseClient | null = null;
 
 function getClient(): SupabaseClient | null {
-  if (supabaseClient) return supabaseClient;
+  if (analyticsClient) return analyticsClient;
 
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY;
+  // Use analytics-specific Supabase instance
+  const url = process.env.SUPABASE_ANALYTICS_URL;
+  const key = process.env.SUPABASE_ANALYTICS_KEY;
 
   if (!url || !key) {
-    console.warn("Supabase not configured - analytics disabled");
+    console.warn("Supabase analytics not configured - analytics disabled");
     return null;
   }
 
-  supabaseClient = createClient(url, key);
-  return supabaseClient;
+  analyticsClient = createClient(url, key);
+  return analyticsClient;
 }
 
 export interface ChatEvent {
