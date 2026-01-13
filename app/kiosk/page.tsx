@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Sparkles, RefreshCw } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, RefreshCw, X } from "lucide-react";
 import confetti from "canvas-confetti";
+
+// Celebration video URL
+const CELEBRATION_VIDEO_URL =
+  "https://xjeemfudbujwqrnkuwvb.supabase.co/storage/v1/object/public/family-media/00879c1b-a586-4d52-96be-8f4b7ddf7257/celebrations/Mascot_Animation_For_Task_Completion.mp4";
 
 // Fun completion messages
 const COMPLETION_MESSAGES = [
@@ -55,7 +59,7 @@ interface ChildData {
   };
 }
 
-// Avatar colors for kids
+// Avatar colors for kids (fallback)
 const AVATAR_COLORS = [
   "from-blue-400 to-blue-600",
   "from-purple-400 to-purple-600",
@@ -69,7 +73,9 @@ export default function KioskPage() {
   const [children, setChildren] = useState<ChildData[]>([]);
   const [loading, setLoading] = useState(true);
   const [celebrationMessage, setCelebrationMessage] = useState<string | null>(null);
-  const [allCompleteMessage, setAllCompleteMessage] = useState<string | null>(null);
+  const [showVideo, setShowVideo] = useState(false);
+  const [hasShownVideo, setHasShownVideo] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -92,12 +98,16 @@ export default function KioskPage() {
   // Check if all children are complete
   const allComplete =
     children.length > 0 &&
-    children.every((child) => child.stats.isComplete);
+    children.every((child) => child.stats.isComplete && child.stats.total > 0);
 
-  // Trigger celebration when everyone completes
+  // Trigger celebration video when everyone completes
   useEffect(() => {
-    if (allComplete && children.length > 0) {
-      // Big celebration!
+    if (allComplete && children.length > 0 && !hasShownVideo) {
+      // Show celebration video
+      setShowVideo(true);
+      setHasShownVideo(true);
+
+      // Also fire confetti
       const duration = 3000;
       const end = Date.now() + duration;
 
@@ -122,14 +132,20 @@ export default function KioskPage() {
         }
       };
       frame();
-
-      setAllCompleteMessage(
-        ALL_COMPLETE_MESSAGES[Math.floor(Math.random() * ALL_COMPLETE_MESSAGES.length)]
-      );
-
-      setTimeout(() => setAllCompleteMessage(null), 5000);
     }
-  }, [allComplete, children.length]);
+  }, [allComplete, children.length, hasShownVideo]);
+
+  // Auto-play video when shown
+  useEffect(() => {
+    if (showVideo && videoRef.current) {
+      videoRef.current.play().catch(console.error);
+    }
+  }, [showVideo]);
+
+  // Close video when it ends
+  const handleVideoEnd = () => {
+    setShowVideo(false);
+  };
 
   async function toggleItem(childId: string, itemId: string, isCurrentlyCompleted: boolean) {
     // Check if this will complete the child's checklist
@@ -195,22 +211,37 @@ export default function KioskPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden">
-      {/* Celebration Overlays */}
-      {celebrationMessage && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-12 py-8 rounded-3xl shadow-2xl animate-bounce">
-            <p className="text-4xl md:text-5xl font-black text-center drop-shadow-lg">
-              {celebrationMessage}
+      {/* Celebration Video Overlay */}
+      {showVideo && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
+          <button
+            onClick={() => setShowVideo(false)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <video
+            ref={videoRef}
+            src={CELEBRATION_VIDEO_URL}
+            className="max-w-full max-h-full rounded-2xl shadow-2xl"
+            onEnded={handleVideoEnd}
+            playsInline
+            controls={false}
+          />
+          <div className="absolute bottom-8 left-0 right-0 text-center">
+            <p className="text-white text-3xl font-bold animate-pulse">
+              {ALL_COMPLETE_MESSAGES[Math.floor(Math.random() * ALL_COMPLETE_MESSAGES.length)]}
             </p>
           </div>
         </div>
       )}
 
-      {allCompleteMessage && (
+      {/* Celebration Message Overlay */}
+      {celebrationMessage && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-16 py-12 rounded-3xl shadow-2xl animate-pulse">
-            <p className="text-5xl md:text-6xl font-black text-center drop-shadow-lg">
-              {allCompleteMessage}
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-12 py-8 rounded-3xl shadow-2xl animate-bounce">
+            <p className="text-4xl md:text-5xl font-black text-center drop-shadow-lg">
+              {celebrationMessage}
             </p>
           </div>
         </div>
@@ -232,10 +263,25 @@ export default function KioskPage() {
                 })}
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={loadData}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              {allComplete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowVideo(true);
+                  }}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Play Celebration
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={loadData}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
           </div>
 
           {/* All Complete Message */}
@@ -280,13 +326,24 @@ export default function KioskPage() {
                 >
                   {/* Child Header */}
                   <div className="flex items-center gap-3 mb-4 pb-4 border-b">
-                    <div
-                      className={`w-14 h-14 rounded-full bg-gradient-to-br ${
-                        AVATAR_COLORS[index % AVATAR_COLORS.length]
-                      } flex items-center justify-center text-white text-2xl font-bold shadow-lg`}
-                    >
-                      {child.name.charAt(0).toUpperCase()}
-                    </div>
+                    {/* Avatar - use custom if available */}
+                    {child.avatar_type === "custom" && child.avatar_data ? (
+                      <div className="w-14 h-14 rounded-full overflow-hidden shadow-lg border-2 border-white">
+                        <img
+                          src={child.avatar_data}
+                          alt={child.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-14 h-14 rounded-full bg-gradient-to-br ${
+                          AVATAR_COLORS[index % AVATAR_COLORS.length]
+                        } flex items-center justify-center text-white text-2xl font-bold shadow-lg`}
+                      >
+                        {child.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1">
                       <h3 className="text-xl font-bold text-slate-900">{child.name}</h3>
                       {child.age && (
