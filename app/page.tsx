@@ -178,17 +178,17 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <img
               src="/Images/JaffeFamilyHubLogo.PNG"
               alt="Jaffe Family Hub"
-              className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover shadow-lg"
+              className="w-20 h-20 md:w-28 md:h-28 rounded-2xl object-cover shadow-xl"
             />
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"}!
               </h1>
-              <p className="text-slate-600">
+              <p className="text-slate-600 text-lg">
                 {new Date().toLocaleDateString("en-US", {
                   weekday: "long",
                   month: "long",
@@ -282,19 +282,20 @@ export default function DashboardPage() {
                 No children configured yet
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {children.map((child, index) => (
                   <Card
                     key={child.id}
-                    className={`p-4 ${
+                    className={`p-5 ${
                       child.stats.isComplete
                         ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-200"
                         : ""
                     }`}
                   >
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* Large Avatar Section */}
+                    <div className="flex flex-col items-center mb-4">
                       {child.avatar_type === "custom" && child.avatar_data ? (
-                        <div className="w-10 h-10 rounded-full overflow-hidden shadow border-2 border-white">
+                        <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden shadow-xl border-4 border-white">
                           <img
                             src={child.avatar_data}
                             alt={child.name}
@@ -303,22 +304,27 @@ export default function DashboardPage() {
                         </div>
                       ) : (
                         <div
-                          className={`w-10 h-10 rounded-full bg-gradient-to-br ${
+                          className={`w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br ${
                             AVATAR_COLORS[index % AVATAR_COLORS.length]
-                          } flex items-center justify-center text-white text-sm font-bold`}
+                          } flex items-center justify-center text-white text-4xl md:text-5xl font-bold shadow-xl`}
                         >
                           {child.name.charAt(0)}
                         </div>
                       )}
-                      <div className="flex-1">
-                        <div className="font-medium text-slate-900">{child.name}</div>
-                        <div className="text-xs text-slate-500">
+                      <h3
+                        className="mt-3 text-2xl font-black text-slate-800 tracking-tight"
+                        style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', cursive" }}
+                      >
+                        {child.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm text-slate-500 font-medium">
                           {child.stats.completed}/{child.stats.total}
-                        </div>
+                        </span>
+                        {child.stats.isComplete && (
+                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        )}
                       </div>
-                      {child.stats.isComplete && (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      )}
                     </div>
 
                     <div className="space-y-1">
@@ -326,20 +332,20 @@ export default function DashboardPage() {
                         <div
                           key={item.id}
                           onClick={() => toggleItem(child.id, item.id, item.isCompleted)}
-                          className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
                             item.isCompleted
                               ? "bg-green-100 text-green-800"
                               : "hover:bg-slate-100"
                           }`}
                         >
                           {item.isCompleted ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
                           ) : (
-                            <Circle className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                            <Circle className="h-5 w-5 text-slate-400 flex-shrink-0" />
                           )}
-                          {item.icon && <span className="text-sm">{item.icon}</span>}
+                          {item.icon && <span className="text-lg">{item.icon}</span>}
                           <span
-                            className={`text-sm ${
+                            className={`text-sm font-medium ${
                               item.isCompleted ? "line-through" : ""
                             }`}
                           >
@@ -350,7 +356,7 @@ export default function DashboardPage() {
                       {child.checklist.length > 5 && (
                         <Link
                           href="/kiosk"
-                          className="text-xs text-blue-600 hover:underline block text-center pt-1"
+                          className="text-sm text-blue-600 hover:underline block text-center pt-2 font-medium"
                         >
                           +{child.checklist.length - 5} more items
                         </Link>

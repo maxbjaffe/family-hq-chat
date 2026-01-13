@@ -35,16 +35,13 @@ export function Navigation() {
       {/* Desktop Sidebar */}
       <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-56 bg-white border-r border-slate-200 flex-col z-50">
         {/* Logo */}
-        <div className="p-4 border-b border-slate-200">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="p-3 lg:p-4 border-b border-slate-200">
+          <Link href="/" className="flex items-center justify-center">
             <img
               src="/Images/JaffeFamilyHubLogo.PNG"
               alt="Jaffe Family Hub"
-              className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl object-cover"
+              className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl object-cover shadow-lg"
             />
-            <span className="hidden lg:block font-bold text-lg bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Family Hub
-            </span>
           </Link>
         </div>
 
