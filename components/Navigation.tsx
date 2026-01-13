@@ -80,16 +80,16 @@ export function Navigation() {
     <>
       {/* Desktop Sidebar */}
       <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-56 bg-white border-r border-slate-200 flex-col z-50">
-        {/* Logo - tappable for secret exit */}
-        <div className="p-3 lg:p-4 border-b border-slate-200">
+        {/* Logo - much larger, tappable for secret exit */}
+        <div className="p-4 lg:p-5 border-b border-slate-200">
           <button
             onClick={handleLogoTap}
-            className="flex items-center justify-center w-full min-h-[48px]"
+            className="flex items-center justify-center w-full"
           >
             <img
               src="/Images/JaffeFamilyHubLogo.PNG"
               alt="Jaffe Family Hub"
-              className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl object-cover shadow-lg"
+              className="w-16 h-16 lg:w-24 lg:h-24 rounded-2xl object-cover shadow-xl border-2 border-white"
             />
           </button>
         </div>
@@ -162,7 +162,7 @@ export function Navigation() {
       </nav>
 
       {/* Top bar for mobile - shows clock and sync status */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-12 bg-white/95 backdrop-blur-sm border-b border-slate-200 z-40 flex items-center justify-between px-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200 z-40 flex items-center justify-between px-4">
         <button
           onClick={handleLogoTap}
           className="min-h-[48px] min-w-[48px] flex items-center justify-center -ml-2"
@@ -170,7 +170,7 @@ export function Navigation() {
           <img
             src="/Images/JaffeFamilyHubLogo.PNG"
             alt="Jaffe Family Hub"
-            className="w-8 h-8 rounded-lg object-cover"
+            className="w-10 h-10 rounded-xl object-cover shadow-md"
           />
         </button>
         <div className="flex items-center gap-3">
@@ -192,7 +192,7 @@ export function Navigation() {
       {/* Spacer for fixed nav */}
       <div className="hidden md:block w-20 lg:w-56 flex-shrink-0" />
       {/* Mobile top spacer */}
-      <div className="md:hidden h-12" />
+      <div className="md:hidden h-14" />
     </>
   );
 }
