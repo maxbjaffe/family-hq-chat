@@ -8,8 +8,7 @@ import {
   MessageSquare,
   Paintbrush,
   Calendar,
-  Menu,
-  X,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -19,6 +18,7 @@ const navItems = [
   { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/doodle", label: "Doodle", icon: Paintbrush },
   { href: "/chat", label: "Chat", icon: MessageSquare },
+  { href: "/admin", label: "Admin", icon: Settings },
 ];
 
 export function Navigation() {
