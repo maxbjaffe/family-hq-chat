@@ -10,10 +10,9 @@ import {
   Circle,
   MessageSquare,
   Calendar,
-  Cloud,
   RefreshCw,
-  ExternalLink,
   Sparkles,
+  Paintbrush,
 } from "lucide-react";
 
 interface ChecklistItem {
@@ -179,7 +178,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Family HQ
+              Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"}!
             </h1>
             <p className="text-slate-600">
               {new Date().toLocaleDateString("en-US", {
@@ -189,18 +188,10 @@ export default function DashboardPage() {
               })}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={loadAllData}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/kiosk">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Kiosk Mode
-              </Link>
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" onClick={loadAllData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
 
         {/* Top Row: Weather + Quick Actions */}
@@ -259,9 +250,9 @@ export default function DashboardPage() {
                 </Link>
               </Button>
               <Button variant="outline" size="sm" asChild className="justify-start">
-                <Link href="/kiosk">
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Checklists
+                <Link href="/doodle">
+                  <Paintbrush className="h-4 w-4 mr-2" />
+                  Doodle
                 </Link>
               </Button>
             </div>
