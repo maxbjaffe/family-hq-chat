@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Home, Clock } from "lucide-react";
 
 interface InactivityWarningProps {
@@ -14,14 +14,15 @@ export function InactivityWarning({
   secondsRemaining,
   onDismiss,
 }: InactivityWarningProps) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
   // Play a gentle chime when warning appears
   useEffect(() => {
     if (isVisible && secondsRemaining === 60) {
       // Create a simple beep using Web Audio API
       try {
-        const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        const audioContext = new AudioContextClass();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
 
@@ -36,7 +37,7 @@ export function InactivityWarning({
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.5);
       } catch {
-        // Audio not available, that's okay
+        // Audio not available (DakBoard, iframe, etc.), that's okay
       }
     }
   }, [isVisible, secondsRemaining]);
@@ -108,37 +109,6 @@ export function InactivityWarning({
           </p>
         </div>
       </div>
-
-      {/* CSS Animations */}
-      <style jsx global>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        @keyframes bounce-in {
-          0% {
-            opacity: 0;
-            transform: scale(0.8) translateY(20px);
-          }
-          50% {
-            transform: scale(1.02) translateY(-5px);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.2s ease-out;
-        }
-        .animate-bounce-in {
-          animation: bounce-in 0.3s ease-out;
-        }
-      `}</style>
     </>
   );
 }

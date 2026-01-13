@@ -41,10 +41,20 @@ export function KioskProvider({ children }: KioskProviderProps) {
 
   const enterKioskMode = useCallback(async () => {
     try {
-      await document.documentElement.requestFullscreen();
-      setIsKioskMode(true);
+      // Check if fullscreen is supported (not in iframe or restricted browser)
+      if (document.fullscreenEnabled) {
+        await document.documentElement.requestFullscreen();
+        setIsKioskMode(true);
+      } else {
+        // Fullscreen not available (iframe, DakBoard embed, etc.)
+        // Still enable kiosk behaviors without fullscreen
+        setIsKioskMode(true);
+        console.log("Fullscreen not available, enabling kiosk behaviors only");
+      }
     } catch (err) {
-      console.error("Failed to enter kiosk mode:", err);
+      // Even if fullscreen fails, enable kiosk behaviors
+      setIsKioskMode(true);
+      console.error("Failed to enter fullscreen, kiosk mode still active:", err);
     }
   }, []);
 

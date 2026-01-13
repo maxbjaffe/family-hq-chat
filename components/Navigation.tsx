@@ -54,7 +54,12 @@ export function Navigation() {
   }, []);
 
   const enterFullscreen = useCallback(() => {
-    document.documentElement.requestFullscreen().catch(console.error);
+    // Check if fullscreen is available (not in iframe or restricted)
+    if (document.fullscreenEnabled) {
+      document.documentElement.requestFullscreen().catch(console.error);
+    } else {
+      console.log("Fullscreen not available in this browser context");
+    }
   }, []);
 
   return (
