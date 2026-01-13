@@ -25,6 +25,8 @@ interface ChecklistItem {
 interface ChildData {
   id: string;
   name: string;
+  avatar_type: string | null;
+  avatar_data: string | null;
   checklist: ChecklistItem[];
   stats: {
     total: number;
@@ -291,13 +293,23 @@ export default function DashboardPage() {
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-3">
-                      <div
-                        className={`w-8 h-8 rounded-full bg-gradient-to-br ${
-                          AVATAR_COLORS[index % AVATAR_COLORS.length]
-                        } flex items-center justify-center text-white text-sm font-bold`}
-                      >
-                        {child.name.charAt(0)}
-                      </div>
+                      {child.avatar_type === "custom" && child.avatar_data ? (
+                        <div className="w-10 h-10 rounded-full overflow-hidden shadow border-2 border-white">
+                          <img
+                            src={child.avatar_data}
+                            alt={child.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className={`w-10 h-10 rounded-full bg-gradient-to-br ${
+                            AVATAR_COLORS[index % AVATAR_COLORS.length]
+                          } flex items-center justify-center text-white text-sm font-bold`}
+                        >
+                          {child.name.charAt(0)}
+                        </div>
+                      )}
                       <div className="flex-1">
                         <div className="font-medium text-slate-900">{child.name}</div>
                         <div className="text-xs text-slate-500">

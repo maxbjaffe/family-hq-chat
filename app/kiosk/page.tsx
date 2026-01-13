@@ -226,7 +226,17 @@ export default function KioskPage() {
             className="max-w-full max-h-full rounded-2xl shadow-2xl"
             onEnded={handleVideoEnd}
             playsInline
-            controls={false}
+            autoPlay
+            muted={false}
+            onCanPlay={(e) => {
+              const video = e.currentTarget;
+              video.muted = true;
+              video.play().then(() => {
+                video.muted = false;
+              }).catch(() => {
+                // If unmuting fails, keep playing muted
+              });
+            }}
           />
           <div className="absolute bottom-8 left-0 right-0 text-center">
             <p className="text-white text-3xl font-bold animate-pulse">
@@ -309,13 +319,13 @@ export default function KioskPage() {
           )}
         </div>
 
-        {/* Children Grid */}
+        {/* Children Grid - Horizontal layout with large avatars */}
         {children.length === 0 ? (
           <Card className="p-12 text-center">
             <p className="text-slate-600">No children configured yet</p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="space-y-6">
             {children.map((child, index) => {
               const percentage =
                 child.stats.total > 0
@@ -325,103 +335,104 @@ export default function KioskPage() {
               return (
                 <Card
                   key={child.id}
-                  className={`p-6 ${
+                  className={`p-4 md:p-6 ${
                     child.stats.isComplete
                       ? "bg-gradient-to-br from-green-50 to-blue-50 border-green-300"
                       : "bg-white"
                   }`}
                 >
-                  {/* Child Header */}
-                  <div className="flex items-center gap-3 mb-4 pb-4 border-b">
-                    {/* Avatar - use custom if available */}
-                    {child.avatar_type === "custom" && child.avatar_data ? (
-                      <div className="w-14 h-14 rounded-full overflow-hidden shadow-lg border-2 border-white">
-                        <img
-                          src={child.avatar_data}
-                          alt={child.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div
-                        className={`w-14 h-14 rounded-full bg-gradient-to-br ${
-                          AVATAR_COLORS[index % AVATAR_COLORS.length]
-                        } flex items-center justify-center text-white text-2xl font-bold shadow-lg`}
-                      >
-                        {child.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-slate-900">{child.name}</h3>
-                      {child.age && (
-                        <p className="text-sm text-slate-600">Age {child.age}</p>
-                      )}
-                    </div>
-                    {child.stats.isComplete && child.stats.total > 0 && (
-                      <CheckCircle2 className="h-8 w-8 text-green-600" />
-                    )}
-                  </div>
-
-                  {/* Progress Bar */}
-                  {child.stats.total > 0 && (
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-600 font-medium">Progress</span>
-                        <span className="font-bold text-slate-900">
-                          {child.stats.completed}/{child.stats.total}
-                        </span>
-                      </div>
-                      <Progress value={percentage} className="h-3" />
-                      {child.stats.isComplete && (
-                        <p className="text-green-600 font-semibold text-sm mt-2">
-                          ✓ All done! 🎉
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Checklist Items */}
-                  {child.checklist.length === 0 ? (
-                    <div className="text-center py-6 text-slate-500 text-sm">
-                      <p>No checklist items yet</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {child.checklist.map((item) => (
+                  <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+                    {/* Large Avatar Section */}
+                    <div className="flex flex-col items-center md:items-start flex-shrink-0">
+                      {/* Avatar - Large display */}
+                      {child.avatar_type === "custom" && child.avatar_data ? (
+                        <div className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-2xl overflow-hidden shadow-xl border-4 border-white">
+                          <img
+                            src={child.avatar_data}
+                            alt={child.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
                         <div
-                          key={item.id}
-                          onClick={() => toggleItem(child.id, item.id, item.isCompleted)}
-                          className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer hover:shadow-md ${
-                            item.isCompleted
-                              ? "bg-green-100 border border-green-300"
-                              : "bg-slate-50 border border-slate-200 hover:bg-slate-100"
-                          }`}
+                          className={`w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-2xl bg-gradient-to-br ${
+                            AVATAR_COLORS[index % AVATAR_COLORS.length]
+                          } flex items-center justify-center text-white text-5xl md:text-6xl lg:text-7xl font-bold shadow-xl`}
                         >
-                          <div className="flex-shrink-0">
-                            {item.isCompleted ? (
-                              <CheckCircle2 className="h-6 w-6 text-green-600" />
-                            ) : (
-                              <Circle className="h-6 w-6 text-slate-400" />
-                            )}
+                          {child.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      {/* Name and completion badge below avatar */}
+                      <div className="mt-3 text-center md:text-left">
+                        <h3 className="text-2xl md:text-3xl font-bold text-slate-900">{child.name}</h3>
+                        {child.stats.isComplete && child.stats.total > 0 && (
+                          <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
+                            <CheckCircle2 className="h-6 w-6 text-green-600" />
+                            <span className="text-green-600 font-bold">All done!</span>
                           </div>
-                          {item.icon && (
-                            <div className="text-2xl flex-shrink-0">{item.icon}</div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className={`font-medium text-sm ${
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Checklist Section */}
+                    <div className="flex-1 min-w-0">
+                      {/* Progress Bar */}
+                      {child.stats.total > 0 && (
+                        <div className="mb-4">
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-slate-600 font-medium">Progress</span>
+                            <span className="font-bold text-slate-900">
+                              {child.stats.completed}/{child.stats.total}
+                            </span>
+                          </div>
+                          <Progress value={percentage} className="h-3" />
+                        </div>
+                      )}
+
+                      {/* Checklist Items */}
+                      {child.checklist.length === 0 ? (
+                        <div className="text-center py-6 text-slate-500 text-sm">
+                          <p>No checklist items yet</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {child.checklist.map((item) => (
+                            <div
+                              key={item.id}
+                              onClick={() => toggleItem(child.id, item.id, item.isCompleted)}
+                              className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer hover:shadow-md ${
                                 item.isCompleted
-                                  ? "text-green-900 line-through"
-                                  : "text-slate-900"
+                                  ? "bg-green-100 border border-green-300"
+                                  : "bg-slate-50 border border-slate-200 hover:bg-slate-100"
                               }`}
                             >
-                              {item.title}
-                            </p>
-                          </div>
+                              <div className="flex-shrink-0">
+                                {item.isCompleted ? (
+                                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                                ) : (
+                                  <Circle className="h-6 w-6 text-slate-400" />
+                                )}
+                              </div>
+                              {item.icon && (
+                                <div className="text-2xl flex-shrink-0">{item.icon}</div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={`font-medium ${
+                                    item.isCompleted
+                                      ? "text-green-900 line-through"
+                                      : "text-slate-900"
+                                  }`}
+                                >
+                                  {item.title}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
+                  </div>
                 </Card>
               );
             })}
