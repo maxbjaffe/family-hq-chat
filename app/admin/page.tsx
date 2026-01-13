@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,11 @@ import {
   ChevronDown,
   BarChart3,
   RefreshCw,
+  Upload,
+  Image as ImageIcon,
+  Video,
+  Sparkles,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,7 +38,17 @@ interface Child {
   name: string;
   age: number | null;
   grade: string | null;
+  avatar_type: string | null;
+  avatar_data: string | null;
   checklist_items: ChecklistItem[];
+}
+
+interface MediaFile {
+  name: string;
+  path: string;
+  url: string;
+  category: string;
+  created_at?: string;
 }
 
 interface AnalyticsSummary {
@@ -43,7 +58,16 @@ interface AnalyticsSummary {
   top_queries: { query: string; count: number }[];
 }
 
-type Tab = "children" | "analytics";
+type Tab = "children" | "media" | "analytics";
+type MediaCategory = "avatars" | "celebrations" | "icons" | "backgrounds" | "general";
+
+const MEDIA_CATEGORIES: { value: MediaCategory; label: string; icon: React.ElementType }[] = [
+  { value: "avatars", label: "Avatars", icon: User },
+  { value: "celebrations", label: "Celebrations", icon: Sparkles },
+  { value: "icons", label: "Icons", icon: ImageIcon },
+  { value: "backgrounds", label: "Backgrounds", icon: ImageIcon },
+  { value: "general", label: "General", icon: ImageIcon },
+];
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("children");
@@ -56,9 +80,26 @@ export default function AdminPage() {
   const [newItemForm, setNewItemForm] = useState({ title: "", icon: "" });
   const [showNewItem, setShowNewItem] = useState(false);
 
+  // Media state
+  const [mediaCategory, setMediaCategory] = useState<MediaCategory>("avatars");
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Avatar selection state
+  const [selectingAvatarFor, setSelectingAvatarFor] = useState<string | null>(null);
+  const [avatarOptions, setAvatarOptions] = useState<MediaFile[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (tab === "media") {
+      loadMedia(mediaCategory);
+    }
+  }, [tab, mediaCategory]);
 
   async function loadData() {
     setLoading(true);
@@ -85,6 +126,99 @@ export default function AdminPage() {
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadMedia(category: MediaCategory) {
+    setMediaLoading(true);
+    try {
+      const response = await fetch(`/api/admin/media?category=${category}`);
+      if (response.ok) {
+        const data = await response.json();
+        setMediaFiles(data.files || []);
+      }
+    } catch (error) {
+      console.error("Error loading media:", error);
+      toast.error("Failed to load media");
+    } finally {
+      setMediaLoading(false);
+    }
+  }
+
+  async function loadAvatarOptions() {
+    try {
+      const response = await fetch("/api/admin/media?category=avatars");
+      if (response.ok) {
+        const data = await response.json();
+        setAvatarOptions(data.files || []);
+      }
+    } catch (error) {
+      console.error("Error loading avatars:", error);
+    }
+  }
+
+  async function uploadFile(file: File) {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("category", mediaCategory);
+
+      const response = await fetch("/api/admin/media", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast.success("File uploaded");
+        loadMedia(mediaCategory);
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Upload failed");
+      }
+    } catch (error) {
+      toast.error("Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function deleteMedia(path: string) {
+    if (!confirm("Delete this file?")) return;
+
+    try {
+      const response = await fetch(`/api/admin/media?path=${encodeURIComponent(path)}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast.success("File deleted");
+        loadMedia(mediaCategory);
+      } else {
+        toast.error("Delete failed");
+      }
+    } catch (error) {
+      toast.error("Delete failed");
+    }
+  }
+
+  async function setChildAvatar(childId: string, avatarUrl: string) {
+    try {
+      const response = await fetch("/api/admin/children", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: childId, avatar_url: avatarUrl }),
+      });
+
+      if (response.ok) {
+        toast.success("Avatar updated");
+        setSelectingAvatarFor(null);
+        loadData();
+      } else {
+        toast.error("Failed to update avatar");
+      }
+    } catch (error) {
+      toast.error("Failed to update avatar");
     }
   }
 
@@ -192,7 +326,6 @@ export default function AdminPage() {
 
     if (swapIndex < 0 || swapIndex >= items.length) return;
 
-    // Swap display orders
     const updates = [
       { id: items[index].id, display_order: items[swapIndex].display_order },
       { id: items[swapIndex].id, display_order: items[index].display_order },
@@ -218,6 +351,19 @@ export default function AdminPage() {
     setEditForm({ title: item.title, icon: item.icon || "" });
   }
 
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadFile(file);
+    }
+    e.target.value = "";
+  }
+
+  function openAvatarSelector(childId: string) {
+    setSelectingAvatarFor(childId);
+    loadAvatarOptions();
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 flex items-center justify-center">
@@ -228,7 +374,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30">
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold flex items-center gap-3">
@@ -237,53 +383,118 @@ export default function AdminPage() {
               Admin
             </span>
           </h1>
-          <p className="text-slate-600 mt-1">Manage checklists and view analytics</p>
+          <p className="text-slate-600 mt-1">Manage checklists, media, and view analytics</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <Button
             variant={tab === "children" ? "default" : "outline"}
             onClick={() => setTab("children")}
-            className="flex-1 md:flex-none"
           >
             <Users className="h-4 w-4 mr-2" />
             Children & Checklists
           </Button>
           <Button
+            variant={tab === "media" ? "default" : "outline"}
+            onClick={() => setTab("media")}
+          >
+            <ImageIcon className="h-4 w-4 mr-2" />
+            Media Library
+          </Button>
+          <Button
             variant={tab === "analytics" ? "default" : "outline"}
             onClick={() => setTab("analytics")}
-            className="flex-1 md:flex-none"
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
           </Button>
         </div>
 
+        {/* Children & Checklists Tab */}
         {tab === "children" && (
           <>
-            {/* Child Selector */}
+            {/* Child Selector with Avatars */}
             <Card className="p-4 mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <Users className="h-5 w-5 text-slate-600" />
                 <span className="font-medium">Select Child</span>
               </div>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-4 flex-wrap">
                 {children.map((child) => (
-                  <Button
-                    key={child.id}
-                    variant={selectedChild === child.id ? "default" : "outline"}
-                    onClick={() => setSelectedChild(child.id)}
-                    className="min-w-[100px]"
-                  >
-                    {child.name}
-                    {child.age && (
-                      <span className="ml-1 text-xs opacity-70">({child.age})</span>
-                    )}
-                  </Button>
+                  <div key={child.id} className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => setSelectedChild(child.id)}
+                      className={`relative w-16 h-16 rounded-full overflow-hidden border-4 transition-all ${
+                        selectedChild === child.id
+                          ? "border-purple-500 scale-110"
+                          : "border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      {child.avatar_type === "custom" && child.avatar_data ? (
+                        <img
+                          src={child.avatar_data}
+                          alt={child.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xl font-bold">
+                          {child.name.charAt(0)}
+                        </div>
+                      )}
+                    </button>
+                    <span className="text-sm font-medium">{child.name}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs h-6"
+                      onClick={() => openAvatarSelector(child.id)}
+                    >
+                      <Edit2 className="h-3 w-3 mr-1" />
+                      Avatar
+                    </Button>
+                  </div>
                 ))}
               </div>
             </Card>
+
+            {/* Avatar Selection Modal */}
+            {selectingAvatarFor && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <Card className="p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold">Select Avatar</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectingAvatarFor(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {avatarOptions.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <User className="h-12 w-12 mx-auto mb-2 text-slate-300" />
+                      <p>No avatars uploaded yet.</p>
+                      <p className="text-sm">Go to Media Library → Avatars to upload some.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-3">
+                      {avatarOptions.map((avatar) => (
+                        <button
+                          key={avatar.path}
+                          onClick={() => setChildAvatar(selectingAvatarFor, avatar.url)}
+                          className="aspect-square rounded-lg overflow-hidden border-2 border-slate-200 hover:border-purple-500 transition-all hover:scale-105"
+                        >
+                          <img
+                            src={avatar.url}
+                            alt={avatar.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </div>
+            )}
 
             {/* Checklist Items */}
             {currentChild && (
@@ -466,11 +677,123 @@ export default function AdminPage() {
           </>
         )}
 
+        {/* Media Library Tab */}
+        {tab === "media" && (
+          <>
+            {/* Category Selector */}
+            <Card className="p-4 mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <ImageIcon className="h-5 w-5 text-slate-600" />
+                <span className="font-medium">Category</span>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {MEDIA_CATEGORIES.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <Button
+                      key={cat.value}
+                      variant={mediaCategory === cat.value ? "default" : "outline"}
+                      onClick={() => setMediaCategory(cat.value)}
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {cat.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* Upload Section */}
+            <Card className="p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium">Upload to {mediaCategory}</h3>
+                  <p className="text-sm text-slate-500">
+                    {mediaCategory === "avatars" && "Upload profile pictures for the kids"}
+                    {mediaCategory === "celebrations" && "Upload videos to play when checklists are complete"}
+                    {mediaCategory === "icons" && "Upload custom icons for checklist items"}
+                    {mediaCategory === "backgrounds" && "Upload background images for the dashboard"}
+                    {mediaCategory === "general" && "Upload any photos or videos"}
+                  </p>
+                </div>
+                <div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept="image/*,video/*"
+                    className="hidden"
+                  />
+                  <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                    {uploading ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-2" />
+                    )}
+                    {uploading ? "Uploading..." : "Upload File"}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Media Grid */}
+            <Card className="p-4">
+              <h3 className="font-medium mb-4">
+                {mediaCategory.charAt(0).toUpperCase() + mediaCategory.slice(1)} ({mediaFiles.length})
+              </h3>
+
+              {mediaLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
+                </div>
+              ) : mediaFiles.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <ImageIcon className="h-12 w-12 mx-auto mb-2 text-slate-300" />
+                  <p>No files in this category</p>
+                  <p className="text-sm">Upload some files above</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {mediaFiles.map((file) => {
+                    const isVideo = file.url.match(/\.(mp4|webm|mov)$/i);
+                    return (
+                      <div key={file.path} className="relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+                          {isVideo ? (
+                            <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                              <Video className="h-8 w-8 text-white" />
+                            </div>
+                          ) : (
+                            <img
+                              src={file.url}
+                              alt={file.name}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1 truncate">{file.name}</p>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0"
+                          onClick={() => deleteMedia(file.path)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+
+        {/* Analytics Tab */}
         {tab === "analytics" && (
           <>
             {analytics ? (
               <>
-                {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <Card className="p-6">
                     <p className="text-sm text-slate-500 mb-1">Total Queries</p>
@@ -492,7 +815,6 @@ export default function AdminPage() {
                   </Card>
                 </div>
 
-                {/* Top Queries */}
                 <Card className="p-6">
                   <h2 className="text-lg font-semibold text-slate-800 mb-4">
                     Top Queries

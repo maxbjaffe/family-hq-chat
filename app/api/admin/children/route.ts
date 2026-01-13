@@ -10,7 +10,7 @@ export async function GET() {
 
     const { data: children, error } = await supabase
       .from("children")
-      .select("id, name, age, grade")
+      .select("id, name, age, grade, avatar_type, avatar_data")
       .eq("user_id", FAMILY_USER_ID)
       .order("name");
 
@@ -78,15 +78,25 @@ export async function PUT(request: NextRequest) {
   try {
     const supabase = getFamilyDataClient();
     const body = await request.json();
-    const { id, name, age, grade } = body;
+    const { id, name, age, grade, avatar_url, avatar_type } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
+    const updates: Record<string, unknown> = {};
+    if (name !== undefined) updates.name = name;
+    if (age !== undefined) updates.age = age;
+    if (grade !== undefined) updates.grade = grade;
+    if (avatar_url !== undefined) {
+      updates.avatar_data = avatar_url;
+      updates.avatar_type = "custom";
+    }
+    if (avatar_type !== undefined) updates.avatar_type = avatar_type;
+
     const { data, error } = await supabase
       .from("children")
-      .update({ name, age, grade })
+      .update(updates)
       .eq("id", id)
       .eq("user_id", FAMILY_USER_ID)
       .select()
