@@ -37,11 +37,13 @@ export function Navigation() {
         {/* Logo */}
         <div className="p-4 border-b border-slate-200">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
-              F
-            </div>
+            <img
+              src="/Images/JaffeFamilyHubLogo.PNG"
+              alt="Jaffe Family Hub"
+              className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl object-cover"
+            />
             <span className="hidden lg:block font-bold text-lg bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Family HQ
+              Family Hub
             </span>
           </Link>
         </div>

@@ -176,17 +176,24 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"}!
-            </h1>
-            <p className="text-slate-600">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
+          <div className="flex items-center gap-4">
+            <img
+              src="/Images/JaffeFamilyHubLogo.PNG"
+              alt="Jaffe Family Hub"
+              className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover shadow-lg"
+            />
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"}!
+              </h1>
+              <p className="text-slate-600">
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
           </div>
           <Button variant="outline" size="sm" onClick={loadAllData}>
             <RefreshCw className="h-4 w-4 mr-2" />

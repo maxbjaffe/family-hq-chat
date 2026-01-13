@@ -251,17 +251,24 @@ export default function KioskPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                Morning Checklist
-              </h1>
-              <p className="text-slate-600 mt-1">
-                {new Date().toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
+            <div className="flex items-center gap-4">
+              <img
+                src="/Images/JaffeFamilyHubLogo.PNG"
+                alt="Jaffe Family Hub"
+                className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover shadow-lg"
+              />
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                  Morning Checklist
+                </h1>
+                <p className="text-slate-600 mt-1">
+                  {new Date().toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
             </div>
             <div className="flex gap-2">
               {allComplete && (
