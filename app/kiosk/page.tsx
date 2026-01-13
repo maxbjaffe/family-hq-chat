@@ -4,8 +4,11 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Sparkles, RefreshCw, X } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, RefreshCw, X, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
+import { Clock } from "@/components/Clock";
 
 // Celebration video URL
 const CELEBRATION_VIDEO_URL =
@@ -72,24 +75,37 @@ const AVATAR_COLORS = [
 export default function KioskPage() {
   const [children, setChildren] = useState<ChildData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState<string | null>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [hasShownVideo, setHasShownVideo] = useState(false);
+  const [togglingItems, setTogglingItems] = useState<Set<string>>(new Set());
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const loadData = useCallback(async () => {
+    startSync();
     try {
       const response = await fetch("/api/checklist");
       if (response.ok) {
         const data = await response.json();
         setChildren(data.children || []);
+        endSync(true);
+      } else {
+        endSync(false);
       }
     } catch (error) {
       console.error("Error loading checklist data:", error);
+      endSync(false);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const refreshData = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   useEffect(() => {
     loadData();
@@ -148,6 +164,10 @@ export default function KioskPage() {
   };
 
   async function toggleItem(childId: string, itemId: string, isCurrentlyCompleted: boolean) {
+    const itemKey = `${childId}-${itemId}`;
+    setTogglingItems((prev) => new Set(prev).add(itemKey));
+    startSync();
+
     // Check if this will complete the child's checklist
     const child = children.find((c) => c.id === childId);
     const willComplete = !isCurrentlyCompleted && child && child.stats.remaining === 1;
@@ -180,6 +200,7 @@ export default function KioskPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ childId, itemId, isCompleted: isCurrentlyCompleted }),
       });
+      endSync(true);
 
       // Celebrate when a child completes their checklist
       if (willComplete) {
@@ -196,15 +217,23 @@ export default function KioskPage() {
       }
     } catch (error) {
       console.error("Error toggling item:", error);
+      endSync(false);
       // Revert on error
       loadData();
+    } finally {
+      setTogglingItems((prev) => {
+        const next = new Set(prev);
+        next.delete(itemKey);
+        return next;
+      });
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <div className="text-lg text-slate-600">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col items-center justify-center gap-4">
+        <LoadingSpinner size="lg" />
+        <div className="text-lg text-slate-600">Loading checklists...</div>
       </div>
     );
   }
@@ -280,24 +309,32 @@ export default function KioskPage() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
-              {allComplete && (
+            <div className="flex flex-col items-end gap-2">
+              <Clock size="md" className="hidden md:block" />
+              <div className="flex items-center gap-2">
+                <SyncIndicator />
+                {allComplete && (
+                  <Button
+                    onClick={() => setShowVideo(true)}
+                    className="min-h-[48px] bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600"
+                  >
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Play Celebration
+                  </Button>
+                )}
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setShowVideo(true);
-                  }}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600"
+                  onClick={refreshData}
+                  disabled={refreshing}
+                  className="min-h-[48px] min-w-[48px]"
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Play Celebration
+                  {refreshing ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-5 w-5" />
+                  )}
                 </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={loadData}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
+              </div>
             </div>
           </div>
 
@@ -395,40 +432,47 @@ export default function KioskPage() {
                           <p>No checklist items yet</p>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {child.checklist.map((item) => (
-                            <div
-                              key={item.id}
-                              onClick={() => toggleItem(child.id, item.id, item.isCompleted)}
-                              className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer hover:shadow-md ${
-                                item.isCompleted
-                                  ? "bg-green-100 border border-green-300"
-                                  : "bg-slate-50 border border-slate-200 hover:bg-slate-100"
-                              }`}
-                            >
-                              <div className="flex-shrink-0">
-                                {item.isCompleted ? (
-                                  <CheckCircle2 className="h-6 w-6 text-green-600" />
-                                ) : (
-                                  <Circle className="h-6 w-6 text-slate-400" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {child.checklist.map((item) => {
+                            const itemKey = `${child.id}-${item.id}`;
+                            const isToggling = togglingItems.has(itemKey);
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={() => toggleItem(child.id, item.id, item.isCompleted)}
+                                disabled={isToggling}
+                                className={`w-full flex items-center gap-3 p-4 min-h-[56px] rounded-xl transition-all cursor-pointer hover:shadow-md active:scale-[0.98] ${
+                                  item.isCompleted
+                                    ? "bg-green-100 border-2 border-green-300"
+                                    : "bg-slate-50 border-2 border-slate-200 hover:bg-slate-100"
+                                } ${isToggling ? "opacity-60" : ""}`}
+                              >
+                                <div className="flex-shrink-0">
+                                  {isToggling ? (
+                                    <Loader2 className="h-7 w-7 text-purple-500 animate-spin" />
+                                  ) : item.isCompleted ? (
+                                    <CheckCircle2 className="h-7 w-7 text-green-600" />
+                                  ) : (
+                                    <Circle className="h-7 w-7 text-slate-400" />
+                                  )}
+                                </div>
+                                {item.icon && (
+                                  <div className="text-2xl flex-shrink-0">{item.icon}</div>
                                 )}
-                              </div>
-                              {item.icon && (
-                                <div className="text-2xl flex-shrink-0">{item.icon}</div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p
-                                  className={`font-medium ${
-                                    item.isCompleted
-                                      ? "text-green-900 line-through"
-                                      : "text-slate-900"
-                                  }`}
-                                >
-                                  {item.title}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
+                                <div className="flex-1 min-w-0 text-left">
+                                  <p
+                                    className={`font-semibold text-base ${
+                                      item.isCompleted
+                                        ? "text-green-900 line-through"
+                                        : "text-slate-900"
+                                    }`}
+                                  >
+                                    {item.title}
+                                  </p>
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

@@ -13,7 +13,11 @@ import {
   RefreshCw,
   Sparkles,
   Paintbrush,
+  Loader2,
 } from "lucide-react";
+import { Clock } from "@/components/Clock";
+import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface ChecklistItem {
   id: string;
@@ -63,6 +67,8 @@ export default function DashboardPage() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [togglingItems, setTogglingItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadAllData();
@@ -70,8 +76,26 @@ export default function DashboardPage() {
 
   async function loadAllData() {
     setLoading(true);
-    await Promise.all([loadChecklist(), loadWeather(), loadCalendar()]);
+    startSync();
+    try {
+      await Promise.all([loadChecklist(), loadWeather(), loadCalendar()]);
+      endSync(true);
+    } catch {
+      endSync(false);
+    }
     setLoading(false);
+  }
+
+  async function refreshData() {
+    setRefreshing(true);
+    startSync();
+    try {
+      await Promise.all([loadChecklist(), loadWeather(), loadCalendar()]);
+      endSync(true);
+    } catch {
+      endSync(false);
+    }
+    setRefreshing(false);
   }
 
   async function loadChecklist() {
@@ -111,6 +135,10 @@ export default function DashboardPage() {
   }
 
   async function toggleItem(childId: string, itemId: string, isCompleted: boolean) {
+    const itemKey = `${childId}-${itemId}`;
+    setTogglingItems((prev) => new Set(prev).add(itemKey));
+    startSync();
+
     // Optimistic update
     setChildren((prev) =>
       prev.map((c) => {
@@ -138,9 +166,17 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ childId, itemId, isCompleted }),
       });
+      endSync(true);
     } catch (error) {
       console.error("Error toggling item:", error);
+      endSync(false);
       loadChecklist();
+    } finally {
+      setTogglingItems((prev) => {
+        const next = new Set(prev);
+        next.delete(itemKey);
+        return next;
+      });
     }
   }
 
@@ -167,7 +203,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 flex flex-col items-center justify-center gap-4">
+        <LoadingSpinner size="lg" />
         <div className="text-lg text-slate-600">Loading Family HQ...</div>
       </div>
     );
@@ -197,10 +234,27 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={loadAllData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            {/* Large Clock Display */}
+            <Clock size="lg" className="hidden md:block" />
+            <div className="flex items-center gap-3">
+              <SyncIndicator />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshData}
+                disabled={refreshing}
+                className="min-h-[48px] min-w-[48px]"
+              >
+                {refreshing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline ml-2">Refresh</span>
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Top Row: Weather + Quick Actions */}
@@ -252,15 +306,15 @@ export default function DashboardPage() {
           <Card className="p-4">
             <div className="text-sm font-medium text-slate-600 mb-3">Quick Actions</div>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" asChild className="justify-start">
+              <Button variant="outline" asChild className="justify-start min-h-[48px]">
                 <Link href="/chat">
-                  <MessageSquare className="h-4 w-4 mr-2" />
+                  <MessageSquare className="h-5 w-5 mr-2" />
                   Ask AI
                 </Link>
               </Button>
-              <Button variant="outline" size="sm" asChild className="justify-start">
+              <Button variant="outline" asChild className="justify-start min-h-[48px]">
                 <Link href="/doodle">
-                  <Paintbrush className="h-4 w-4 mr-2" />
+                  <Paintbrush className="h-5 w-5 mr-2" />
                   Doodle
                 </Link>
               </Button>
@@ -328,35 +382,42 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="space-y-1">
-                      {child.checklist.slice(0, 5).map((item) => (
-                        <div
-                          key={item.id}
-                          onClick={() => toggleItem(child.id, item.id, item.isCompleted)}
-                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                            item.isCompleted
-                              ? "bg-green-100 text-green-800"
-                              : "hover:bg-slate-100"
-                          }`}
-                        >
-                          {item.isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-slate-400 flex-shrink-0" />
-                          )}
-                          {item.icon && <span className="text-lg">{item.icon}</span>}
-                          <span
-                            className={`text-sm font-medium ${
-                              item.isCompleted ? "line-through" : ""
-                            }`}
+                      {child.checklist.slice(0, 5).map((item) => {
+                        const itemKey = `${child.id}-${item.id}`;
+                        const isToggling = togglingItems.has(itemKey);
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => toggleItem(child.id, item.id, item.isCompleted)}
+                            disabled={isToggling}
+                            className={`w-full flex items-center gap-2 p-3 min-h-[48px] rounded-lg cursor-pointer transition-all ${
+                              item.isCompleted
+                                ? "bg-green-100 text-green-800"
+                                : "hover:bg-slate-100"
+                            } ${isToggling ? "opacity-50" : ""}`}
                           >
-                            {item.title}
-                          </span>
-                        </div>
-                      ))}
+                            {isToggling ? (
+                              <Loader2 className="h-5 w-5 text-purple-500 animate-spin flex-shrink-0" />
+                            ) : item.isCompleted ? (
+                              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-5 w-5 text-slate-400 flex-shrink-0" />
+                            )}
+                            {item.icon && <span className="text-lg">{item.icon}</span>}
+                            <span
+                              className={`text-sm font-medium text-left ${
+                                item.isCompleted ? "line-through" : ""
+                              }`}
+                            >
+                              {item.title}
+                            </span>
+                          </button>
+                        );
+                      })}
                       {child.checklist.length > 5 && (
                         <Link
                           href="/kiosk"
-                          className="text-sm text-blue-600 hover:underline block text-center pt-2 font-medium"
+                          className="flex items-center justify-center min-h-[48px] text-sm text-blue-600 hover:underline font-medium rounded-lg hover:bg-blue-50 transition-colors"
                         >
                           +{child.checklist.length - 5} more items
                         </Link>

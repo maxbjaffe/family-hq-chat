@@ -9,8 +9,11 @@ import {
   Paintbrush,
   Calendar,
   Settings,
+  Maximize,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useRef } from "react";
+import { SyncIndicator } from "./SyncIndicator";
+import { HeaderClock } from "./Clock";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -21,32 +24,59 @@ const navItems = [
   { href: "/admin", label: "Admin", icon: Settings },
 ];
 
+// Secret exit: tap logo 5 times in 3 seconds
+const EXIT_TAP_COUNT = 5;
+const EXIT_TAP_WINDOW = 3000;
+
 export function Navigation() {
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const logoTapTimesRef = useRef<number[]>([]);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
 
+  // Handle secret logo tap to exit kiosk/fullscreen
+  const handleLogoTap = useCallback(() => {
+    const now = Date.now();
+    logoTapTimesRef.current = logoTapTimesRef.current.filter(
+      (time) => now - time < EXIT_TAP_WINDOW
+    );
+    logoTapTimesRef.current.push(now);
+
+    if (logoTapTimesRef.current.length >= EXIT_TAP_COUNT) {
+      logoTapTimesRef.current = [];
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(console.error);
+      }
+    }
+  }, []);
+
+  const enterFullscreen = useCallback(() => {
+    document.documentElement.requestFullscreen().catch(console.error);
+  }, []);
+
   return (
     <>
       {/* Desktop Sidebar */}
       <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-56 bg-white border-r border-slate-200 flex-col z-50">
-        {/* Logo */}
+        {/* Logo - tappable for secret exit */}
         <div className="p-3 lg:p-4 border-b border-slate-200">
-          <Link href="/" className="flex items-center justify-center">
+          <button
+            onClick={handleLogoTap}
+            className="flex items-center justify-center w-full min-h-[48px]"
+          >
             <img
               src="/Images/JaffeFamilyHubLogo.PNG"
               alt="Jaffe Family Hub"
               className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl object-cover shadow-lg"
             />
-          </Link>
+          </button>
         </div>
 
-        {/* Nav Items */}
-        <div className="flex-1 p-2 space-y-1">
+        {/* Nav Items - 50px minimum height for touch targets */}
+        <div className="flex-1 p-2 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -54,7 +84,7 @@ export function Navigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
+                className={`flex items-center gap-3 px-3 min-h-[50px] rounded-xl transition-all ${
                   active
                     ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg"
                     : "text-slate-600 hover:bg-slate-100"
@@ -67,32 +97,35 @@ export function Navigation() {
           })}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-200">
-          <div className="hidden lg:block text-xs text-slate-400 text-center">
-            Family Dashboard
-          </div>
+        {/* Footer with fullscreen button */}
+        <div className="p-3 border-t border-slate-200 space-y-2">
+          <button
+            onClick={enterFullscreen}
+            className="w-full flex items-center justify-center gap-2 min-h-[48px] px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition-all"
+            title="Enter Kiosk Mode"
+          >
+            <Maximize className="h-5 w-5" />
+            <span className="hidden lg:block text-sm font-medium">Kiosk Mode</span>
+          </button>
         </div>
       </nav>
 
-      {/* Mobile Bottom Nav */}
+      {/* Mobile Bottom Nav - larger touch targets */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 safe-area-bottom">
-        <div className="flex justify-around items-center py-2">
-          {navItems.map((item) => {
+        <div className="flex justify-around items-center py-1">
+          {navItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg min-w-[60px] transition-all ${
-                  active
-                    ? "text-purple-600"
-                    : "text-slate-500"
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[56px] rounded-xl transition-all ${
+                  active ? "text-purple-600" : "text-slate-500"
                 }`}
               >
                 <div
-                  className={`p-2 rounded-xl transition-all ${
+                  className={`p-2.5 rounded-xl transition-all ${
                     active
                       ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
                       : ""
@@ -100,15 +133,42 @@ export function Navigation() {
                 >
                   <Icon className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium">{item.label}</span>
               </Link>
             );
           })}
         </div>
       </nav>
 
+      {/* Top bar for mobile - shows clock and sync status */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-12 bg-white/95 backdrop-blur-sm border-b border-slate-200 z-40 flex items-center justify-between px-4">
+        <button
+          onClick={handleLogoTap}
+          className="min-h-[48px] min-w-[48px] flex items-center justify-center -ml-2"
+        >
+          <img
+            src="/Images/JaffeFamilyHubLogo.PNG"
+            alt="Jaffe Family Hub"
+            className="w-8 h-8 rounded-lg object-cover"
+          />
+        </button>
+        <div className="flex items-center gap-3">
+          <HeaderClock />
+          <SyncIndicator />
+          <button
+            onClick={enterFullscreen}
+            className="min-h-[48px] min-w-[48px] flex items-center justify-center -mr-2"
+            title="Enter Kiosk Mode"
+          >
+            <Maximize className="h-5 w-5 text-slate-500" />
+          </button>
+        </div>
+      </div>
+
       {/* Spacer for fixed nav */}
       <div className="hidden md:block w-20 lg:w-56 flex-shrink-0" />
+      {/* Mobile top spacer */}
+      <div className="md:hidden h-12" />
     </>
   );
 }

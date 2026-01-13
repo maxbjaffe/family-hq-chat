@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { NavigationWrapper } from "@/components/Navigation";
+import { KioskProvider } from "@/components/KioskProvider";
 import { Toaster } from "sonner";
 
 const geist = Geist({
@@ -38,8 +39,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={geist.className}>
-        <NavigationWrapper>{children}</NavigationWrapper>
-        <Toaster position="top-center" richColors />
+        <KioskProvider>
+          <NavigationWrapper>{children}</NavigationWrapper>
+          <Toaster position="top-center" richColors />
+        </KioskProvider>
       </body>
     </html>
   );
