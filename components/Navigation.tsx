@@ -11,9 +11,22 @@ import {
   Settings,
   Maximize,
 } from "lucide-react";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { SyncIndicator } from "./SyncIndicator";
 import { HeaderClock } from "./Clock";
+
+// Detect if running in iframe
+function useIsEmbedded() {
+  const [isEmbedded, setIsEmbedded] = useState(false);
+  useEffect(() => {
+    try {
+      setIsEmbedded(window.self !== window.top);
+    } catch {
+      setIsEmbedded(true);
+    }
+  }, []);
+  return isEmbedded;
+}
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -31,6 +44,7 @@ const EXIT_TAP_WINDOW = 3000;
 export function Navigation() {
   const pathname = usePathname();
   const logoTapTimesRef = useRef<number[]>([]);
+  const isEmbedded = useIsEmbedded();
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -102,17 +116,19 @@ export function Navigation() {
           })}
         </div>
 
-        {/* Footer with fullscreen button */}
-        <div className="p-3 border-t border-slate-200 space-y-2">
-          <button
-            onClick={enterFullscreen}
-            className="w-full flex items-center justify-center gap-2 min-h-[48px] px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition-all"
-            title="Enter Kiosk Mode"
-          >
-            <Maximize className="h-5 w-5" />
-            <span className="hidden lg:block text-sm font-medium">Kiosk Mode</span>
-          </button>
-        </div>
+        {/* Footer with fullscreen button - hidden when embedded in iframe */}
+        {!isEmbedded && (
+          <div className="p-3 border-t border-slate-200 space-y-2">
+            <button
+              onClick={enterFullscreen}
+              className="w-full flex items-center justify-center gap-2 min-h-[48px] px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition-all"
+              title="Enter Kiosk Mode"
+            >
+              <Maximize className="h-5 w-5" />
+              <span className="hidden lg:block text-sm font-medium">Kiosk Mode</span>
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Mobile Bottom Nav - larger touch targets */}
@@ -160,13 +176,16 @@ export function Navigation() {
         <div className="flex items-center gap-3">
           <HeaderClock />
           <SyncIndicator />
-          <button
-            onClick={enterFullscreen}
-            className="min-h-[48px] min-w-[48px] flex items-center justify-center -mr-2"
-            title="Enter Kiosk Mode"
-          >
-            <Maximize className="h-5 w-5 text-slate-500" />
-          </button>
+          {/* Hide fullscreen button when embedded in iframe */}
+          {!isEmbedded && (
+            <button
+              onClick={enterFullscreen}
+              className="min-h-[48px] min-w-[48px] flex items-center justify-center -mr-2"
+              title="Enter Kiosk Mode"
+            >
+              <Maximize className="h-5 w-5 text-slate-500" />
+            </button>
+          )}
         </div>
       </div>
 

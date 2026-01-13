@@ -7,6 +7,7 @@ import { KioskModeIndicator } from "./FullscreenButton";
 
 interface KioskContextType {
   isKioskMode: boolean;
+  isEmbedded: boolean; // true when in iframe (e.g., DakBoard)
   enterKioskMode: () => Promise<void>;
   exitKioskMode: () => Promise<void>;
   inactivityTimeoutMinutes: number;
@@ -29,7 +30,22 @@ interface KioskProviderProps {
 
 export function KioskProvider({ children }: KioskProviderProps) {
   const [isKioskMode, setIsKioskMode] = useState(false);
+  const [isEmbedded, setIsEmbedded] = useState(false);
   const [inactivityTimeoutMinutes, setInactivityTimeoutMinutes] = useState(7);
+
+  // Detect if running in iframe (DakBoard embed)
+  useEffect(() => {
+    try {
+      const inIframe = window.self !== window.top;
+      setIsEmbedded(inIframe);
+      if (inIframe) {
+        console.log("Running in iframe mode (DakBoard embed detected)");
+      }
+    } catch {
+      // If we can't access window.top, we're likely in a sandboxed iframe
+      setIsEmbedded(true);
+    }
+  }, []);
 
   const { isWarningVisible, secondsRemaining, resetTimer, isEnabled } =
     useInactivityTimer({
@@ -134,6 +150,7 @@ export function KioskProvider({ children }: KioskProviderProps) {
     <KioskContext.Provider
       value={{
         isKioskMode,
+        isEmbedded,
         enterKioskMode,
         exitKioskMode,
         inactivityTimeoutMinutes,
