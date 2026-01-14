@@ -69,8 +69,8 @@ function extractProperty(property: NotionProperty | undefined): string | null {
 
 async function queryDatabase(databaseId: string): Promise<Record<string, NotionProperty>[]> {
   try {
-    const response = await notion.dataSources.query({
-      data_source_id: databaseId,
+    const response = await notion.databases.query({
+      database_id: databaseId,
       page_size: 100,
     });
     return response.results.map(
