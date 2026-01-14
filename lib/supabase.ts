@@ -57,6 +57,43 @@ export interface CalendarEvent {
 // Hardcoded user ID for your family (from gift-tracker)
 const FAMILY_USER_ID = "00879c1b-a586-4d52-96be-8f4b7ddf7257";
 
+// Get today's date in local timezone (EST) as YYYY-MM-DD
+function getLocalDateString(): string {
+  const now = new Date();
+  // Use EST timezone for consistency (family is in NY area)
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  };
+  const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+  return `${year}-${month}-${day}`;
+}
+
+// Get day of week in local timezone (0 = Sunday, 6 = Saturday)
+function getLocalDayOfWeek(): number {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: "America/New_York",
+    weekday: "short",
+  };
+  const dayName = new Intl.DateTimeFormat("en-US", options).format(now);
+  const dayMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  return dayMap[dayName] ?? 0;
+}
+
 export async function getChildren(): Promise<Child[]> {
   const supabase = getFamilyDataClient();
 
@@ -79,8 +116,8 @@ export async function getChecklistForChild(childId: string): Promise<{
   stats: { total: number; completed: number; remaining: number; isComplete: boolean };
 }> {
   const supabase = getFamilyDataClient();
-  const today = new Date().toISOString().split("T")[0];
-  const dayOfWeek = new Date().getDay();
+  const today = getLocalDateString(); // Use local timezone (EST)
+  const dayOfWeek = getLocalDayOfWeek(); // Use local timezone (EST)
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
   // Get checklist items
@@ -132,7 +169,7 @@ export async function toggleChecklistItem(
   isCurrentlyCompleted: boolean
 ): Promise<boolean> {
   const supabase = getFamilyDataClient();
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString(); // Use local timezone (EST)
 
   if (isCurrentlyCompleted) {
     // Remove completion
