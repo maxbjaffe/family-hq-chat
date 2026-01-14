@@ -263,16 +263,27 @@ export function DoodleBoard() {
     saveToHistory();
   };
 
+  const generateTitle = () => {
+    const adjectives = [
+      "Amazing", "Beautiful", "Colorful", "Dazzling", "Epic",
+      "Fantastic", "Glorious", "Happy", "Incredible", "Joyful",
+      "Lovely", "Magical", "Nice", "Outstanding", "Pretty",
+      "Radiant", "Sparkly", "Terrific", "Unique", "Wonderful",
+    ];
+    const nouns = [
+      "Masterpiece", "Creation", "Artwork", "Drawing", "Doodle",
+      "Picture", "Design", "Sketch", "Art", "Work",
+    ];
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    return `${adj} ${noun}`;
+  };
+
   const saveDrawing = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const title = prompt(
-      "Give your drawing a name!",
-      `Masterpiece ${new Date().toLocaleDateString()}`
-    );
-    if (!title) return;
-
+    const title = generateTitle();
     const imageData = canvas.toDataURL();
 
     try {
@@ -283,7 +294,7 @@ export function DoodleBoard() {
       });
 
       if (response.ok) {
-        toast.success("Drawing saved to gallery! 🎨");
+        toast.success(`"${title}" saved to gallery! 🎨`);
       } else {
         const data = await response.json();
         toast.error(data.error || "Failed to save drawing");
