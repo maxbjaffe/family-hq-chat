@@ -32,7 +32,7 @@ const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
   { href: "/calendar", label: "Calendar", icon: Calendar },
-  { href: "/games", label: "Games", icon: Gamepad2 },
+  { href: "/games", label: "Breaktime", icon: Gamepad2 },
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/admin", label: "Admin", icon: Settings },
 ];
