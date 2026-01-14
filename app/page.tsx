@@ -12,7 +12,7 @@ import {
   Calendar,
   RefreshCw,
   Sparkles,
-  Paintbrush,
+  Gamepad2,
   Loader2,
 } from "lucide-react";
 import { Clock } from "@/components/Clock";
@@ -313,9 +313,9 @@ export default function DashboardPage() {
                 </Link>
               </Button>
               <Button variant="outline" asChild className="justify-start min-h-[48px]">
-                <Link href="/doodle">
-                  <Paintbrush className="h-5 w-5 mr-2" />
-                  Doodle
+                <Link href="/games">
+                  <Gamepad2 className="h-5 w-5 mr-2" />
+                  Games
                 </Link>
               </Button>
             </div>

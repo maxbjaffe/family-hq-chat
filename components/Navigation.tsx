@@ -6,7 +6,7 @@ import {
   Home,
   CheckSquare,
   MessageSquare,
-  Paintbrush,
+  Gamepad2,
   Calendar,
   Settings,
   Maximize,
@@ -32,7 +32,7 @@ const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
   { href: "/calendar", label: "Calendar", icon: Calendar },
-  { href: "/doodle", label: "Doodle", icon: Paintbrush },
+  { href: "/games", label: "Games", icon: Gamepad2 },
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/admin", label: "Admin", icon: Settings },
 ];
