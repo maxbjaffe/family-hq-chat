@@ -3,53 +3,46 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Trophy, X } from "lucide-react";
-
-// Kid-friendly words with categories
-const WORD_CATEGORIES = {
-  Animals: [
-    "ELEPHANT", "GIRAFFE", "DOLPHIN", "PENGUIN", "BUTTERFLY", "KANGAROO",
-    "OCTOPUS", "TIGER", "MONKEY", "RABBIT", "TURTLE", "PARROT",
-  ],
-  Food: [
-    "PIZZA", "BANANA", "CHOCOLATE", "PANCAKE", "SANDWICH", "STRAWBERRY",
-    "POPCORN", "MUFFIN", "COOKIE", "PRETZEL", "WAFFLE", "CUPCAKE",
-  ],
-  Places: [
-    "BEACH", "CASTLE", "LIBRARY", "PLAYGROUND", "MOUNTAIN", "FOREST",
-    "MUSEUM", "GARDEN", "SCHOOL", "AIRPORT", "ISLAND", "STADIUM",
-  ],
-  Things: [
-    "RAINBOW", "SKATEBOARD", "UMBRELLA", "TELESCOPE", "KEYBOARD", "BACKPACK",
-    "TREASURE", "BALLOON", "CAMPFIRE", "SPACESHIP", "DINOSAUR", "FIREWORK",
-  ],
-};
+import { RefreshCw, Trophy, X, Settings } from "lucide-react";
+import { getRandomHangmanWord, type Difficulty } from "@/lib/game-words";
+import {
+  AnimalCharacter,
+  MonsterCharacter,
+  RobotCharacter,
+} from "@/components/games/hangman-characters";
 
 const MAX_WRONG = 6;
 
-export function HangmanGame() {
+// Character types for random selection
+const CHARACTER_TYPES = ['animal', 'robot', 'monster'] as const;
+type CharacterType = typeof CHARACTER_TYPES[number];
+
+interface HangmanGameProps {
+  difficulty?: Difficulty;
+  onChangeDifficulty?: () => void;
+}
+
+export function HangmanGame({ difficulty = 'easy', onChangeDifficulty }: HangmanGameProps) {
   const [word, setWord] = useState("");
   const [category, setCategory] = useState("");
   const [guessedLetters, setGuessedLetters] = useState<Set<string>>(new Set());
   const [wrongGuesses, setWrongGuesses] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
+  const [characterType, setCharacterType] = useState<CharacterType>('animal');
 
   const startNewGame = useCallback(() => {
-    const categories = Object.keys(WORD_CATEGORIES);
-    const randomCategory =
-      categories[Math.floor(Math.random() * categories.length)];
-    const words =
-      WORD_CATEGORIES[randomCategory as keyof typeof WORD_CATEGORIES];
-    const randomWord = words[Math.floor(Math.random() * words.length)];
+    const { word: randomWord, category: randomCategory } = getRandomHangmanWord(difficulty);
+    const randomCharacter = CHARACTER_TYPES[Math.floor(Math.random() * CHARACTER_TYPES.length)];
 
     setWord(randomWord);
     setCategory(randomCategory);
+    setCharacterType(randomCharacter);
     setGuessedLetters(new Set());
     setWrongGuesses(0);
     setGameOver(false);
     setWon(false);
-  }, []);
+  }, [difficulty]);
 
   useEffect(() => {
     startNewGame();
@@ -103,157 +96,19 @@ export function HangmanGame() {
 
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-  // SVG Hangman figure
-  const HangmanFigure = () => (
-    <svg viewBox="0 0 200 250" className="w-full h-48 md:h-64">
-      {/* Gallows */}
-      <line
-        x1="20"
-        y1="230"
-        x2="100"
-        y2="230"
-        stroke="#4B5563"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <line
-        x1="60"
-        y1="230"
-        x2="60"
-        y2="20"
-        stroke="#4B5563"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <line
-        x1="60"
-        y1="20"
-        x2="140"
-        y2="20"
-        stroke="#4B5563"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <line
-        x1="140"
-        y1="20"
-        x2="140"
-        y2="50"
-        stroke="#4B5563"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-
-      {/* Head */}
-      {wrongGuesses >= 1 && (
-        <circle
-          cx="140"
-          cy="70"
-          r="20"
-          fill="none"
-          stroke="#F59E0B"
-          strokeWidth="4"
-        />
-      )}
-
-      {/* Body */}
-      {wrongGuesses >= 2 && (
-        <line
-          x1="140"
-          y1="90"
-          x2="140"
-          y2="150"
-          stroke="#F59E0B"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      )}
-
-      {/* Left Arm */}
-      {wrongGuesses >= 3 && (
-        <line
-          x1="140"
-          y1="110"
-          x2="110"
-          y2="130"
-          stroke="#F59E0B"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      )}
-
-      {/* Right Arm */}
-      {wrongGuesses >= 4 && (
-        <line
-          x1="140"
-          y1="110"
-          x2="170"
-          y2="130"
-          stroke="#F59E0B"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      )}
-
-      {/* Left Leg */}
-      {wrongGuesses >= 5 && (
-        <line
-          x1="140"
-          y1="150"
-          x2="110"
-          y2="190"
-          stroke="#F59E0B"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      )}
-
-      {/* Right Leg */}
-      {wrongGuesses >= 6 && (
-        <line
-          x1="140"
-          y1="150"
-          x2="170"
-          y2="190"
-          stroke="#F59E0B"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      )}
-
-      {/* Face when lost */}
-      {wrongGuesses >= 6 && (
-        <>
-          <text x="132" y="68" fontSize="10" fill="#EF4444">
-            X
-          </text>
-          <text x="142" y="68" fontSize="10" fill="#EF4444">
-            X
-          </text>
-          <path
-            d="M 132 78 Q 140 72 148 78"
-            fill="none"
-            stroke="#EF4444"
-            strokeWidth="2"
-          />
-        </>
-      )}
-
-      {/* Face when won */}
-      {won && (
-        <>
-          <circle cx="132" cy="65" r="3" fill="#10B981" />
-          <circle cx="148" cy="65" r="3" fill="#10B981" />
-          <path
-            d="M 132 76 Q 140 84 148 76"
-            fill="none"
-            stroke="#10B981"
-            strokeWidth="2"
-          />
-        </>
-      )}
-    </svg>
-  );
+  // Render the appropriate character based on characterType
+  const renderCharacter = () => {
+    const props = { wrongGuesses, won };
+    switch (characterType) {
+      case 'robot':
+        return <RobotCharacter {...props} />;
+      case 'monster':
+        return <MonsterCharacter {...props} />;
+      case 'animal':
+      default:
+        return <AnimalCharacter {...props} />;
+    }
+  };
 
   return (
     <Card className="p-6">
@@ -272,9 +127,9 @@ export function HangmanGame() {
         </p>
       </div>
 
-      {/* Hangman Figure */}
+      {/* Character */}
       <div className="flex justify-center mb-4">
-        <HangmanFigure />
+        {renderCharacter()}
       </div>
 
       {/* Wrong Guesses Counter */}
@@ -343,6 +198,19 @@ export function HangmanGame() {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Change Difficulty */}
+      {onChangeDifficulty && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={onChangeDifficulty}
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm transition-colors"
+          >
+            <Settings className="h-4 w-4" />
+            Change Difficulty
+          </button>
         </div>
       )}
     </Card>
