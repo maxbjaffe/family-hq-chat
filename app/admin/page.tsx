@@ -23,6 +23,7 @@ import {
   User,
 } from "lucide-react";
 import { toast } from "sonner";
+import { IconPicker } from "@/components/IconPicker";
 
 interface ChecklistItem {
   id: string;
@@ -91,6 +92,11 @@ export default function AdminPage() {
   const [selectingAvatarFor, setSelectingAvatarFor] = useState<string | null>(null);
   const [avatarOptions, setAvatarOptions] = useState<MediaFile[]>([]);
 
+  // Icon picker state
+  const [showNewIconPicker, setShowNewIconPicker] = useState(false);
+  const [showEditIconPicker, setShowEditIconPicker] = useState(false);
+  const [customIcons, setCustomIcons] = useState<MediaFile[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -104,9 +110,10 @@ export default function AdminPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [childrenRes, analyticsRes] = await Promise.all([
+      const [childrenRes, analyticsRes, iconsRes] = await Promise.all([
         fetch("/api/admin/children"),
         fetch("/api/admin/analytics"),
+        fetch("/api/admin/media?category=icons"),
       ]);
 
       if (childrenRes.ok) {
@@ -120,6 +127,11 @@ export default function AdminPage() {
       if (analyticsRes.ok) {
         const data = await analyticsRes.json();
         setAnalytics(data);
+      }
+
+      if (iconsRes.ok) {
+        const data = await iconsRes.json();
+        setCustomIcons(data.files || []);
       }
     } catch (error) {
       console.error("Error loading data:", error);
@@ -154,6 +166,18 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error("Error loading avatars:", error);
+    }
+  }
+
+  async function loadCustomIcons() {
+    try {
+      const response = await fetch("/api/admin/media?category=icons");
+      if (response.ok) {
+        const data = await response.json();
+        setCustomIcons(data.files || []);
+      }
+    } catch (error) {
+      console.error("Error loading icons:", error);
     }
   }
 
@@ -521,15 +545,31 @@ export default function AdminPage() {
                 {showNewItem && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                     <div className="flex gap-2 mb-2">
-                      <input
-                        type="text"
-                        placeholder="Icon (emoji)"
-                        value={newItemForm.icon}
-                        onChange={(e) =>
-                          setNewItemForm({ ...newItemForm, icon: e.target.value })
-                        }
-                        className="w-16 px-3 py-2 border rounded-lg text-center text-xl"
-                      />
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowNewIconPicker(!showNewIconPicker)}
+                          className="w-14 h-10 px-2 border rounded-lg text-center text-xl bg-white hover:bg-slate-50 flex items-center justify-center"
+                        >
+                          {newItemForm.icon ? (
+                            newItemForm.icon.startsWith("http") ? (
+                              <img src={newItemForm.icon} alt="icon" className="w-6 h-6 object-cover rounded" />
+                            ) : (
+                              newItemForm.icon
+                            )
+                          ) : (
+                            <span className="text-slate-400 text-sm">+</span>
+                          )}
+                        </button>
+                        {showNewIconPicker && (
+                          <IconPicker
+                            value={newItemForm.icon}
+                            onChange={(icon) => setNewItemForm({ ...newItemForm, icon })}
+                            customIcons={customIcons.map(f => ({ url: f.url, name: f.name }))}
+                            onClose={() => setShowNewIconPicker(false)}
+                          />
+                        )}
+                      </div>
                       <input
                         type="text"
                         placeholder="Item title"
@@ -551,6 +591,7 @@ export default function AdminPage() {
                         variant="outline"
                         onClick={() => {
                           setShowNewItem(false);
+                          setShowNewIconPicker(false);
                           setNewItemForm({ title: "", icon: "" });
                         }}
                       >
@@ -576,14 +617,31 @@ export default function AdminPage() {
                       >
                         {editingItem === item.id ? (
                           <>
-                            <input
-                              type="text"
-                              value={editForm.icon}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, icon: e.target.value })
-                              }
-                              className="w-12 px-2 py-1 border rounded text-center text-lg"
-                            />
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setShowEditIconPicker(!showEditIconPicker)}
+                                className="w-10 h-8 border rounded text-center text-lg bg-white hover:bg-slate-50 flex items-center justify-center"
+                              >
+                                {editForm.icon ? (
+                                  editForm.icon.startsWith("http") ? (
+                                    <img src={editForm.icon} alt="icon" className="w-5 h-5 object-cover rounded" />
+                                  ) : (
+                                    editForm.icon
+                                  )
+                                ) : (
+                                  <span className="text-slate-400 text-xs">+</span>
+                                )}
+                              </button>
+                              {showEditIconPicker && (
+                                <IconPicker
+                                  value={editForm.icon}
+                                  onChange={(icon) => setEditForm({ ...editForm, icon })}
+                                  customIcons={customIcons.map(f => ({ url: f.url, name: f.name }))}
+                                  onClose={() => setShowEditIconPicker(false)}
+                                />
+                              )}
+                            </div>
                             <input
                               type="text"
                               value={editForm.title}
@@ -596,22 +654,36 @@ export default function AdminPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => updateItem(item.id)}
+                              onClick={() => {
+                                updateItem(item.id);
+                                setShowEditIconPicker(false);
+                              }}
                             >
                               <Save className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => setEditingItem(null)}
+                              onClick={() => {
+                                setEditingItem(null);
+                                setShowEditIconPicker(false);
+                              }}
                             >
                               <X className="h-4 w-4" />
                             </Button>
                           </>
                         ) : (
                           <>
-                            <span className="text-xl w-8 text-center">
-                              {item.icon || "📋"}
+                            <span className="text-xl w-8 text-center flex items-center justify-center">
+                              {item.icon ? (
+                                item.icon.startsWith("http") ? (
+                                  <img src={item.icon} alt="icon" className="w-6 h-6 object-cover rounded" />
+                                ) : (
+                                  item.icon
+                                )
+                              ) : (
+                                "📋"
+                              )}
                             </span>
                             <span className="flex-1 font-medium">{item.title}</span>
                             {item.weekdays_only && (
