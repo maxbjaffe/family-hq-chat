@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from("checklist_items")
       .insert({
+        user_id: FAMILY_USER_ID,
         child_id,
         title,
         icon: icon || null,
