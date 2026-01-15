@@ -36,7 +36,7 @@ export const WORDLE_WORDS: Record<Difficulty, string[]> = {
     'STONE', 'STORE', 'STARE', 'START', 'STARS', 'SNAIL', 'SMALL', 'SMART',
     'SPELL', 'SPILL', 'SPLIT', 'SPORT', 'SPEAK', 'SPENT', 'STAND', 'STILL',
     'LEARN', 'LEAST', 'LEASE', 'LATER', 'LASER', 'LANES', 'LARGE', 'LATTE',
-    'RATES', 'RATLE', 'RAISE', 'RAINS', 'REALS', 'RENTS', 'RESET', 'RESTS',
+    'RATES', 'RATIO', 'RAISE', 'RAINS', 'REALS', 'RENTS', 'RESET', 'RESTS',
     'TESTS', 'TENTS', 'TEENS', 'TEARS', 'TELLS', 'TILES', 'TIMES', 'TIRES',
     'EATER', 'EATEN', 'EARNS', 'EARTH', 'EASEL', 'ENTER', 'ELITE', 'EQUAL',
     'SALES', 'SAILS', 'SAINT', 'SALTS', 'SENSE', 'SEATS', 'SEALS', 'SEEDS',
@@ -123,7 +123,7 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
       {
         name: 'Animals',
         words: [
-          'CAT', 'DOG', 'BIRD', 'FISH', 'FROG', 'DUCK', 'BEAR', 'DEER',
+          'TOAD', 'WOLF', 'BIRD', 'FISH', 'FROG', 'DUCK', 'BEAR', 'DEER',
           'LION', 'PONY', 'GOAT', 'LAMB', 'SEAL', 'CRAB', 'MOTH', 'WORM',
           'BUNNY', 'MOUSE', 'SNAKE', 'TIGER', 'ZEBRA', 'HIPPO', 'PANDA',
           'PUPPY', 'KITTY', 'HORSE', 'SHARK', 'WHALE', 'EAGLE', 'PARROT',
@@ -134,14 +134,14 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
         words: [
           'APPLE', 'BREAD', 'CANDY', 'DONUT', 'GRAPE', 'LEMON', 'MANGO',
           'OLIVE', 'PEACH', 'PIZZA', 'SALAD', 'TOAST', 'WATER', 'JUICE',
-          'CAKE', 'CORN', 'EGGS', 'FISH', 'MILK', 'PEAR', 'RICE', 'SOUP',
+          'CAKE', 'CORN', 'EGGS', 'MEAL', 'MILK', 'PEAR', 'RICE', 'SOUP',
           'TACO', 'BAGEL', 'BERRY', 'CHIPS', 'CREAM', 'HONEY', 'PASTA',
         ],
       },
       {
         name: 'Colors',
         words: [
-          'RED', 'BLUE', 'PINK', 'GOLD', 'GRAY', 'CYAN', 'TEAL',
+          'RUBY', 'BLUE', 'PINK', 'GOLD', 'GRAY', 'CYAN', 'TEAL',
           'GREEN', 'BLACK', 'WHITE', 'BROWN', 'ORANGE', 'PURPLE', 'YELLOW',
           'PEACH', 'CORAL', 'IVORY', 'BEIGE', 'CREAM', 'OLIVE', 'SALMON',
         ],
@@ -149,17 +149,9 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
       {
         name: 'Family',
         words: [
-          'MOM', 'DAD', 'SIS', 'BRO', 'SON', 'BABY', 'AUNT', 'UNCLE',
-          'MAMA', 'PAPA', 'NANA', 'TWIN', 'KIDS', 'FAMILY', 'SISTER',
-          'BROTHER', 'MOTHER', 'FATHER', 'GRANNY', 'PARENT', 'COUSIN',
-        ],
-      },
-      {
-        name: 'Home',
-        words: [
-          'BED', 'RUG', 'TUB', 'BATH', 'BOWL', 'DESK', 'DOOR', 'FORK',
-          'LAMP', 'ROOM', 'SOFA', 'WALL', 'YARD', 'CHAIR', 'CLOCK',
-          'COUCH', 'GLASS', 'HOUSE', 'PLATE', 'SPOON', 'TABLE', 'TOWEL',
+          'MAMA', 'DADA', 'BABY', 'AUNT', 'UNCLE', 'PAPA', 'NANA',
+          'TWIN', 'KIDS', 'FAMILY', 'SISTER', 'MOTHER', 'FATHER',
+          'GRANNY', 'PARENT', 'COUSIN', 'NIECE', 'NEPHEW',
         ],
       },
     ],
@@ -172,7 +164,7 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
         words: [
           'GIRAFFE', 'DOLPHIN', 'PENGUIN', 'GORILLA', 'CHEETAH', 'PANTHER',
           'LEOPARD', 'BUFFALO', 'RACCOON', 'HAMSTER', 'OSTRICH', 'PEACOCK',
-          'PELICAN', 'SEAGULL', 'LOBSTER', 'OCTOPUS', 'JELLYFISH', 'STARFISH',
+          'PELICAN', 'SEAGULL', 'LOBSTER', 'OCTOPUS', 'SEAHORSE', 'STARFISH',
           'MEERKAT', 'GAZELLE', 'ANTELOPE', 'FLAMINGO', 'CARDINAL', 'SPARROW',
         ],
       },
@@ -191,7 +183,7 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
           'AIRPORT', 'LIBRARY', 'STADIUM', 'THEATER', 'MUSEUM', 'AQUARIUM',
           'HOSPITAL', 'PHARMACY', 'GROCERY', 'BAKERY', 'SCHOOL', 'COLLEGE',
           'CHURCH', 'TEMPLE', 'CASTLE', 'PALACE', 'VILLAGE', 'ISLAND',
-          'MOUNTAIN', 'FOREST', 'DESERT', 'VALLEY', 'BEACH', 'HARBOR',
+          'MOUNTAIN', 'FOREST', 'DESERT', 'VALLEY', 'SEASHORE', 'HARBOR',
         ],
       },
       {
@@ -199,24 +191,24 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
         words: [
           'SOCCER', 'TENNIS', 'HOCKEY', 'BOXING', 'BOWLING', 'SKATING',
           'SURFING', 'CYCLING', 'RUNNING', 'SWIMMING', 'DIVING', 'ARCHERY',
-          'FENCING', 'ROWING', 'SAILING', 'SKIING', 'GOLF', 'RUGBY',
-          'LACROSSE', 'SOFTBALL', 'BASEBALL', 'FOOTBALL', 'BASKETBALL', 'VOLLEYBALL',
+          'FENCING', 'ROWING', 'SAILING', 'SKIING', 'GOLFING', 'KARATE',
+          'LACROSSE', 'SOFTBALL', 'BASEBALL', 'FOOTBALL', 'CURLING', 'JAVELIN',
         ],
       },
       {
         name: 'Weather',
         words: [
-          'CLOUDY', 'STORMY', 'FOGGY', 'RAINY', 'SNOWY', 'SUNNY', 'WINDY',
-          'THUNDER', 'LIGHTNING', 'BLIZZARD', 'TORNADO', 'HURRICANE', 'RAINBOW',
+          'CLOUDY', 'STORMY', 'CHILLY', 'BREEZY', 'FROSTY', 'STEAMY', 'WARMTH',
+          'THUNDER', 'OVERCAST', 'BLIZZARD', 'TORNADO', 'TYPHOON', 'RAINBOW',
           'DRIZZLE', 'HAILING', 'FREEZING', 'HUMIDITY', 'FORECAST', 'CLIMATE',
         ],
       },
       {
         name: 'Music',
         words: [
-          'GUITAR', 'VIOLIN', 'TRUMPET', 'CLARINET', 'SAXOPHONE', 'HARMONICA',
-          'DRUMSET', 'CYMBAL', 'TAMBOURINE', 'MARACAS', 'UKULELE', 'MANDOLIN',
-          'BANJO', 'FLUTE', 'OBOE', 'CELLO', 'PIANO', 'ORGAN', 'HARP',
+          'GUITAR', 'VIOLIN', 'TRUMPET', 'CLARINET', 'TROMBONE', 'BAGPIPE',
+          'DRUMSET', 'CYMBALS', 'MARIMBA', 'MARACAS', 'UKULELE', 'MANDOLIN',
+          'BONGOS', 'FIDDLER', 'BASSOON', 'CELLIST', 'PIANIST', 'ORGANIST',
           'MELODY', 'RHYTHM', 'HARMONY', 'CHORUS', 'LYRICS', 'CONCERT',
         ],
       },
@@ -228,10 +220,10 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
       {
         name: 'Science Terms',
         words: [
-          'MOLECULE', 'ELECTRON', 'NEUTRON', 'PROTON', 'NUCLEUS', 'CHROMOSOME',
+          'MOLECULE', 'ELECTRON', 'PARTICLE', 'ORGANISM', 'BACTERIA', 'CHROMOSOME',
           'MITOCHONDRIA', 'PHOTOSYNTHESIS', 'ECOSYSTEM', 'HYPOTHESIS', 'EXPERIMENT',
-          'MICROSCOPE', 'TELESCOPE', 'LABORATORY', 'CHEMISTRY', 'BIOLOGY', 'PHYSICS',
-          'EQUATION', 'FORMULA', 'VELOCITY', 'GRAVITY', 'MAGNETISM', 'ELECTRICITY',
+          'MICROSCOPE', 'TELESCOPE', 'LABORATORY', 'CHEMISTRY', 'CELLULAR', 'REACTION',
+          'EQUATION', 'SOLUTION', 'VELOCITY', 'MOMENTUM', 'MAGNETISM', 'ELECTRICITY',
           'EVAPORATION', 'CONDENSATION', 'PRECIPITATION', 'OXIDATION', 'COMBUSTION',
         ],
       },
@@ -240,8 +232,8 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
         words: [
           'AUSTRALIA', 'ANTARCTICA', 'CALIFORNIA', 'COLORADO', 'WASHINGTON',
           'ARGENTINA', 'VENEZUELA', 'INDONESIA', 'PHILIPPINES', 'BANGLADESH',
-          'MEDITERRANEAN', 'CARIBBEAN', 'ATLANTIC', 'PACIFIC', 'HIMALAYAS',
-          'KILIMANJARO', 'EVEREST', 'AMAZON', 'MISSISSIPPI', 'PENINSULA',
+          'MEDITERRANEAN', 'CARIBBEAN', 'ATLANTIC', 'THAILAND', 'HIMALAYAS',
+          'KILIMANJARO', 'MONGOLIA', 'PATAGONIA', 'MISSISSIPPI', 'PENINSULA',
           'ARCHIPELAGO', 'CONTINENT', 'HEMISPHERE', 'LONGITUDE', 'LATITUDE',
         ],
       },
@@ -259,8 +251,8 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
         name: 'Nature and Environment',
         words: [
           'ATMOSPHERE', 'BIOSPHERE', 'RAINFOREST', 'SAVANNAH', 'GRASSLAND',
-          'TUNDRA', 'PERMAFROST', 'VOLCANIC', 'GEOLOGICAL', 'EARTHQUAKE',
-          'TSUNAMI', 'AVALANCHE', 'WILDERNESS', 'CONSERVATION', 'BIODIVERSITY',
+          'WOODLAND', 'PERMAFROST', 'VOLCANIC', 'GEOLOGICAL', 'EARTHQUAKE',
+          'MUDSLIDE', 'AVALANCHE', 'WILDERNESS', 'CONSERVATION', 'BIODIVERSITY',
           'ENDANGERED', 'EXTINCTION', 'SUSTAINABLE', 'RENEWABLE', 'POLLUTION',
           'DEFORESTATION', 'REFORESTATION', 'MIGRATION', 'HIBERNATION', 'METAMORPHOSIS',
         ],
@@ -269,10 +261,10 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
         name: 'Space and Astronomy',
         words: [
           'UNIVERSE', 'ASTRONOMY', 'ASTRONAUT', 'TELESCOPE', 'SATELLITE',
-          'CONSTELLATION', 'SUPERNOVA', 'NEBULA', 'ASTEROID', 'METEORITE',
+          'CONSTELLATION', 'SUPERNOVA', 'STARLIGHT', 'ASTEROID', 'METEORITE',
           'SPACECRAFT', 'SPACESHIP', 'ATMOSPHERE', 'STRATOSPHERE', 'THERMOSPHERE',
           'EXOSPHERE', 'GRAVITATIONAL', 'PLANETARY', 'INTERSTELLAR', 'EXTRATERRESTRIAL',
-          'OBSERVATORY', 'PLANETARIUM', 'COSMOLOGY', 'CELESTIAL', 'REVOLUTION',
+          'OBSERVATORY', 'PLANETARIUM', 'COSMOLOGY', 'CELESTIAL', 'BLACKHOLE',
         ],
       },
     ],
