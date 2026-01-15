@@ -14,6 +14,9 @@ import {
 import { WordleGame } from "@/components/games/WordleGame";
 import { HangmanGame } from "@/components/games/HangmanGame";
 import { TicTacToeGame } from "@/components/games/TicTacToeGame";
+import { DifficultySelect } from "@/components/games/DifficultySelect";
+
+type Difficulty = "easy" | "medium" | "hard";
 
 type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe";
 
@@ -54,6 +57,8 @@ const games = [
 
 export default function GamesPage() {
   const [activeGame, setActiveGame] = useState<GameType>("menu");
+  const [wordleDifficulty, setWordleDifficulty] = useState<Difficulty | null>(null);
+  const [hangmanDifficulty, setHangmanDifficulty] = useState<Difficulty | null>(null);
 
   // Show game menu
   if (activeGame === "menu") {
@@ -154,7 +159,12 @@ export default function GamesPage() {
         {/* Back Button */}
         <Button
           variant="ghost"
-          onClick={() => setActiveGame("menu")}
+          onClick={() => {
+            setActiveGame("menu");
+            // Reset difficulty when going back to menu
+            if (activeGame === "wordle") setWordleDifficulty(null);
+            if (activeGame === "hangman") setHangmanDifficulty(null);
+          }}
           className="mb-4 min-h-[48px]"
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
@@ -162,8 +172,32 @@ export default function GamesPage() {
         </Button>
 
         {/* Game Component */}
-        {activeGame === "wordle" && <WordleGame />}
-        {activeGame === "hangman" && <HangmanGame />}
+        {activeGame === "wordle" && (
+          wordleDifficulty === null ? (
+            <DifficultySelect
+              gameName="Word Guess"
+              onSelect={(difficulty) => setWordleDifficulty(difficulty)}
+            />
+          ) : (
+            <WordleGame
+              difficulty={wordleDifficulty}
+              onChangeDifficulty={() => setWordleDifficulty(null)}
+            />
+          )
+        )}
+        {activeGame === "hangman" && (
+          hangmanDifficulty === null ? (
+            <DifficultySelect
+              gameName="Hangman"
+              onSelect={(difficulty) => setHangmanDifficulty(difficulty)}
+            />
+          ) : (
+            <HangmanGame
+              difficulty={hangmanDifficulty}
+              onChangeDifficulty={() => setHangmanDifficulty(null)}
+            />
+          )
+        )}
         {activeGame === "tictactoe" && <TicTacToeGame />}
       </div>
     </div>
