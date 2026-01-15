@@ -3,20 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Trophy, X } from "lucide-react";
+import { RefreshCw, Trophy, X, Settings } from "lucide-react";
+import { getRandomWordleWord, type Difficulty } from "@/lib/game-words";
+import { isValidWord } from "@/lib/valid-words";
 
-// Kid-friendly 5-letter words
-const WORDS = [
-  "APPLE", "BEACH", "CANDY", "DANCE", "EAGLE", "FAIRY", "GAMES", "HAPPY",
-  "JELLY", "KITES", "LEMON", "MAGIC", "NIGHT", "OCEAN", "PARTY", "QUEEN",
-  "ROBOT", "SMILE", "TIGER", "UNDER", "VIVID", "WATER", "YOUTH", "ZEBRA",
-  "BRAIN", "CLOUD", "DREAM", "FLAME", "GRAPE", "HEART", "JUICE", "KOALA",
-  "LIGHT", "MOUSE", "NINJA", "OLIVE", "PIANO", "QUIET", "RIDER", "SNAKE",
-  "TRAIN", "UNITY", "VOICE", "WORLD", "EXTRA", "YOUNG", "ZONES", "BOOKS",
-  "CHAIR", "DOORS", "EARTH", "FROST", "GIANT", "HORSE", "IMAGE", "JOKER",
-  "KINGS", "LEARN", "MANGO", "NOTES", "ORBIT", "PEACE", "QUEST", "RAINY",
-  "STARS", "THINK", "URBAN", "VALUE", "WHALE", "XENON", "YARDS", "ZESTY",
-];
+interface WordleGameProps {
+  difficulty?: Difficulty;
+  onChangeDifficulty?: () => void;
+}
 
 type LetterStatus = "correct" | "present" | "absent" | "empty";
 
@@ -28,7 +22,7 @@ interface Letter {
 const MAX_GUESSES = 6;
 const WORD_LENGTH = 5;
 
-export function WordleGame() {
+export function WordleGame({ difficulty = 'easy', onChangeDifficulty }: WordleGameProps) {
   const [targetWord, setTargetWord] = useState("");
   const [guesses, setGuesses] = useState<Letter[][]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
@@ -36,16 +30,18 @@ export function WordleGame() {
   const [won, setWon] = useState(false);
   const [shake, setShake] = useState(false);
   const [usedLetters, setUsedLetters] = useState<Record<string, LetterStatus>>({});
+  const [invalidWordMessage, setInvalidWordMessage] = useState("");
 
   const startNewGame = useCallback(() => {
-    const word = WORDS[Math.floor(Math.random() * WORDS.length)];
+    const word = getRandomWordleWord(difficulty);
     setTargetWord(word);
     setGuesses([]);
     setCurrentGuess("");
     setGameOver(false);
     setWon(false);
     setUsedLetters({});
-  }, []);
+    setInvalidWordMessage("");
+  }, [difficulty]);
 
   useEffect(() => {
     startNewGame();
@@ -88,6 +84,17 @@ export function WordleGame() {
     if (currentGuess.length !== WORD_LENGTH) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
+      return;
+    }
+
+    // Validate that the word is a real word
+    if (!isValidWord(currentGuess)) {
+      setShake(true);
+      setInvalidWordMessage("Hmm, try a real word!");
+      setTimeout(() => {
+        setShake(false);
+        setInvalidWordMessage("");
+      }, 2000);
       return;
     }
 
@@ -231,6 +238,15 @@ export function WordleGame() {
         ))}
       </div>
 
+      {/* Invalid Word Message */}
+      {invalidWordMessage && (
+        <div className="text-center mb-4">
+          <p className="text-amber-600 font-medium text-lg animate-pulse">
+            {invalidWordMessage}
+          </p>
+        </div>
+      )}
+
       {/* Game Over Message */}
       {gameOver && (
         <div className="text-center mb-6">
@@ -282,6 +298,19 @@ export function WordleGame() {
           </div>
         ))}
       </div>
+
+      {/* Change Difficulty */}
+      {onChangeDifficulty && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={onChangeDifficulty}
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm transition-colors"
+          >
+            <Settings className="h-4 w-4" />
+            Change Difficulty
+          </button>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes shake {
