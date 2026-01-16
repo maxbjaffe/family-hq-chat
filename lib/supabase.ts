@@ -1,4 +1,17 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createHash } from "crypto";
+
+// User auth types
+export interface User {
+  id: string;
+  name: string;
+  role: "admin" | "adult" | "kid";
+  integrations: Record<string, string>;
+}
+
+function hashPin(pin: string): string {
+  return createHash("sha256").update(pin).digest("hex");
+}
 
 let familyDataClient: SupabaseClient | null = null;
 
@@ -236,4 +249,58 @@ export async function getUpcomingEvents(days: number = 7): Promise<CalendarEvent
   }
 
   return data || [];
+}
+
+// User auth functions
+export async function getUserByPin(pin: string): Promise<User | null> {
+  const supabase = getFamilyDataClient();
+  const pinHash = hashPin(pin);
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name, role, integrations")
+    .eq("pin_hash", pinHash)
+    .single();
+
+  if (error || !data) return null;
+  return data as User;
+}
+
+export async function getUserById(userId: string): Promise<User | null> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name, role, integrations")
+    .eq("id", userId)
+    .single();
+
+  if (error || !data) return null;
+  return data as User;
+}
+
+export async function verifyPin(userId: string, pin: string): Promise<boolean> {
+  const supabase = getFamilyDataClient();
+  const pinHash = hashPin(pin);
+
+  const { data } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", userId)
+    .eq("pin_hash", pinHash)
+    .single();
+
+  return !!data;
+}
+
+export async function getAllUsers(): Promise<User[]> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name, role, integrations")
+    .order("name");
+
+  if (error) return [];
+  return (data || []) as User[];
 }
