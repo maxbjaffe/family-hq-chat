@@ -15,6 +15,7 @@ import {
 import { Clock } from "@/components/Clock";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { HouseTasks } from "@/components/HouseTasks";
 
 interface ChildData {
   id: string;
@@ -188,23 +189,29 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Weather Card - Compact */}
-        {weather && (
-          <Card className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="text-4xl">{weather.icon}</div>
-              <div>
-                <div className="text-2xl font-bold text-slate-900">
-                  {weather.temperature}°F
+        {/* Weather and House Tasks Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Weather Card - Compact */}
+          {weather && (
+            <Card className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50">
+              <div className="flex items-center gap-3">
+                <div className="text-4xl">{weather.icon}</div>
+                <div>
+                  <div className="text-2xl font-bold text-slate-900">
+                    {weather.temperature}°F
+                  </div>
+                  <div className="text-sm text-slate-600">{weather.description}</div>
                 </div>
-                <div className="text-sm text-slate-600">{weather.description}</div>
+                <div className="ml-auto text-sm text-slate-500">
+                  H: {weather.high}° L: {weather.low}°
+                </div>
               </div>
-              <div className="ml-auto text-sm text-slate-500">
-                H: {weather.high}° L: {weather.low}°
-              </div>
-            </div>
-          </Card>
-        )}
+            </Card>
+          )}
+
+          {/* House Tasks */}
+          <HouseTasks />
+        </div>
 
         {/* Kid Avatar Cards - Main Focus */}
         <div className="mb-8">
