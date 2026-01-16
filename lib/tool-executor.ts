@@ -1,6 +1,14 @@
 import * as todoist from '@/lib/todoist';
 import { fetchAllFamilyData } from '@/lib/notion';
-import { getCachedCalendarEvents, getCachedReminders } from '@/lib/supabase';
+import {
+  getCachedCalendarEvents,
+  getCachedReminders,
+  getWeeklyPriorities,
+  setWeeklyPriorities,
+  updateWeeklyPriority,
+  getCurrentWeekStart,
+  getPreviousWeekStart,
+} from '@/lib/supabase';
 
 export interface ToolResult {
   success: boolean;
@@ -101,6 +109,44 @@ export async function executeTool(
         // Use Alex's user ID for reminders lookup
         const reminders = await getCachedReminders('alex');
         return { success: true, data: reminders };
+      }
+
+      case 'get_priorities': {
+        const weekStart = toolInput.previous_week ? getPreviousWeekStart() : getCurrentWeekStart();
+        const priorities = await getWeeklyPriorities(weekStart);
+        return {
+          success: true,
+          data: {
+            week_start: weekStart,
+            priorities: priorities.map(p => ({ number: p.priority_number, content: p.content })),
+          },
+        };
+      }
+
+      case 'set_priorities': {
+        const priorities = toolInput.priorities as string[];
+        await setWeeklyPriorities(priorities);
+        return {
+          success: true,
+          data: {
+            week_start: getCurrentWeekStart(),
+            priorities_set: priorities.length,
+          },
+        };
+      }
+
+      case 'update_priority': {
+        await updateWeeklyPriority(
+          toolInput.priority_number as number,
+          toolInput.content as string
+        );
+        return {
+          success: true,
+          data: {
+            priority_number: toolInput.priority_number,
+            content: toolInput.content,
+          },
+        };
       }
 
       default:

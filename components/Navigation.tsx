@@ -33,9 +33,9 @@ const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
+  { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/games", label: "Breaktime", icon: Gamepad2 },
-  { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/admin", label: "Admin", icon: Settings },
 ];
 

@@ -365,3 +365,92 @@ export async function getCachedReminders(userId: string): Promise<CachedReminder
 
   return data || [];
 }
+
+// Weekly Priorities
+export interface WeeklyPriority {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+  week_start: string; // YYYY-MM-DD (Monday)
+  priority_number: number; // 1-5
+  content: string;
+}
+
+// Helper: get Monday of current week
+export function getCurrentWeekStart(): string {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Sunday
+  const monday = new Date(now);
+  monday.setDate(diff);
+  return monday.toISOString().split('T')[0];
+}
+
+// Helper: get Monday of previous week
+export function getPreviousWeekStart(): string {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1) - 7;
+  const monday = new Date(now);
+  monday.setDate(diff);
+  return monday.toISOString().split('T')[0];
+}
+
+export async function getWeeklyPriorities(weekStart?: string): Promise<WeeklyPriority[]> {
+  const supabase = getFamilyDataClient();
+  const targetWeek = weekStart || getCurrentWeekStart();
+
+  const { data, error } = await supabase
+    .from('weekly_priorities')
+    .select('*')
+    .eq('week_start', targetWeek)
+    .order('priority_number', { ascending: true });
+
+  if (error) {
+    console.error("Error fetching weekly priorities:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function setWeeklyPriorities(priorities: string[]): Promise<void> {
+  const supabase = getFamilyDataClient();
+  const weekStart = getCurrentWeekStart();
+
+  // Delete existing priorities for this week
+  await supabase
+    .from('weekly_priorities')
+    .delete()
+    .eq('week_start', weekStart);
+
+  // Insert new priorities
+  const rows = priorities.slice(0, 5).map((content, index) => ({
+    week_start: weekStart,
+    priority_number: index + 1,
+    content,
+  }));
+
+  const { error } = await supabase
+    .from('weekly_priorities')
+    .insert(rows);
+
+  if (error) throw new Error(`Failed to set priorities: ${error.message}`);
+}
+
+export async function updateWeeklyPriority(priorityNumber: number, content: string): Promise<void> {
+  const supabase = getFamilyDataClient();
+  const weekStart = getCurrentWeekStart();
+
+  const { error } = await supabase
+    .from('weekly_priorities')
+    .upsert({
+      week_start: weekStart,
+      priority_number: priorityNumber,
+      content,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'week_start,priority_number',
+    });
+
+  if (error) throw new Error(`Failed to update priority: ${error.message}`);
+}

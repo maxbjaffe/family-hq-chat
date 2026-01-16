@@ -122,4 +122,51 @@ export const tools: Anthropic.Tool[] = [
       required: [],
     },
   },
+  {
+    name: 'get_priorities',
+    description: 'Get weekly priorities. Returns current week by default, or previous week if specified.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        previous_week: {
+          type: 'boolean',
+          description: "Set true to get last week's priorities instead of current week",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'set_priorities',
+    description: 'Set priorities for the current week. Replaces any existing priorities.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        priorities: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of 1-5 priority strings for the week',
+        },
+      },
+      required: ['priorities'],
+    },
+  },
+  {
+    name: 'update_priority',
+    description: 'Update a single priority by its number (1-5).',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        priority_number: {
+          type: 'integer',
+          description: 'Which priority to update (1-5)',
+        },
+        content: {
+          type: 'string',
+          description: 'New priority text',
+        },
+      },
+      required: ['priority_number', 'content'],
+    },
+  },
 ];
