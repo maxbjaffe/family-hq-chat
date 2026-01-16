@@ -61,11 +61,9 @@ export function useInactivityTimer({
     // Set up activity listeners
     const events = [
       "mousedown",
-      "mousemove",
       "keydown",
       "scroll",
       "touchstart",
-      "touchmove",
       "click",
     ];
 

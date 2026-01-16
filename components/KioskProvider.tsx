@@ -31,7 +31,7 @@ interface KioskProviderProps {
 export function KioskProvider({ children }: KioskProviderProps) {
   const [isKioskMode, setIsKioskMode] = useState(false);
   const [isEmbedded, setIsEmbedded] = useState(false);
-  const [inactivityTimeoutMinutes, setInactivityTimeoutMinutes] = useState(7);
+  const [inactivityTimeoutMinutes, setInactivityTimeoutMinutes] = useState(10);
 
   // Detect if running in iframe (DakBoard embed)
   useEffect(() => {
