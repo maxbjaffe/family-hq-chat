@@ -10,6 +10,7 @@ import {
   Calendar,
   Settings,
   Maximize,
+  LayoutDashboard,
 } from "lucide-react";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { SyncIndicator } from "./SyncIndicator";
@@ -30,6 +31,7 @@ function useIsEmbedded() {
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
   { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/games", label: "Breaktime", icon: Gamepad2 },
