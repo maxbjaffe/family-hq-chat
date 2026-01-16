@@ -13,8 +13,10 @@ Unified family command center with PIN-protected personal spaces. Combines kids'
 ## Key Paths
 ```
 app/                  # Pages and API routes
+  chat/               # AI chat interface
   dashboard/          # Family dashboard page
   api/auth/           # PIN verification, user lookup
+  api/chat/           # Agentic chat endpoint with tool use
   api/dashboard/      # Calendar and tasks APIs
   api/shortcuts/      # iOS Shortcuts endpoints for Apple data
 components/           # React components
@@ -25,8 +27,25 @@ components/           # React components
 lib/                  # Utilities and services
   supabase.ts         # DB client + auth functions
   todoist.ts          # Todoist API integration
+  claude.ts           # Claude API client + system prompt
+  tools.ts            # Claude tool definitions
+  tool-executor.ts    # Tool execution logic
 hooks/                # Custom React hooks
 ```
+
+## Chat System (Agentic)
+The chat system uses Claude with tool use for actionable conversations.
+
+**Available Tools:**
+- `get_tasks` / `create_task` / `update_task` / `complete_task` / `delete_task` - Todoist operations
+- `get_family_info` - Notion family reference data (doctors, contacts, etc.)
+- `get_calendar` - Upcoming calendar events
+- `get_reminders` - Alex's Apple Reminders
+
+**Architecture:**
+- SSE streaming with tool call/result events
+- Agentic loop continues until no more tool calls
+- Family data from Notion included as context
 
 ## Auth Model
 - **Default:** No auth required for family dashboard and Kids Zone
@@ -47,6 +66,7 @@ SHORTCUTS_SECRET_KEY=   # Secret for iOS Shortcuts auth
 
 ## Routes
 - `/` - Kids Zone (current homepage with checklists)
+- `/chat` - AI chat interface with tools
 - `/dashboard` - Family dashboard with widgets and space cards
 - `/max` - Max's personal space (PIN required)
 - `/alex` - Alex's personal space (PIN required)

@@ -24,14 +24,8 @@ export default function DashboardPage() {
     }
   };
 
-  const handlePinSuccess = async (userId: string) => {
-    // Fetch user info and update context
-    const response = await fetch(`/api/auth/user?id=${userId}`);
-    if (response.ok) {
-      const { name, role } = await response.json();
-      login(userId, name, role);
-    }
-
+  const handlePinSuccess = (user: { id: string; name: string; role: 'admin' | 'adult' | 'kid' }) => {
+    login(user.id, user.name, user.role);
     setPinModalOpen(false);
     if (pendingSpace) {
       router.push(`/${pendingSpace}`);

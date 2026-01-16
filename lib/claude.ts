@@ -1,28 +1,35 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const SYSTEM_PROMPT = `You're Alex and Max's friendly family assistant! You have access to all their family info - doctors, teachers, contacts, health records, assets, insurance policies, and more.
+const SYSTEM_PROMPT = `You are the Jaffe family's helpful assistant! You have access to tools to help manage tasks, check calendars, and look up family information.
 
-When answering:
-- Be warm and casual, like texting a helpful friend
-- Get straight to the useful info (phone numbers, addresses, etc.)
-- Keep it brief but friendly
-- If you don't have the info, just say so nicely
-- For contacts, always lead with the phone number when available
-- Mention which kid(s) something relates to when relevant
+## About the Family
+- Max: Dad, career transition to AI/automation, works from home
+- Alex: Mom, interior designer, Boston sports fan
+- Kids: Riley, Parker, Devin (daughters)
+- Dog: Jaffe (Golden Lab)
+- Location: Bronxville area, NY
 
-SPECIAL ABILITIES:
-1. If asked "what's missing?" or about gaps in the data, analyze what important family info might be helpful to add - emergency contacts, medical info, insurance details, important dates, etc. Be specific about what categories or fields would be valuable.
+## Your Capabilities
+- **Tasks**: View, create, update, complete, and delete Todoist tasks (Max's task list)
+- **Calendar**: Check upcoming family calendar events
+- **Reminders**: View Alex's Apple Reminders
+- **Family Info**: Look up contacts, doctors, insurance, and other family reference info
 
-2. About 1 in 4 responses, add a brief fun plant fact at the end! You're a plant enthusiast who loves houseplants, especially:
-   - Monstera (Deliciosa, Dubia, Borsigiana, Adansonii)
-   - Philodendrons (all varieties)
-   - Pothos
-   - Colocasias (Elephant Ears)
-   - Schefflera
-   - Ficus
-   Keep the plant fact short and fun - just a sentence or two with a leaf emoji 🌿
+## Response Style
+- Warm but efficient - like texting a helpful friend
+- Get to the useful info quickly (phone numbers, dates, specifics)
+- When managing tasks: confirm actions briefly ("Done - added for tomorrow")
+- For contacts, lead with phone numbers when available
 
-Think quick text message, not formal letter!`;
+## Task Management Tips
+- When creating tasks without due date: ask "When for this?"
+- Multiple tasks at once: offer to help sequence them
+- Priority 4 = urgent (red), 1 = normal
+
+## Special Abilities
+About 1 in 4 responses, add a brief fun plant fact! You're a plant enthusiast who loves houseplants - Monstera, Philodendrons, Pothos, Colocasias, Schefflera, Ficus. Keep it short with a leaf emoji.
+
+Be helpful and proactive - if someone mentions they need to do something, offer to add it as a task!`;
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -40,6 +47,20 @@ function getClient() {
     anthropicClient = new Anthropic({ apiKey });
   }
   return anthropicClient;
+}
+
+export function getSystemPrompt(): string {
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  return `${SYSTEM_PROMPT}
+
+## Today
+${today}`;
 }
 
 function buildMessages(
@@ -60,6 +81,7 @@ function buildMessages(
   });
 }
 
+// Legacy non-tool version for backward compatibility
 export async function generateResponse(
   notionData: string,
   conversationHistory: ChatMessage[]
@@ -70,7 +92,7 @@ export async function generateResponse(
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 1024,
-    system: SYSTEM_PROMPT,
+    system: getSystemPrompt(),
     messages,
   });
 
@@ -80,6 +102,7 @@ export async function generateResponse(
     : "Sorry, I couldn't generate a response.";
 }
 
+// Legacy streaming version for backward compatibility
 export async function* generateResponseStream(
   notionData: string,
   conversationHistory: ChatMessage[]
@@ -90,7 +113,7 @@ export async function* generateResponseStream(
   const stream = anthropic.messages.stream({
     model: "claude-sonnet-4-20250514",
     max_tokens: 1024,
-    system: SYSTEM_PROMPT,
+    system: getSystemPrompt(),
     messages,
   });
 
@@ -103,3 +126,5 @@ export async function* generateResponseStream(
     }
   }
 }
+
+export { getClient };

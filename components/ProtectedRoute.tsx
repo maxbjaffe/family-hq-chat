@@ -45,13 +45,9 @@ export function ProtectedRoute({
     setChecking(false);
   }, [isAuthenticated, userRole, userId, allowedRoles, requiredUserId, router]);
 
-  const handlePinSuccess = async (newUserId: string) => {
-    const response = await fetch(`/api/auth/user?id=${newUserId}`);
-    if (response.ok) {
-      const { name, role } = await response.json();
-      login(newUserId, name, role);
-      setShowPinModal(false);
-    }
+  const handlePinSuccess = (user: { id: string; name: string; role: 'admin' | 'adult' | 'kid' }) => {
+    login(user.id, user.name, user.role);
+    setShowPinModal(false);
   };
 
   const handlePinCancel = () => {

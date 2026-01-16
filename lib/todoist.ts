@@ -97,3 +97,44 @@ export async function completeTask(taskId: string, userId?: string): Promise<voi
     throw new Error(`Todoist complete error: ${response.status}`);
   }
 }
+
+export async function updateTask(
+  taskId: string,
+  params: {
+    content?: string;
+    description?: string;
+    due_string?: string;
+    priority?: number;
+  },
+  userId?: string
+): Promise<TodoistTask> {
+  const token = await getToken(userId);
+
+  const response = await fetch(`${TODOIST_API_URL}/tasks/${taskId}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Todoist update error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteTask(taskId: string, userId?: string): Promise<void> {
+  const token = await getToken(userId);
+
+  const response = await fetch(`${TODOIST_API_URL}/tasks/${taskId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Todoist delete error: ${response.status}`);
+  }
+}

@@ -2,14 +2,20 @@
 
 import { useState, useRef, useEffect } from 'react';
 
+interface UserInfo {
+  id: string;
+  name: string;
+  role: 'admin' | 'adult' | 'kid';
+}
+
 interface PinModalProps {
-  isOpen: boolean;
-  onSuccess: (userId: string) => void;
+  isOpen?: boolean;
+  onSuccess: (user: UserInfo) => void;
   onCancel: () => void;
   title?: string;
 }
 
-export function PinModal({ isOpen, onSuccess, onCancel, title = 'Enter PIN' }: PinModalProps) {
+export function PinModal({ isOpen = true, onSuccess, onCancel, title = 'Enter PIN' }: PinModalProps) {
   const [pin, setPin] = useState(['', '', '', '']);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,8 +71,8 @@ export function PinModal({ isOpen, onSuccess, onCancel, title = 'Enter PIN' }: P
       });
 
       if (response.ok) {
-        const { userId } = await response.json();
-        onSuccess(userId);
+        const { userId, name, role } = await response.json();
+        onSuccess({ id: userId, name, role });
       } else {
         setError('Invalid PIN');
         setPin(['', '', '', '']);
