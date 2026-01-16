@@ -304,3 +304,64 @@ export async function getAllUsers(): Promise<User[]> {
   if (error) return [];
   return (data || []) as User[];
 }
+
+// Cached data types
+export interface CachedCalendarEvent {
+  id: string;
+  event_id: string;
+  title: string;
+  start_time: string;
+  end_time: string | null;
+  calendar_name: string | null;
+  location: string | null;
+}
+
+export interface CachedReminder {
+  id: string;
+  reminder_id: string;
+  user_id: string;
+  title: string;
+  due_date: string | null;
+  list_name: string | null;
+  priority: number;
+  is_completed: boolean;
+}
+
+// Cache query functions
+export async function getCachedCalendarEvents(days: number = 7): Promise<CachedCalendarEvent[]> {
+  const supabase = getFamilyDataClient();
+  const now = new Date().toISOString();
+  const futureDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("cached_calendar_events")
+    .select("*")
+    .gte("start_time", now)
+    .lte("start_time", futureDate)
+    .order("start_time");
+
+  if (error) {
+    console.error("Error fetching cached calendar:", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function getCachedReminders(userId: string): Promise<CachedReminder[]> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("cached_reminders")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_completed", false)
+    .order("due_date");
+
+  if (error) {
+    console.error("Error fetching cached reminders:", error);
+    return [];
+  }
+
+  return data || [];
+}
