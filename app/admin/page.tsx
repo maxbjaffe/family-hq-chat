@@ -21,6 +21,9 @@ import {
   Video,
   Sparkles,
   User,
+  KeyRound,
+  Shield,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "@/components/IconPicker";
@@ -59,7 +62,14 @@ interface AnalyticsSummary {
   top_queries: { query: string; count: number }[];
 }
 
-type Tab = "children" | "media" | "analytics";
+interface FamilyUser {
+  id: string;
+  name: string;
+  role: 'admin' | 'adult' | 'kid';
+  created_at: string;
+}
+
+type Tab = "children" | "users" | "media" | "analytics";
 type MediaCategory = "avatars" | "celebrations" | "icons" | "backgrounds" | "general";
 
 const MEDIA_CATEGORIES: { value: MediaCategory; label: string; icon: React.ElementType }[] = [
@@ -75,6 +85,14 @@ export default function AdminPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Users state
+  const [users, setUsers] = useState<FamilyUser[]>([]);
+  const [editingPinFor, setEditingPinFor] = useState<string | null>(null);
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUserForm, setNewUserForm] = useState<{ name: string; role: 'admin' | 'adult' | 'kid'; pin: string }>({ name: "", role: "adult", pin: "" });
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: "", icon: "" });
@@ -105,7 +123,102 @@ export default function AdminPage() {
     if (tab === "media") {
       loadMedia(mediaCategory);
     }
+    if (tab === "users") {
+      loadUsers();
+    }
   }, [tab, mediaCategory]);
+
+  async function loadUsers() {
+    try {
+      const response = await fetch("/api/admin/users");
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      }
+    } catch (error) {
+      console.error("Error loading users:", error);
+      toast.error("Failed to load users");
+    }
+  }
+
+  async function updatePin(userId: string) {
+    if (newPin !== confirmPin) {
+      toast.error("PINs don't match");
+      return;
+    }
+    if (newPin.length !== 4 || !/^\d+$/.test(newPin)) {
+      toast.error("PIN must be 4 digits");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: userId, pin: newPin }),
+      });
+
+      if (response.ok) {
+        toast.success("PIN updated");
+        setEditingPinFor(null);
+        setNewPin("");
+        setConfirmPin("");
+      } else {
+        toast.error("Failed to update PIN");
+      }
+    } catch (error) {
+      toast.error("Failed to update PIN");
+    }
+  }
+
+  async function addUser() {
+    if (!newUserForm.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (newUserForm.pin.length !== 4 || !/^\d+$/.test(newUserForm.pin)) {
+      toast.error("PIN must be 4 digits");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUserForm),
+      });
+
+      if (response.ok) {
+        toast.success("User added");
+        setShowAddUser(false);
+        setNewUserForm({ name: "", role: "adult" as const, pin: "" });
+        loadUsers();
+      } else {
+        toast.error("Failed to add user");
+      }
+    } catch (error) {
+      toast.error("Failed to add user");
+    }
+  }
+
+  async function deleteUser(userId: string) {
+    if (!confirm("Delete this user? This cannot be undone.")) return;
+
+    try {
+      const response = await fetch(`/api/admin/users?id=${userId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast.success("User deleted");
+        loadUsers();
+      } else {
+        toast.error("Failed to delete user");
+      }
+    } catch (error) {
+      toast.error("Failed to delete user");
+    }
+  }
 
   async function loadData() {
     setLoading(true);
@@ -418,6 +531,13 @@ export default function AdminPage() {
           >
             <Users className="h-4 w-4 mr-2" />
             Children & Checklists
+          </Button>
+          <Button
+            variant={tab === "users" ? "default" : "outline"}
+            onClick={() => setTab("users")}
+          >
+            <KeyRound className="h-4 w-4 mr-2" />
+            Users & PINs
           </Button>
           <Button
             variant={tab === "media" ? "default" : "outline"}
@@ -746,6 +866,157 @@ export default function AdminPage() {
                 )}
               </Card>
             )}
+          </>
+        )}
+
+        {/* Users & PINs Tab */}
+        {tab === "users" && (
+          <>
+            <Card className="p-4 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="h-5 w-5 text-slate-600" />
+                  <span className="font-medium">Family Users</span>
+                </div>
+                <Button size="sm" onClick={() => setShowAddUser(true)} disabled={showAddUser}>
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Add User
+                </Button>
+              </div>
+
+              {/* Add User Form */}
+              {showAddUser && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <h4 className="font-medium mb-3">Add New User</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">Name</label>
+                      <input
+                        type="text"
+                        placeholder="Name"
+                        value={newUserForm.name}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">Role</label>
+                      <select
+                        value={newUserForm.role}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as 'admin' | 'adult' | 'kid' })}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="adult">Adult</option>
+                        <option value="kid">Kid</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">PIN (4 digits)</label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={4}
+                        placeholder="****"
+                        value={newUserForm.pin}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, pin: e.target.value.replace(/\D/g, '') })}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button size="sm" onClick={addUser}>
+                      <Save className="h-4 w-4 mr-1" />
+                      Save
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setShowAddUser(false);
+                      setNewUserForm({ name: "", role: "adult" as const, pin: "" });
+                    }}>
+                      <X className="h-4 w-4 mr-1" />
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Users List */}
+              {users.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <User className="h-12 w-12 mx-auto mb-2 text-slate-300" />
+                  <p>No users configured yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {users.map((user) => (
+                    <div key={user.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-lg font-bold">
+                        {user.name.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium text-slate-800">{user.name}</div>
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                          <Shield className="h-3 w-3" />
+                          <span className="capitalize">{user.role}</span>
+                        </div>
+                      </div>
+
+                      {editingPinFor === user.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={4}
+                            placeholder="New PIN"
+                            value={newPin}
+                            onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+                            className="w-20 px-2 py-1 border rounded text-center"
+                          />
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={4}
+                            placeholder="Confirm"
+                            value={confirmPin}
+                            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
+                            className="w-20 px-2 py-1 border rounded text-center"
+                          />
+                          <Button size="sm" variant="ghost" onClick={() => updatePin(user.id)}>
+                            <Save className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => {
+                            setEditingPinFor(null);
+                            setNewPin("");
+                            setConfirmPin("");
+                          }}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingPinFor(user.id)}
+                          >
+                            <KeyRound className="h-4 w-4 mr-1" />
+                            Change PIN
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => deleteUser(user.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
           </>
         )}
 
