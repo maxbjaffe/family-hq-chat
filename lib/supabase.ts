@@ -212,7 +212,6 @@ export async function getFamilyMembers(): Promise<FamilyMember[]> {
   const { data, error } = await supabase
     .from("family_members")
     .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
-    .eq("user_id", FAMILY_USER_ID)
     .order("name");
 
   if (error) {
@@ -229,7 +228,6 @@ export async function getFamilyMembersWithChecklists(): Promise<FamilyMember[]> 
   const { data, error } = await supabase
     .from("family_members")
     .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
-    .eq("user_id", FAMILY_USER_ID)
     .eq("has_checklist", true)
     .order("name");
 
@@ -248,7 +246,6 @@ export async function getFamilyMemberByPin(pin: string): Promise<FamilyMember | 
   const { data, error } = await supabase
     .from("family_members")
     .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
-    .eq("user_id", FAMILY_USER_ID)
     .eq("pin_hash", pinHash)
     .single();
 

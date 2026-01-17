@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getFamilyDataClient } from "@/lib/supabase";
 import { createHash } from "crypto";
 
-const FAMILY_USER_ID = "00879c1b-a586-4d52-96be-8f4b7ddf7257";
-
 function hashPin(pin: string): string {
   return createHash("sha256").update(pin).digest("hex");
 }
@@ -16,7 +14,6 @@ export async function GET() {
     const { data: members, error } = await supabase
       .from("family_members")
       .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
-      .eq("user_id", FAMILY_USER_ID)
       .order("name");
 
     if (error) {
@@ -93,7 +90,6 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from("family_members")
       .insert({
-        user_id: FAMILY_USER_ID,
         name,
         role,
         pin_hash: pinHash,
@@ -163,7 +159,6 @@ export async function PUT(request: NextRequest) {
       .from("family_members")
       .update(updates)
       .eq("id", id)
-      .eq("user_id", FAMILY_USER_ID)
       .select()
       .single();
 
@@ -234,8 +229,7 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase
       .from("family_members")
       .delete()
-      .eq("id", id)
-      .eq("user_id", FAMILY_USER_ID);
+      .eq("id", id);
 
     if (error) {
       console.error("Error deleting family member:", error);
