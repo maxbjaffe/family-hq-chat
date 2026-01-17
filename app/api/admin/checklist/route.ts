@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
         weekdays_only: weekdays_only ?? true,
         reset_daily: reset_daily ?? true,
         is_active: true,
+        active_days: body.active_days || '["mon","tue","wed","thu","fri"]',
       })
       .select()
       .single();
@@ -124,6 +125,7 @@ export async function PUT(request: NextRequest) {
     if (weekdays_only !== undefined) updates.weekdays_only = weekdays_only;
     if (reset_daily !== undefined) updates.reset_daily = reset_daily;
     if (is_active !== undefined) updates.is_active = is_active;
+    if (body.active_days !== undefined) updates.active_days = body.active_days;
 
     const { data, error } = await supabase
       .from("checklist_items")
