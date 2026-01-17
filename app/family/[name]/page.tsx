@@ -112,8 +112,13 @@ export default function FamilyProfilePage() {
         const res = await fetch('/api/family');
         if (res.ok) {
           const data = await res.json();
+          // Match by first name to support both "parker" and "Parker Jaffe"
           const found = data.members?.find(
-            (m: FamilyMember) => m.name.toLowerCase() === name.toLowerCase()
+            (m: FamilyMember) => {
+              const memberFirstName = m.name.toLowerCase().split(' ')[0];
+              const searchName = name.toLowerCase();
+              return m.name.toLowerCase() === searchName || memberFirstName === searchName;
+            }
           );
           if (found) {
             setMember(found);

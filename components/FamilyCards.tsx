@@ -72,27 +72,24 @@ export function FamilyCards() {
         <span className="text-sm text-slate-400 ml-auto">Tap for details</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
         {members.map((member) => (
           <Link
             key={member.id}
             href={`/family/${encodeURIComponent(member.name.toLowerCase())}`}
             className="group"
           >
-            <div className="flex flex-col items-center p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all hover:shadow-md">
-              {/* Avatar */}
-              <div className="mb-2 group-hover:scale-105 transition-transform">
-                <Avatar member={member} size="sm" />
+            <div className="flex flex-col items-center p-4 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-all hover:shadow-lg">
+              {/* Avatar - Large to show off photos */}
+              <div className="mb-3 group-hover:scale-105 transition-transform">
+                <Avatar member={member} size="lg" className="ring-4 ring-white shadow-md" />
               </div>
 
               {/* Name */}
-              <span className="font-medium text-slate-800 text-sm">{member.name}</span>
+              <span className="font-semibold text-slate-800">{member.name}</span>
 
               {/* Role */}
-              <span className="text-xs text-slate-500 capitalize">{member.role}</span>
-
-              {/* Hover indicator */}
-              <ChevronRight className="h-4 w-4 text-slate-300 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="text-sm text-slate-500 capitalize">{member.role}</span>
             </div>
           </Link>
         ))}
