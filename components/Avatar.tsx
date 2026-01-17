@@ -11,7 +11,7 @@ interface AvatarMember {
 }
 
 // Size variants
-type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
 interface AvatarProps {
   member: AvatarMember;
@@ -44,6 +44,7 @@ const SIZE_CLASSES: Record<AvatarSize, string> = {
   md: 'w-16 h-16 text-2xl',
   lg: 'w-24 h-24 text-4xl',
   xl: 'w-32 h-32 text-5xl',
+  '2xl': 'w-44 h-44 text-6xl',
 };
 
 export function Avatar({ member, size = 'md', className }: AvatarProps) {
@@ -67,7 +68,7 @@ export function Avatar({ member, size = 'md', className }: AvatarProps) {
           alt={member.name}
           fill
           className="object-cover"
-          sizes={size === 'xl' ? '128px' : size === 'lg' ? '96px' : size === 'md' ? '64px' : size === 'sm' ? '48px' : '32px'}
+          sizes={size === '2xl' ? '176px' : size === 'xl' ? '128px' : size === 'lg' ? '96px' : size === 'md' ? '64px' : size === 'sm' ? '48px' : '32px'}
         />
       </div>
     );
