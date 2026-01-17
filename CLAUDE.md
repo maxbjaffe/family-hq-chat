@@ -24,19 +24,27 @@ app/                    # Pages and API routes
   page.tsx              # Homepage with kids progress + House Tasks
   chat/                 # AI chat interface
   dashboard/            # Family dashboard with space cards
+  family/[name]/        # Family member profile pages
   max/, alex/           # PIN-protected personal spaces
+  kiosk/                # Kids morning checklist interface
+  admin/                # Unified family & checklist management
   api/
     chat/               # Agentic chat with tools
+    admin/family/       # Family member CRUD (unified)
+    admin/checklist/    # Checklist item management
+    family/             # Notion health data lookup
     house-tasks/        # House Tasks CRUD
     auth/               # PIN verification
     shortcuts/          # iOS Shortcuts endpoints
 components/
+  Avatar.tsx            # Shared avatar (photo + emoji fallback)
+  FamilyCards.tsx       # Dashboard family member grid
   HouseTasks.tsx        # Shared family task list
   PinModal.tsx          # PIN entry
   UserProvider.tsx      # Auth context
   widgets/              # Dashboard widgets
 lib/
-  supabase.ts           # DB client + auth + priorities
+  supabase.ts           # DB client + auth + family members
   todoist.ts            # Todoist API (full CRUD)
   claude.ts             # Claude client + system prompt
   tools.ts              # Tool definitions (11 tools)
@@ -72,7 +80,7 @@ The agentic chat system has 11 tools:
 ## Auth Model
 - **No auth needed:** Homepage, Kids Zone, House Tasks, Chat (as guest)
 - **PIN-protected:** Personal spaces (/max, /alex), full task filtering in chat
-- **Roles:** admin, adult, kid
+- **Roles:** admin, adult, kid, pet (pets have profiles but no PIN/checklist)
 
 ## Environment Variables
 ```bash
@@ -84,9 +92,11 @@ SHORTCUTS_SECRET_KEY=   # iOS Shortcuts auth
 ```
 
 ## Database Tables
-- `users` - Family members with PIN hashes
-- `children` - Kids for checklist tracking
-- `checklist_items` / `checklist_completions` - Morning routines
+- `family_members` - Unified table for all family (id, name, role, pin_hash, avatar_url, has_checklist)
+  - Roles: admin, adult, kid, pet
+  - Replaces old `users` and `children` tables
+- `checklist_items` - Morning routine items (member_id, title, icon, reset_daily, weekdays_only)
+- `checklist_completions` - Daily completion tracking (member_id, item_id, completion_date)
 - `weekly_priorities` - Weekly focus areas (week_start, priority_number, content)
 - `cached_calendar_events` - Apple Calendar sync
 - `cached_reminders` - Apple Reminders sync
@@ -100,7 +110,18 @@ SHORTCUTS_SECRET_KEY=   # iOS Shortcuts auth
 - `/kiosk` - Kids checklist interface
 - `/admin` - User management, checklist config
 
-## Recent Changes (Jan 16, 2025)
+## Recent Changes
+
+### Jan 17, 2025 - Unified Family Profiles
+- Consolidated `users` + `children` tables into unified `family_members`
+- Created shared `<Avatar>` component (photo with emoji fallback)
+- Added family member profile pages (`/family/[name]`)
+- Consolidated admin UI: single "Family" tab replaces separate Children/Users tabs
+- Added `reset_daily` option for checklist items
+- Added Jaffe (dog) to family profiles with pet role
+- Hybrid data model: Supabase for app settings, Notion for health/reference data
+
+### Jan 16, 2025 - Agentic Chat
 - Merged Morning Rundown agentic chat into Family HQ
 - Added 11 Claude tools for task/priority management
 - Implemented user-aware filtering in chat
