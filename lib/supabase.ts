@@ -9,6 +9,36 @@ export interface User {
   integrations: Record<string, string>;
 }
 
+export interface ProfileVisibility {
+  birthday: boolean;
+  age: boolean;
+  bloodType: boolean;
+  allergies: boolean;
+  medications: boolean;
+  conditions: boolean;
+  emergencyNotes: boolean;
+  doctors: boolean;
+  patientPortal: boolean;
+  school: boolean;
+  teachers: boolean;
+  activities: boolean;
+}
+
+export const DEFAULT_PROFILE_VISIBILITY: ProfileVisibility = {
+  birthday: true,
+  age: true,
+  bloodType: true,
+  allergies: true,
+  medications: true,
+  conditions: true,
+  emergencyNotes: true,
+  doctors: true,
+  patientPortal: true,
+  school: true,
+  teachers: true,
+  activities: true,
+};
+
 export interface FamilyMember {
   id: string;
   name: string;
@@ -16,6 +46,7 @@ export interface FamilyMember {
   pin_hash?: string | null;
   avatar_url?: string | null;
   has_checklist: boolean;
+  profile_visibility?: ProfileVisibility;
   created_at?: string;
 }
 
@@ -47,6 +78,7 @@ export interface ChecklistItem {
   icon?: string;
   display_order: number;
   weekdays_only: boolean;
+  active_days?: string; // JSON array: ["mon","tue","wed","thu","fri","sat","sun"]
   is_active: boolean;
 }
 
