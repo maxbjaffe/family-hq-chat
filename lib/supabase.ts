@@ -9,6 +9,16 @@ export interface User {
   integrations: Record<string, string>;
 }
 
+export interface FamilyMember {
+  id: string;
+  name: string;
+  role: 'admin' | 'adult' | 'kid' | 'pet';
+  pin_hash?: string | null;
+  avatar_url?: string | null;
+  has_checklist: boolean;
+  created_at?: string;
+}
+
 function hashPin(pin: string): string {
   return createHash("sha256").update(pin).digest("hex");
 }
@@ -303,6 +313,140 @@ export async function getAllUsers(): Promise<User[]> {
 
   if (error) return [];
   return (data || []) as User[];
+}
+
+// Family member functions
+export async function getFamilyMembers(): Promise<FamilyMember[]> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("family_members")
+    .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
+    .eq("user_id", FAMILY_USER_ID)
+    .order("name");
+
+  if (error) {
+    console.error("Error fetching family members:", error);
+    return [];
+  }
+
+  return (data || []) as FamilyMember[];
+}
+
+export async function getFamilyMembersWithChecklists(): Promise<FamilyMember[]> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("family_members")
+    .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
+    .eq("user_id", FAMILY_USER_ID)
+    .eq("has_checklist", true)
+    .order("name");
+
+  if (error) {
+    console.error("Error fetching family members with checklists:", error);
+    return [];
+  }
+
+  return (data || []) as FamilyMember[];
+}
+
+export async function getFamilyMemberByPin(pin: string): Promise<FamilyMember | null> {
+  const supabase = getFamilyDataClient();
+  const pinHash = hashPin(pin);
+
+  const { data, error } = await supabase
+    .from("family_members")
+    .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
+    .eq("user_id", FAMILY_USER_ID)
+    .eq("pin_hash", pinHash)
+    .single();
+
+  if (error || !data) return null;
+  return data as FamilyMember;
+}
+
+export async function getChecklistForMember(memberId: string): Promise<{
+  items: (ChecklistItem & { isCompleted: boolean })[];
+  stats: { total: number; completed: number; remaining: number; isComplete: boolean };
+}> {
+  const supabase = getFamilyDataClient();
+  const today = getLocalDateString();
+  const dayOfWeek = getLocalDayOfWeek();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+  // Get checklist items for this member
+  let query = supabase
+    .from("checklist_items")
+    .select("*")
+    .eq("member_id", memberId)
+    .eq("is_active", true)
+    .order("display_order");
+
+  if (isWeekend) {
+    query = query.eq("weekdays_only", false);
+  }
+
+  const { data: items, error: itemsError } = await query;
+
+  if (itemsError) {
+    console.error("Error fetching checklist items for member:", itemsError);
+    return { items: [], stats: { total: 0, completed: 0, remaining: 0, isComplete: false } };
+  }
+
+  // Get today's completions for this member
+  const { data: completions } = await supabase
+    .from("checklist_completions")
+    .select("item_id")
+    .eq("member_id", memberId)
+    .eq("completion_date", today);
+
+  const completedItemIds = new Set(completions?.map((c) => c.item_id) || []);
+
+  const enrichedItems = (items || []).map((item) => ({
+    ...item,
+    isCompleted: completedItemIds.has(item.id),
+  }));
+
+  const stats = {
+    total: enrichedItems.length,
+    completed: enrichedItems.filter((item) => item.isCompleted).length,
+    remaining: enrichedItems.filter((item) => !item.isCompleted).length,
+    isComplete: enrichedItems.length > 0 && enrichedItems.every((item) => item.isCompleted),
+  };
+
+  return { items: enrichedItems, stats };
+}
+
+export async function toggleMemberChecklistItem(
+  memberId: string,
+  itemId: string,
+  isCurrentlyCompleted: boolean
+): Promise<boolean> {
+  const supabase = getFamilyDataClient();
+  const today = getLocalDateString();
+
+  if (isCurrentlyCompleted) {
+    // Remove completion
+    const { error } = await supabase
+      .from("checklist_completions")
+      .delete()
+      .eq("member_id", memberId)
+      .eq("item_id", itemId)
+      .eq("completion_date", today);
+
+    return !error;
+  } else {
+    // Add completion
+    const { error } = await supabase.from("checklist_completions").insert({
+      member_id: memberId,
+      item_id: itemId,
+      completion_date: today,
+      user_id: FAMILY_USER_ID,
+    });
+
+    return !error;
+  }
 }
 
 // Cached data types
