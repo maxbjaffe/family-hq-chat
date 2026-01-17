@@ -8,6 +8,7 @@ import { TasksWidget } from '@/components/widgets/TasksWidget';
 import { SpaceCard } from '@/components/SpaceCard';
 import { PinModal } from '@/components/PinModal';
 import { useUser } from '@/components/UserProvider';
+import { FamilyCards } from '@/components/FamilyCards';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -69,11 +70,9 @@ export default function DashboardPage() {
           <TasksWidget />
         </div>
 
-        {/* Chat Section */}
-        <div className="bg-white rounded-xl border p-4 mb-6">
-          <p className="text-gray-500 text-center py-8">
-            Chat coming soon...
-          </p>
+        {/* Family Cards */}
+        <div className="mb-6">
+          <FamilyCards />
         </div>
 
         {/* Space Cards */}
