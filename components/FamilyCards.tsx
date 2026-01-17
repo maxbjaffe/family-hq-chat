@@ -72,7 +72,7 @@ export function FamilyCards() {
         <span className="text-sm text-slate-400 ml-auto">Tap for details</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
         {members.map((member) => (
           <Link
             key={member.id}
@@ -82,7 +82,7 @@ export function FamilyCards() {
             <div className="flex flex-col items-center p-4 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-all hover:shadow-lg">
               {/* Avatar - Large to show off photos */}
               <div className="mb-3 group-hover:scale-105 transition-transform">
-                <Avatar member={member} size="lg" className="ring-4 ring-white shadow-md" />
+                <Avatar member={member} size="xl" className="ring-4 ring-white shadow-lg" />
               </div>
 
               {/* Name */}

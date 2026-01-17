@@ -373,7 +373,7 @@ export default function KioskPage() {
                       {/* Avatar - Large display */}
                       <Avatar
                         member={{ name: member.name, role: member.role, avatar_url: member.avatar_url }}
-                        size="xl"
+                        size="2xl"
                         className="shadow-xl"
                       />
                       {/* Name and completion badge below avatar */}
