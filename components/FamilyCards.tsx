@@ -28,6 +28,7 @@ const ROLE_COLORS: Record<string, string> = {
   'Mom': 'from-pink-500 to-rose-600',
   'Daughter': 'from-purple-500 to-violet-600',
   'Son': 'from-green-500 to-emerald-600',
+  'Dog': 'from-amber-500 to-orange-600',
   'default': 'from-slate-500 to-slate-600',
 };
 
@@ -37,6 +38,7 @@ const ROLE_EMOJI: Record<string, string> = {
   'Mom': '👩',
   'Daughter': '👧',
   'Son': '👦',
+  'Dog': '🐕',
   'default': '👤',
 };
 

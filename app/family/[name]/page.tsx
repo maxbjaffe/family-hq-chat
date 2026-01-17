@@ -16,6 +16,9 @@ import {
   AlertCircle,
   Loader2,
   Calendar,
+  GraduationCap,
+  Users,
+  Sparkles,
 } from 'lucide-react';
 
 interface FamilyMember {
@@ -31,6 +34,9 @@ interface FamilyMember {
   doctors: string | null;
   patientPortal: string | null;
   emergencyNotes: string | null;
+  school: string | null;
+  teachers: string | null;
+  activities: string | null;
 }
 
 const ROLE_COLORS: Record<string, string> = {
@@ -38,6 +44,7 @@ const ROLE_COLORS: Record<string, string> = {
   'Mom': 'from-pink-500 to-rose-600',
   'Daughter': 'from-purple-500 to-violet-600',
   'Son': 'from-green-500 to-emerald-600',
+  'Dog': 'from-amber-500 to-orange-600',
   'default': 'from-slate-500 to-slate-600',
 };
 
@@ -46,6 +53,7 @@ const ROLE_EMOJI: Record<string, string> = {
   'Mom': '👩',
   'Daughter': '👧',
   'Son': '👦',
+  'Dog': '🐕',
   'default': '👤',
 };
 
@@ -230,6 +238,28 @@ export default function FamilyProfilePage() {
             value={member.doctors}
           />
         </div>
+
+        {/* School & Activities (for kids) */}
+        {(member.school || member.teachers || member.activities) && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <InfoCard
+              icon={GraduationCap}
+              label="School / Grade"
+              value={member.school}
+            />
+            <InfoCard
+              icon={Users}
+              label="Teachers"
+              value={member.teachers}
+            />
+            <InfoCard
+              icon={Sparkles}
+              label="Activities & Interests"
+              value={member.activities}
+              className="sm:col-span-2"
+            />
+          </div>
+        )}
 
         {/* Patient Portal Link */}
         {member.patientPortal && (

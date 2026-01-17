@@ -69,6 +69,9 @@ export interface FamilyMember {
   doctors: string | null;
   patientPortal: string | null;
   emergencyNotes: string | null;
+  school: string | null;
+  teachers: string | null;
+  activities: string | null;
 }
 
 // Simple cache
@@ -106,6 +109,9 @@ export async function GET() {
         doctors: extractProperty(props["Primary Doctors"]),
         patientPortal: extractProperty(props["Patient Portal Link"]),
         emergencyNotes: extractProperty(props["Emergency Notes"]),
+        school: extractProperty(props["School / Grade"]),
+        teachers: extractProperty(props["Teachers"]),
+        activities: extractProperty(props["Activities & Interests"]),
       };
     });
 
