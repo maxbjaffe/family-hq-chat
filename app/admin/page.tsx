@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "@/components/IconPicker";
+import { Avatar } from "@/components/Avatar";
 
 interface ChecklistItem {
   id: string;
@@ -35,15 +36,17 @@ interface ChecklistItem {
   display_order: number;
   weekdays_only: boolean;
   is_active: boolean;
+  reset_daily?: boolean;
 }
 
-interface Child {
+interface FamilyMember {
   id: string;
   name: string;
-  age: number | null;
-  grade: string | null;
-  avatar_type: string | null;
-  avatar_data: string | null;
+  role: 'admin' | 'adult' | 'kid' | 'pet';
+  pin_hash?: string | null;
+  avatar_url?: string | null;
+  has_checklist: boolean;
+  created_at?: string;
   checklist_items: ChecklistItem[];
 }
 
@@ -62,14 +65,7 @@ interface AnalyticsSummary {
   top_queries: { query: string; count: number }[];
 }
 
-interface FamilyUser {
-  id: string;
-  name: string;
-  role: 'admin' | 'adult' | 'kid';
-  created_at: string;
-}
-
-type Tab = "children" | "users" | "media" | "analytics";
+type Tab = "family" | "media" | "analytics";
 type MediaCategory = "avatars" | "celebrations" | "icons" | "backgrounds" | "general";
 
 const MEDIA_CATEGORIES: { value: MediaCategory; label: string; icon: React.ElementType }[] = [
@@ -81,19 +77,18 @@ const MEDIA_CATEGORIES: { value: MediaCategory; label: string; icon: React.Eleme
 ];
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<Tab>("children");
-  const [children, setChildren] = useState<Child[]>([]);
+  const [tab, setTab] = useState<Tab>("family");
+  const [members, setMembers] = useState<FamilyMember[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Users state
-  const [users, setUsers] = useState<FamilyUser[]>([]);
+  // Family member state
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [editingPinFor, setEditingPinFor] = useState<string | null>(null);
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
-  const [showAddUser, setShowAddUser] = useState(false);
-  const [newUserForm, setNewUserForm] = useState<{ name: string; role: 'admin' | 'adult' | 'kid'; pin: string }>({ name: "", role: "adult", pin: "" });
-  const [selectedChild, setSelectedChild] = useState<string | null>(null);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [newMemberForm, setNewMemberForm] = useState<{ name: string; role: 'admin' | 'adult' | 'kid' | 'pet'; pin: string; has_checklist: boolean }>({ name: "", role: "kid", pin: "", has_checklist: false });
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: "", icon: "" });
   const [newItemForm, setNewItemForm] = useState({ title: "", icon: "" });
@@ -123,25 +118,9 @@ export default function AdminPage() {
     if (tab === "media") {
       loadMedia(mediaCategory);
     }
-    if (tab === "users") {
-      loadUsers();
-    }
   }, [tab, mediaCategory]);
 
-  async function loadUsers() {
-    try {
-      const response = await fetch("/api/admin/users");
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users || []);
-      }
-    } catch (error) {
-      console.error("Error loading users:", error);
-      toast.error("Failed to load users");
-    }
-  }
-
-  async function updatePin(userId: string) {
+  async function updatePin(memberId: string) {
     if (newPin !== confirmPin) {
       toast.error("PINs don't match");
       return;
@@ -152,10 +131,10 @@ export default function AdminPage() {
     }
 
     try {
-      const response = await fetch("/api/admin/users", {
+      const response = await fetch("/api/admin/family", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: userId, pin: newPin }),
+        body: JSON.stringify({ id: memberId, pin: newPin }),
       });
 
       if (response.ok) {
@@ -163,6 +142,7 @@ export default function AdminPage() {
         setEditingPinFor(null);
         setNewPin("");
         setConfirmPin("");
+        loadData();
       } else {
         toast.error("Failed to update PIN");
       }
@@ -171,69 +151,94 @@ export default function AdminPage() {
     }
   }
 
-  async function addUser() {
-    if (!newUserForm.name.trim()) {
+  async function addMember() {
+    if (!newMemberForm.name.trim()) {
       toast.error("Name is required");
       return;
     }
-    if (newUserForm.pin.length !== 4 || !/^\d+$/.test(newUserForm.pin)) {
-      toast.error("PIN must be 4 digits");
-      return;
+    // Only require PIN for non-pet members
+    if (newMemberForm.role !== "pet") {
+      if (newMemberForm.pin.length !== 4 || !/^\d+$/.test(newMemberForm.pin)) {
+        toast.error("PIN must be 4 digits");
+        return;
+      }
     }
 
     try {
-      const response = await fetch("/api/admin/users", {
+      const response = await fetch("/api/admin/family", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUserForm),
+        body: JSON.stringify(newMemberForm),
       });
 
       if (response.ok) {
-        toast.success("User added");
-        setShowAddUser(false);
-        setNewUserForm({ name: "", role: "adult" as const, pin: "" });
-        loadUsers();
+        toast.success("Member added");
+        setShowAddMember(false);
+        setNewMemberForm({ name: "", role: "kid", pin: "", has_checklist: false });
+        loadData();
       } else {
-        toast.error("Failed to add user");
+        toast.error("Failed to add member");
       }
     } catch (error) {
-      toast.error("Failed to add user");
+      toast.error("Failed to add member");
     }
   }
 
-  async function deleteUser(userId: string) {
-    if (!confirm("Delete this user? This cannot be undone.")) return;
+  async function deleteMember(memberId: string) {
+    if (!confirm("Delete this family member? This cannot be undone.")) return;
 
     try {
-      const response = await fetch(`/api/admin/users?id=${userId}`, {
+      const response = await fetch(`/api/admin/family?id=${memberId}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        toast.success("User deleted");
-        loadUsers();
+        toast.success("Member deleted");
+        if (selectedMember === memberId) {
+          setSelectedMember(null);
+        }
+        loadData();
       } else {
-        toast.error("Failed to delete user");
+        toast.error("Failed to delete member");
       }
     } catch (error) {
-      toast.error("Failed to delete user");
+      toast.error("Failed to delete member");
+    }
+  }
+
+  async function updateMember(memberId: string, updates: Partial<FamilyMember>) {
+    try {
+      const response = await fetch("/api/admin/family", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: memberId, ...updates }),
+      });
+
+      if (response.ok) {
+        toast.success("Member updated");
+        loadData();
+      } else {
+        toast.error("Failed to update member");
+      }
+    } catch (error) {
+      toast.error("Failed to update member");
     }
   }
 
   async function loadData() {
     setLoading(true);
     try {
-      const [childrenRes, analyticsRes, iconsRes] = await Promise.all([
-        fetch("/api/admin/children"),
+      const [familyRes, analyticsRes, iconsRes] = await Promise.all([
+        fetch("/api/admin/family"),
         fetch("/api/admin/analytics"),
         fetch("/api/admin/media?category=icons"),
       ]);
 
-      if (childrenRes.ok) {
-        const data = await childrenRes.json();
-        setChildren(data.children || []);
-        if (data.children?.length > 0 && !selectedChild) {
-          setSelectedChild(data.children[0].id);
+      if (familyRes.ok) {
+        const data = await familyRes.json();
+        setMembers(data.members || []);
+        if (data.members?.length > 0 && !selectedMember) {
+          setSelectedMember(data.members[0].id);
         }
       }
 
@@ -339,12 +344,12 @@ export default function AdminPage() {
     }
   }
 
-  async function setChildAvatar(childId: string, avatarUrl: string) {
+  async function setMemberAvatar(memberId: string, avatarUrl: string) {
     try {
-      const response = await fetch("/api/admin/children", {
+      const response = await fetch("/api/admin/family", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: childId, avatar_url: avatarUrl }),
+        body: JSON.stringify({ id: memberId, avatar_url: avatarUrl }),
       });
 
       if (response.ok) {
@@ -359,17 +364,17 @@ export default function AdminPage() {
     }
   }
 
-  const currentChild = children.find((c) => c.id === selectedChild);
+  const currentMember = members.find((m) => m.id === selectedMember);
 
   async function addItem() {
-    if (!selectedChild || !newItemForm.title.trim()) return;
+    if (!selectedMember || !newItemForm.title.trim()) return;
 
     try {
       const response = await fetch("/api/admin/checklist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          child_id: selectedChild,
+          member_id: selectedMember,
           title: newItemForm.title.trim(),
           icon: newItemForm.icon.trim() || null,
           weekdays_only: true,
@@ -453,9 +458,9 @@ export default function AdminPage() {
   }
 
   async function moveItem(item: ChecklistItem, direction: "up" | "down") {
-    if (!currentChild) return;
+    if (!currentMember) return;
 
-    const items = [...currentChild.checklist_items].sort(
+    const items = [...currentMember.checklist_items].sort(
       (a, b) => a.display_order - b.display_order
     );
     const index = items.findIndex((i) => i.id === item.id);
@@ -496,8 +501,8 @@ export default function AdminPage() {
     e.target.value = "";
   }
 
-  function openAvatarSelector(childId: string) {
-    setSelectingAvatarFor(childId);
+  function openAvatarSelector(memberId: string) {
+    setSelectingAvatarFor(memberId);
     loadAvatarOptions();
   }
 
@@ -526,18 +531,11 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="flex gap-2 mb-6 flex-wrap">
           <Button
-            variant={tab === "children" ? "default" : "outline"}
-            onClick={() => setTab("children")}
+            variant={tab === "family" ? "default" : "outline"}
+            onClick={() => setTab("family")}
           >
             <Users className="h-4 w-4 mr-2" />
-            Children & Checklists
-          </Button>
-          <Button
-            variant={tab === "users" ? "default" : "outline"}
-            onClick={() => setTab("users")}
-          >
-            <KeyRound className="h-4 w-4 mr-2" />
-            Users & PINs
+            Family
           </Button>
           <Button
             variant={tab === "media" ? "default" : "outline"}
@@ -555,49 +553,107 @@ export default function AdminPage() {
           </Button>
         </div>
 
-        {/* Children & Checklists Tab */}
-        {tab === "children" && (
+        {/* Family Tab */}
+        {tab === "family" && (
           <>
-            {/* Child Selector with Avatars */}
+            {/* Member Selector Grid */}
             <Card className="p-4 mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="h-5 w-5 text-slate-600" />
-                <span className="font-medium">Select Child</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-slate-600" />
+                  <span className="font-medium">Family Members</span>
+                </div>
+                <Button size="sm" onClick={() => setShowAddMember(true)} disabled={showAddMember}>
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Add Member
+                </Button>
               </div>
-              <div className="flex gap-4 flex-wrap">
-                {children.map((child) => (
-                  <div key={child.id} className="flex flex-col items-center gap-2">
-                    <button
-                      onClick={() => setSelectedChild(child.id)}
-                      className={`relative w-16 h-16 rounded-full overflow-hidden border-4 transition-all ${
-                        selectedChild === child.id
-                          ? "border-purple-500 scale-110"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      {child.avatar_type === "custom" && child.avatar_data ? (
-                        <img
-                          src={child.avatar_data}
-                          alt={child.name}
-                          className="w-full h-full object-cover"
+
+              {/* Add Member Form */}
+              {showAddMember && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <h4 className="font-medium mb-3">Add New Family Member</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">Name</label>
+                      <input
+                        type="text"
+                        placeholder="Name"
+                        value={newMemberForm.name}
+                        onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">Role</label>
+                      <select
+                        value={newMemberForm.role}
+                        onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value as 'admin' | 'adult' | 'kid' | 'pet' })}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="adult">Adult</option>
+                        <option value="kid">Kid</option>
+                        <option value="pet">Pet</option>
+                      </select>
+                    </div>
+                    {newMemberForm.role !== "pet" && (
+                      <div>
+                        <label className="block text-sm text-slate-600 mb-1">PIN (4 digits)</label>
+                        <input
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={4}
+                          placeholder="****"
+                          value={newMemberForm.pin}
+                          onChange={(e) => setNewMemberForm({ ...newMemberForm, pin: e.target.value.replace(/\D/g, '') })}
+                          className="w-full px-3 py-2 border rounded-lg"
                         />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xl font-bold">
-                          {child.name.charAt(0)}
-                        </div>
-                      )}
-                    </button>
-                    <span className="text-sm font-medium">{child.name}</span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-xs h-6"
-                      onClick={() => openAvatarSelector(child.id)}
-                    >
-                      <Edit2 className="h-3 w-3 mr-1" />
-                      Avatar
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="has_checklist"
+                        checked={newMemberForm.has_checklist}
+                        onChange={(e) => setNewMemberForm({ ...newMemberForm, has_checklist: e.target.checked })}
+                        className="rounded"
+                      />
+                      <label htmlFor="has_checklist" className="text-sm text-slate-600">Enable checklist</label>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button size="sm" onClick={addMember}>
+                      <Save className="h-4 w-4 mr-1" />
+                      Save
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setShowAddMember(false);
+                      setNewMemberForm({ name: "", role: "kid", pin: "", has_checklist: false });
+                    }}>
+                      <X className="h-4 w-4 mr-1" />
+                      Cancel
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {/* Members Grid */}
+              <div className="flex gap-4 flex-wrap">
+                {members.map((member) => (
+                  <button
+                    key={member.id}
+                    onClick={() => setSelectedMember(member.id)}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all ${
+                      selectedMember === member.id
+                        ? "bg-purple-50 ring-2 ring-purple-500"
+                        : "hover:bg-slate-50"
+                    }`}
+                  >
+                    <Avatar member={member} size="md" />
+                    <span className="text-sm font-medium">{member.name}</span>
+                    <span className="text-xs text-slate-500 capitalize">{member.role}</span>
+                  </button>
                 ))}
               </div>
             </Card>
@@ -617,14 +673,14 @@ export default function AdminPage() {
                     <div className="text-center py-8 text-slate-500">
                       <User className="h-12 w-12 mx-auto mb-2 text-slate-300" />
                       <p>No avatars uploaded yet.</p>
-                      <p className="text-sm">Go to Media Library → Avatars to upload some.</p>
+                      <p className="text-sm">Go to Media Library - Avatars to upload some.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-4 gap-3">
                       {avatarOptions.map((avatar) => (
                         <button
                           key={avatar.path}
-                          onClick={() => setChildAvatar(selectingAvatarFor, avatar.url)}
+                          onClick={() => setMemberAvatar(selectingAvatarFor, avatar.url)}
                           className="aspect-square rounded-lg overflow-hidden border-2 border-slate-200 hover:border-purple-500 transition-all hover:scale-105"
                         >
                           <img
@@ -640,15 +696,149 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Checklist Items */}
-            {currentChild && (
+            {/* Profile Settings Section */}
+            {currentMember && (
+              <Card className="p-4 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-slate-600" />
+                    <span className="font-medium">{currentMember.name}&apos;s Profile</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => deleteMember(currentMember.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Avatar */}
+                  <div className="flex items-center gap-4">
+                    <Avatar member={currentMember} size="lg" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openAvatarSelector(currentMember.id)}
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" />
+                      Change Avatar
+                    </Button>
+                  </div>
+
+                  {/* Name & Role */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">Name</label>
+                      <input
+                        type="text"
+                        value={currentMember.name}
+                        onChange={(e) => updateMember(currentMember.id, { name: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">Role</label>
+                      <select
+                        value={currentMember.role}
+                        onChange={(e) => updateMember(currentMember.id, { role: e.target.value as 'admin' | 'adult' | 'kid' | 'pet' })}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="adult">Adult</option>
+                        <option value="kid">Kid</option>
+                        <option value="pet">Pet</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PIN Section - only for non-pets */}
+                {currentMember.role !== "pet" && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-2">
+                      <KeyRound className="h-4 w-4 text-slate-600" />
+                      <span className="text-sm font-medium">PIN</span>
+                    </div>
+                    {editingPinFor === currentMember.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={4}
+                          placeholder="New PIN"
+                          value={newPin}
+                          onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+                          className="w-24 px-2 py-1 border rounded text-center"
+                        />
+                        <input
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={4}
+                          placeholder="Confirm"
+                          value={confirmPin}
+                          onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
+                          className="w-24 px-2 py-1 border rounded text-center"
+                        />
+                        <Button size="sm" variant="ghost" onClick={() => updatePin(currentMember.id)}>
+                          <Save className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => {
+                          setEditingPinFor(null);
+                          setNewPin("");
+                          setConfirmPin("");
+                        }}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-500">
+                          {currentMember.pin_hash ? "PIN is set" : "No PIN set"}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingPinFor(currentMember.id)}
+                        >
+                          <KeyRound className="h-4 w-4 mr-1" />
+                          {currentMember.pin_hash ? "Change PIN" : "Set PIN"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Enable Checklist Toggle */}
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="enable_checklist"
+                      checked={currentMember.has_checklist}
+                      onChange={(e) => updateMember(currentMember.id, { has_checklist: e.target.checked })}
+                      className="rounded"
+                    />
+                    <label htmlFor="enable_checklist" className="text-sm text-slate-600">
+                      Enable checklist for this member
+                    </label>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Checklist Section - only if has_checklist is true */}
+            {currentMember && currentMember.has_checklist && (
               <Card className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <CheckSquare className="h-5 w-5 text-purple-600" />
-                    <span className="font-medium">{currentChild.name}&apos;s Checklist</span>
+                    <span className="font-medium">{currentMember.name}&apos;s Checklist</span>
                     <span className="text-sm text-slate-500">
-                      ({currentChild.checklist_items.length} items)
+                      ({currentMember.checklist_items.length} items)
                     </span>
                   </div>
                   <Button
@@ -724,7 +914,7 @@ export default function AdminPage() {
 
                 {/* Items List */}
                 <div className="space-y-2">
-                  {currentChild.checklist_items
+                  {currentMember.checklist_items
                     .sort((a, b) => a.display_order - b.display_order)
                     .map((item, index) => (
                       <div
@@ -825,7 +1015,7 @@ export default function AdminPage() {
                                 variant="ghost"
                                 onClick={() => moveItem(item, "down")}
                                 disabled={
-                                  index === currentChild.checklist_items.length - 1
+                                  index === currentMember.checklist_items.length - 1
                                 }
                               >
                                 <ChevronDown className="h-4 w-4" />
@@ -859,164 +1049,13 @@ export default function AdminPage() {
                     ))}
                 </div>
 
-                {currentChild.checklist_items.length === 0 && (
+                {currentMember.checklist_items.length === 0 && (
                   <div className="text-center py-8 text-slate-500">
                     No checklist items yet. Add one above!
                   </div>
                 )}
               </Card>
             )}
-          </>
-        )}
-
-        {/* Users & PINs Tab */}
-        {tab === "users" && (
-          <>
-            <Card className="p-4 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <KeyRound className="h-5 w-5 text-slate-600" />
-                  <span className="font-medium">Family Users</span>
-                </div>
-                <Button size="sm" onClick={() => setShowAddUser(true)} disabled={showAddUser}>
-                  <UserPlus className="h-4 w-4 mr-1" />
-                  Add User
-                </Button>
-              </div>
-
-              {/* Add User Form */}
-              {showAddUser && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                  <h4 className="font-medium mb-3">Add New User</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm text-slate-600 mb-1">Name</label>
-                      <input
-                        type="text"
-                        placeholder="Name"
-                        value={newUserForm.name}
-                        onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-slate-600 mb-1">Role</label>
-                      <select
-                        value={newUserForm.role}
-                        onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as 'admin' | 'adult' | 'kid' })}
-                        className="w-full px-3 py-2 border rounded-lg"
-                      >
-                        <option value="admin">Admin</option>
-                        <option value="adult">Adult</option>
-                        <option value="kid">Kid</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-slate-600 mb-1">PIN (4 digits)</label>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={4}
-                        placeholder="****"
-                        value={newUserForm.pin}
-                        onChange={(e) => setNewUserForm({ ...newUserForm, pin: e.target.value.replace(/\D/g, '') })}
-                        className="w-full px-3 py-2 border rounded-lg"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button size="sm" onClick={addUser}>
-                      <Save className="h-4 w-4 mr-1" />
-                      Save
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => {
-                      setShowAddUser(false);
-                      setNewUserForm({ name: "", role: "adult" as const, pin: "" });
-                    }}>
-                      <X className="h-4 w-4 mr-1" />
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Users List */}
-              {users.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
-                  <User className="h-12 w-12 mx-auto mb-2 text-slate-300" />
-                  <p>No users configured yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {users.map((user) => (
-                    <div key={user.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-lg font-bold">
-                        {user.name.charAt(0)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-slate-800">{user.name}</div>
-                        <div className="flex items-center gap-2 text-sm text-slate-500">
-                          <Shield className="h-3 w-3" />
-                          <span className="capitalize">{user.role}</span>
-                        </div>
-                      </div>
-
-                      {editingPinFor === user.id ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="password"
-                            inputMode="numeric"
-                            maxLength={4}
-                            placeholder="New PIN"
-                            value={newPin}
-                            onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
-                            className="w-20 px-2 py-1 border rounded text-center"
-                          />
-                          <input
-                            type="password"
-                            inputMode="numeric"
-                            maxLength={4}
-                            placeholder="Confirm"
-                            value={confirmPin}
-                            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
-                            className="w-20 px-2 py-1 border rounded text-center"
-                          />
-                          <Button size="sm" variant="ghost" onClick={() => updatePin(user.id)}>
-                            <Save className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => {
-                            setEditingPinFor(null);
-                            setNewPin("");
-                            setConfirmPin("");
-                          }}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingPinFor(user.id)}
-                          >
-                            <KeyRound className="h-4 w-4 mr-1" />
-                            Change PIN
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => deleteUser(user.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
           </>
         )}
 
