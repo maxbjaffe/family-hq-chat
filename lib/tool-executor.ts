@@ -22,8 +22,8 @@ export interface UserContext {
   role: string;
 }
 
-// Projects that are private to Max only
-const MAX_ONLY_PROJECTS = ['Personal'];
+// Only these projects are visible to non-Max users
+const SHARED_PROJECTS = ['House Tasks'];
 
 export async function executeTool(
   toolName: string,
@@ -43,11 +43,11 @@ export async function executeTool(
         }));
 
         // Filter tasks based on user
-        // Max sees everything, others don't see Max's personal projects
+        // Max sees everything, others only see shared projects
         const isMax = userContext?.name?.toLowerCase() === 'max';
         if (!isMax) {
           enrichedTasks = enrichedTasks.filter(
-            task => !MAX_ONLY_PROJECTS.includes(task.project_name)
+            task => SHARED_PROJECTS.includes(task.project_name)
           );
         }
 
