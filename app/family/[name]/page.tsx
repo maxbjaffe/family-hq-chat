@@ -112,12 +112,12 @@ export default function FamilyProfilePage() {
         const res = await fetch('/api/family');
         if (res.ok) {
           const data = await res.json();
-          // Match by first name to support both "parker" and "Parker Jaffe"
+          // Match by any word in name to support "alex" matching "S Alex Jaffe"
           const found = data.members?.find(
             (m: FamilyMember) => {
-              const memberFirstName = m.name.toLowerCase().split(' ')[0];
+              const nameParts = m.name.toLowerCase().split(' ');
               const searchName = name.toLowerCase();
-              return m.name.toLowerCase() === searchName || memberFirstName === searchName;
+              return m.name.toLowerCase() === searchName || nameParts.some(part => part === searchName);
             }
           );
           if (found) {
