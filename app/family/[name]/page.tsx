@@ -103,6 +103,9 @@ export default function FamilyProfilePage() {
   const [member, setMember] = useState<FamilyMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [visibility, setVisibility] = useState<Record<string, boolean>>({});
+
+  const isVisible = (field: string) => visibility[field] !== false;
 
   const name = typeof params.name === 'string' ? decodeURIComponent(params.name) : '';
 
@@ -121,6 +124,24 @@ export default function FamilyProfilePage() {
             }
           );
           if (found) {
+            // Fetch visibility settings from Supabase
+            try {
+              const visRes = await fetch('/api/admin/family');
+              if (visRes.ok) {
+                const visData = await visRes.json();
+                const supabaseMember = visData.members?.find(
+                  (m: { name: string; profile_visibility?: Record<string, boolean> }) => {
+                    const nameParts = m.name.toLowerCase().split(' ');
+                    return nameParts.some(part => part === name.toLowerCase());
+                  }
+                );
+                if (supabaseMember?.profile_visibility) {
+                  setVisibility(supabaseMember.profile_visibility);
+                }
+              }
+            } catch (e) {
+              console.error('Failed to load visibility settings:', e);
+            }
             setMember(found);
           } else {
             setNotFound(true);
@@ -193,19 +214,19 @@ export default function FamilyProfilePage() {
         </Card>
 
         {/* Emergency Info - Highlighted */}
-        {(hasAllergies || member.emergencyNotes) && (
+        {((hasAllergies && isVisible('allergies')) || (member.emergencyNotes && isVisible('emergencyNotes'))) && (
           <Card className="p-4 mb-6 border-amber-200 bg-amber-50">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="h-5 w-5 text-amber-600" />
               <h2 className="font-semibold text-amber-800">Emergency Info</h2>
             </div>
-            {hasAllergies && (
+            {hasAllergies && isVisible('allergies') && (
               <div className="mb-3">
                 <p className="text-sm text-amber-700 font-medium">Allergies</p>
                 <p className="text-amber-900">{member.allergies}</p>
               </div>
             )}
-            {member.emergencyNotes && (
+            {member.emergencyNotes && isVisible('emergencyNotes') && (
               <div>
                 <p className="text-sm text-amber-700 font-medium">Emergency Notes</p>
                 <p className="text-amber-900">{member.emergencyNotes}</p>
@@ -216,58 +237,74 @@ export default function FamilyProfilePage() {
 
         {/* Info Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <InfoCard
-            icon={Cake}
-            label="Birthday"
-            value={formatBirthday(member.birthday)}
-          />
-          <InfoCard
-            icon={Droplets}
-            label="Blood Type"
-            value={member.bloodType}
-            valueClassName="text-red-600 font-bold text-lg"
-          />
-          <InfoCard
-            icon={Pill}
-            label="Medications"
-            value={member.medications}
-          />
-          <InfoCard
-            icon={Heart}
-            label="Chronic Conditions"
-            value={member.conditions}
-          />
-          <InfoCard
-            icon={Stethoscope}
-            label="Primary Doctors"
-            value={member.doctors}
-          />
+          {isVisible('birthday') && (
+            <InfoCard
+              icon={Cake}
+              label="Birthday"
+              value={formatBirthday(member.birthday)}
+            />
+          )}
+          {isVisible('bloodType') && (
+            <InfoCard
+              icon={Droplets}
+              label="Blood Type"
+              value={member.bloodType}
+              valueClassName="text-red-600 font-bold text-lg"
+            />
+          )}
+          {isVisible('medications') && (
+            <InfoCard
+              icon={Pill}
+              label="Medications"
+              value={member.medications}
+            />
+          )}
+          {isVisible('conditions') && (
+            <InfoCard
+              icon={Heart}
+              label="Chronic Conditions"
+              value={member.conditions}
+            />
+          )}
+          {isVisible('doctors') && (
+            <InfoCard
+              icon={Stethoscope}
+              label="Primary Doctors"
+              value={member.doctors}
+            />
+          )}
         </div>
 
         {/* School & Activities (for kids) */}
-        {(member.school || member.teachers || member.activities) && (
+        {((member.school && isVisible('school')) || (member.teachers && isVisible('teachers')) || (member.activities && isVisible('activities'))) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <InfoCard
-              icon={GraduationCap}
-              label="School / Grade"
-              value={member.school}
-            />
-            <InfoCard
-              icon={Users}
-              label="Teachers"
-              value={member.teachers}
-            />
-            <InfoCard
-              icon={Sparkles}
-              label="Activities & Interests"
-              value={member.activities}
-              className="sm:col-span-2"
-            />
+            {isVisible('school') && (
+              <InfoCard
+                icon={GraduationCap}
+                label="School / Grade"
+                value={member.school}
+              />
+            )}
+            {isVisible('teachers') && (
+              <InfoCard
+                icon={Users}
+                label="Teachers"
+                value={member.teachers}
+              />
+            )}
+            {isVisible('activities') && (
+              <InfoCard
+                icon={Sparkles}
+                label="Activities & Interests"
+                value={member.activities}
+                className="sm:col-span-2"
+              />
+            )}
           </div>
         )}
 
         {/* Patient Portal Link */}
-        {member.patientPortal && (
+        {member.patientPortal && isVisible('patientPortal') && (
           <Card className="p-4">
             <a
               href={member.patientPortal}
