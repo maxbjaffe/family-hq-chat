@@ -82,14 +82,12 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from("checklist_items")
       .insert({
-        user_id: FAMILY_USER_ID,
         member_id: effectiveMemberId,
         child_id: effectiveChildId,
         title,
         icon: icon || null,
         display_order: nextOrder,
         weekdays_only: weekdays_only ?? true,
-        reset_daily: reset_daily ?? true,
         is_active: true,
         active_days: body.active_days || '["mon","tue","wed","thu","fri"]',
       })

@@ -20,6 +20,7 @@ import {
   Users,
   Sparkles,
 } from 'lucide-react';
+import { Avatar } from '@/components/Avatar';
 
 interface FamilyMember {
   id: string;
@@ -104,6 +105,7 @@ export default function FamilyProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
+  const [avatarInfo, setAvatarInfo] = useState<{ avatar_url?: string | null; role?: string } | null>(null);
 
   const isVisible = (field: string) => visibility[field] !== false;
 
@@ -130,13 +132,16 @@ export default function FamilyProfilePage() {
               if (visRes.ok) {
                 const visData = await visRes.json();
                 const supabaseMember = visData.members?.find(
-                  (m: { name: string; profile_visibility?: Record<string, boolean> }) => {
+                  (m: { name: string; profile_visibility?: Record<string, boolean>; avatar_url?: string | null; role?: string }) => {
                     const nameParts = m.name.toLowerCase().split(' ');
                     return nameParts.some(part => part === name.toLowerCase());
                   }
                 );
-                if (supabaseMember?.profile_visibility) {
-                  setVisibility(supabaseMember.profile_visibility);
+                if (supabaseMember) {
+                  if (supabaseMember.profile_visibility) {
+                    setVisibility(supabaseMember.profile_visibility);
+                  }
+                  setAvatarInfo({ avatar_url: supabaseMember.avatar_url, role: supabaseMember.role });
                 }
               }
             } catch (e) {
@@ -182,8 +187,6 @@ export default function FamilyProfilePage() {
     );
   }
 
-  const gradient = ROLE_COLORS[member.role || ''] || ROLE_COLORS.default;
-  const emoji = ROLE_EMOJI[member.role || ''] || ROLE_EMOJI.default;
   const hasAllergies = member.allergies && member.allergies.toLowerCase() !== 'none';
 
   return (
@@ -198,9 +201,15 @@ export default function FamilyProfilePage() {
         {/* Profile Header */}
         <Card className="p-6 mb-6">
           <div className="flex items-center gap-4">
-            <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-4xl shadow-lg`}>
-              {emoji}
-            </div>
+            <Avatar
+              member={{
+                name: member.name,
+                role: avatarInfo?.role || member.role || 'default',
+                avatar_url: avatarInfo?.avatar_url,
+              }}
+              size="2xl"
+              className="shadow-lg"
+            />
             <div>
               <h1 className="text-2xl font-bold text-slate-800">{member.name}</h1>
               {member.role && (
