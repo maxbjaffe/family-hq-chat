@@ -24,6 +24,7 @@ import {
   KeyRound,
   Shield,
   UserPlus,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "@/components/IconPicker";
@@ -49,6 +50,20 @@ interface FamilyMember {
   has_checklist: boolean;
   created_at?: string;
   checklist_items: ChecklistItem[];
+  profile_visibility?: {
+    birthday: boolean;
+    age: boolean;
+    bloodType: boolean;
+    allergies: boolean;
+    medications: boolean;
+    conditions: boolean;
+    emergencyNotes: boolean;
+    doctors: boolean;
+    patientPortal: boolean;
+    school: boolean;
+    teachers: boolean;
+    activities: boolean;
+  };
 }
 
 interface MediaFile {
@@ -520,6 +535,39 @@ export default function AdminPage() {
     }
   }
 
+  async function updateProfileVisibility(memberId: string, field: string, value: boolean) {
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+
+    const defaultVisibility = {
+      birthday: true, age: true, bloodType: true, allergies: true,
+      medications: true, conditions: true, emergencyNotes: true,
+      doctors: true, patientPortal: true, school: true, teachers: true, activities: true,
+    };
+
+    const newVisibility = {
+      ...(member.profile_visibility || defaultVisibility),
+      [field]: value,
+    };
+
+    try {
+      const res = await fetch('/api/admin/family', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: memberId, profile_visibility: newVisibility }),
+      });
+      if (res.ok) {
+        setMembers(members.map(m =>
+          m.id === memberId ? { ...m, profile_visibility: newVisibility } : m
+        ));
+        toast.success('Visibility updated');
+      }
+    } catch (error) {
+      console.error('Failed to update visibility:', error);
+      toast.error('Failed to update visibility');
+    }
+  }
+
   async function moveItem(item: ChecklistItem, direction: "up" | "down") {
     if (!currentMember) return;
 
@@ -888,6 +936,45 @@ export default function AdminPage() {
                     <label htmlFor="enable_checklist" className="text-sm text-slate-600">
                       Enable checklist for this member
                     </label>
+                  </div>
+                </div>
+
+                {/* Profile Visibility */}
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Profile Visibility
+                  </h4>
+                  <p className="text-sm text-slate-500 mb-3">Choose which fields appear on this person&apos;s profile page</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'birthday', label: 'Birthday' },
+                      { key: 'age', label: 'Age' },
+                      { key: 'bloodType', label: 'Blood Type' },
+                      { key: 'allergies', label: 'Allergies' },
+                      { key: 'medications', label: 'Medications' },
+                      { key: 'conditions', label: 'Conditions' },
+                      { key: 'emergencyNotes', label: 'Emergency Notes' },
+                      { key: 'doctors', label: 'Doctors' },
+                      { key: 'patientPortal', label: 'Patient Portal' },
+                      { key: 'school', label: 'School' },
+                      { key: 'teachers', label: 'Teachers' },
+                      { key: 'activities', label: 'Activities' },
+                    ].map(({ key, label }) => {
+                      const member = members.find(m => m.id === selectedMember);
+                      const isChecked = member?.profile_visibility?.[key as keyof typeof member.profile_visibility] ?? true;
+                      return (
+                        <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => updateProfileVisibility(selectedMember!, key, e.target.checked)}
+                            className="rounded border-slate-300"
+                          />
+                          {label}
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               </Card>
