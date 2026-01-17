@@ -102,17 +102,33 @@ export interface CalendarEvent {
 // Hardcoded user ID for your family (from gift-tracker)
 const FAMILY_USER_ID = "00879c1b-a586-4d52-96be-8f4b7ddf7257";
 
-// Get today's date in local timezone (EST) as YYYY-MM-DD
+// Get today's date in EST, treating 12am-1:59am as previous day (2am reset)
 function getLocalDateString(): string {
   const now = new Date();
-  // Use EST timezone for consistency (family is in NY area)
-  const options: Intl.DateTimeFormatOptions = {
+
+  // Get current hour in EST
+  const hourFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour: "numeric",
+    hour12: false,
+  });
+  const hour = parseInt(hourFormatter.format(now));
+
+  // Get date in EST
+  const dateFormatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/New_York",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  };
-  const parts = new Intl.DateTimeFormat("en-CA", options).formatToParts(now);
+  });
+
+  // If before 2am, use yesterday's date
+  let targetDate = now;
+  if (hour < 2) {
+    targetDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  }
+
+  const parts = dateFormatter.formatToParts(targetDate);
   const year = parts.find((p) => p.type === "year")?.value;
   const month = parts.find((p) => p.type === "month")?.value;
   const day = parts.find((p) => p.type === "day")?.value;
