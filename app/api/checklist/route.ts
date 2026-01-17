@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getChildren, getChecklistForChild, toggleChecklistItem } from "@/lib/supabase";
+import { getFamilyMembersWithChecklists, getChecklistForMember, toggleMemberChecklistItem } from "@/lib/supabase";
 
 export async function GET() {
   try {
-    const children = await getChildren();
+    const members = await getFamilyMembersWithChecklists();
 
-    // Fetch checklist data for each child
-    const childrenWithChecklists = await Promise.all(
-      children.map(async (child) => {
-        const { items, stats } = await getChecklistForChild(child.id);
+    // Fetch checklist data for each member
+    const membersWithChecklists = await Promise.all(
+      members.map(async (member) => {
+        const { items, stats } = await getChecklistForMember(member.id);
         return {
-          ...child,
+          id: member.id,
+          name: member.name,
+          role: member.role,
+          avatar_url: member.avatar_url,
           checklist: items,
           stats,
         };
       })
     );
 
-    return NextResponse.json({ children: childrenWithChecklists });
+    return NextResponse.json({ members: membersWithChecklists });
   } catch (error) {
     console.error("Error fetching checklist data:", error);
     return NextResponse.json(
@@ -29,16 +32,16 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { childId, itemId, isCompleted } = await request.json();
+    const { memberId, itemId, isCompleted } = await request.json();
 
-    if (!childId || !itemId || typeof isCompleted !== "boolean") {
+    if (!memberId || !itemId || typeof isCompleted !== "boolean") {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const success = await toggleChecklistItem(childId, itemId, isCompleted);
+    const success = await toggleMemberChecklistItem(memberId, itemId, isCompleted);
 
     if (!success) {
       return NextResponse.json(
