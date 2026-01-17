@@ -37,6 +37,7 @@ interface ChecklistItem {
   weekdays_only: boolean;
   is_active: boolean;
   reset_daily?: boolean;
+  active_days?: string;
 }
 
 interface FamilyMember {
@@ -75,6 +76,51 @@ const MEDIA_CATEGORIES: { value: MediaCategory; label: string; icon: React.Eleme
   { value: "backgrounds", label: "Backgrounds", icon: ImageIcon },
   { value: "general", label: "General", icon: ImageIcon },
 ];
+
+const DAYS = [
+  { key: 'mon', label: 'M' },
+  { key: 'tue', label: 'T' },
+  { key: 'wed', label: 'W' },
+  { key: 'thu', label: 'T' },
+  { key: 'fri', label: 'F' },
+  { key: 'sat', label: 'S' },
+  { key: 'sun', label: 'S' },
+];
+
+function DaySelector({
+  activeDays,
+  onChange
+}: {
+  activeDays: string[];
+  onChange: (days: string[]) => void;
+}) {
+  const toggleDay = (day: string) => {
+    if (activeDays.includes(day)) {
+      onChange(activeDays.filter(d => d !== day));
+    } else {
+      onChange([...activeDays, day]);
+    }
+  };
+
+  return (
+    <div className="flex gap-1">
+      {DAYS.map(({ key, label }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => toggleDay(key)}
+          className={`w-6 h-6 rounded text-xs font-medium transition-colors ${
+            activeDays.includes(key)
+              ? 'bg-purple-600 text-white'
+              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("family");
@@ -454,6 +500,23 @@ export default function AdminPage() {
       }
     } catch (error) {
       toast.error("Failed to update item");
+    }
+  }
+
+  async function updateItemDays(itemId: string, days: string[]) {
+    try {
+      const res = await fetch('/api/admin/checklist', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: itemId, active_days: JSON.stringify(days) }),
+      });
+      if (res.ok) {
+        loadData();
+        toast.success('Days updated');
+      }
+    } catch (error) {
+      console.error('Failed to update days:', error);
+      toast.error('Failed to update days');
     }
   }
 
@@ -996,11 +1059,16 @@ export default function AdminPage() {
                               )}
                             </span>
                             <span className="flex-1 font-medium">{item.title}</span>
-                            {item.weekdays_only && (
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                Weekdays
-                              </span>
-                            )}
+                            <DaySelector
+                              activeDays={(() => {
+                                try {
+                                  return JSON.parse(item.active_days || '["mon","tue","wed","thu","fri"]');
+                                } catch {
+                                  return ['mon', 'tue', 'wed', 'thu', 'fri'];
+                                }
+                              })()}
+                              onChange={(days) => updateItemDays(item.id, days)}
+                            />
                             <div className="flex gap-1">
                               <Button
                                 size="sm"
