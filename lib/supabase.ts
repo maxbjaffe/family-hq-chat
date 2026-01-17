@@ -139,6 +139,16 @@ function getLocalDayOfWeek(): number {
   return dayMap[dayName] ?? 0;
 }
 
+// Get day abbreviation in EST (mon, tue, wed, thu, fri, sat, sun)
+function getLocalDayAbbrev(): string {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: "America/New_York",
+    weekday: "short",
+  };
+  return new Intl.DateTimeFormat("en-US", options).format(now).toLowerCase();
+}
+
 export async function getTodayEvents(): Promise<CalendarEvent[]> {
   const supabase = getFamilyDataClient();
   const today = new Date();
@@ -294,24 +304,36 @@ export async function getChecklistForMember(memberId: string): Promise<{
   const dayOfWeek = getLocalDayOfWeek();
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-  // Get checklist items for this member
-  let query = supabase
+  const todayAbbrev = getLocalDayAbbrev();
+
+  const { data: allItems, error: itemsError } = await supabase
     .from("checklist_items")
     .select("*")
     .eq("member_id", memberId)
     .eq("is_active", true)
     .order("display_order");
 
-  if (isWeekend) {
-    query = query.eq("weekdays_only", false);
-  }
-
-  const { data: items, error: itemsError } = await query;
-
   if (itemsError) {
     console.error("Error fetching checklist items for member:", itemsError);
     return { items: [], stats: { total: 0, completed: 0, remaining: 0, isComplete: false } };
   }
+
+  // Filter items by active_days (fallback to weekdays_only for backwards compatibility)
+  const items = (allItems || []).filter(item => {
+    if (item.active_days) {
+      try {
+        const activeDays = JSON.parse(item.active_days);
+        return activeDays.includes(todayAbbrev);
+      } catch {
+        return true; // If parse fails, show item
+      }
+    }
+    // Fallback to old weekdays_only logic
+    if (item.weekdays_only && isWeekend) {
+      return false;
+    }
+    return true;
+  });
 
   // Get today's completions for this member
   const { data: completions } = await supabase
