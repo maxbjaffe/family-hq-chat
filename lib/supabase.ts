@@ -263,17 +263,17 @@ export async function getUpcomingEvents(days: number = 7): Promise<CalendarEvent
 
 // User auth functions
 export async function getUserByPin(pin: string): Promise<User | null> {
-  const supabase = getFamilyDataClient();
-  const pinHash = hashPin(pin);
+  const member = await getFamilyMemberByPin(pin);
+  if (!member) return null;
 
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, name, role, integrations")
-    .eq("pin_hash", pinHash)
-    .single();
-
-  if (error || !data) return null;
-  return data as User;
+  // Map FamilyMember to User interface (for backward compatibility)
+  // Note: The User interface doesn't include 'pet' role, but pets don't have PINs anyway
+  return {
+    id: member.id,
+    name: member.name,
+    role: member.role as 'admin' | 'adult' | 'kid',
+    integrations: {},
+  };
 }
 
 export async function getUserById(userId: string): Promise<User | null> {
