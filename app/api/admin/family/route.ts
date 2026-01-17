@@ -13,7 +13,7 @@ export async function GET() {
 
     const { data: members, error } = await supabase
       .from("family_members")
-      .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
+      .select("id, name, role, pin_hash, avatar_url, has_checklist, profile_visibility, created_at")
       .order("name");
 
     if (error) {
@@ -116,7 +116,7 @@ export async function PUT(request: NextRequest) {
   try {
     const supabase = getFamilyDataClient();
     const body = await request.json();
-    const { id, name, role, pin, avatar_url, has_checklist } = body;
+    const { id, name, role, pin, avatar_url, has_checklist, profile_visibility } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
@@ -137,6 +137,7 @@ export async function PUT(request: NextRequest) {
     }
     if (avatar_url !== undefined) updates.avatar_url = avatar_url;
     if (has_checklist !== undefined) updates.has_checklist = has_checklist;
+    if (profile_visibility !== undefined) updates.profile_visibility = profile_visibility;
 
     // Handle PIN update
     if (pin !== undefined) {
