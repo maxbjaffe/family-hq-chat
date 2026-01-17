@@ -9,6 +9,7 @@ import confetti from "canvas-confetti";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
 import { Clock } from "@/components/Clock";
+import { Avatar } from "@/components/Avatar";
 
 // Celebration video URL
 const CELEBRATION_VIDEO_URL =
@@ -46,13 +47,11 @@ interface ChecklistItem {
   isCompleted: boolean;
 }
 
-interface ChildData {
+interface MemberData {
   id: string;
   name: string;
-  age?: number;
-  avatar_type: string | null;
-  avatar_data: string | null;
-  avatar_background: string | null;
+  role: string;
+  avatar_url: string | null;
   checklist: ChecklistItem[];
   stats: {
     total: number;
@@ -62,18 +61,8 @@ interface ChildData {
   };
 }
 
-// Avatar colors for kids (fallback)
-const AVATAR_COLORS = [
-  "from-blue-400 to-blue-600",
-  "from-purple-400 to-purple-600",
-  "from-green-400 to-green-600",
-  "from-orange-400 to-orange-600",
-  "from-pink-400 to-pink-600",
-  "from-teal-400 to-teal-600",
-];
-
 export default function KioskPage() {
-  const [children, setChildren] = useState<ChildData[]>([]);
+  const [members, setMembers] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState<string | null>(null);
@@ -88,7 +77,7 @@ export default function KioskPage() {
       const response = await fetch("/api/checklist");
       if (response.ok) {
         const data = await response.json();
-        setChildren(data.children || []);
+        setMembers(data.members || []);
         endSync(true);
       } else {
         endSync(false);
@@ -111,14 +100,14 @@ export default function KioskPage() {
     loadData();
   }, [loadData]);
 
-  // Check if all children are complete
+  // Check if all members are complete
   const allComplete =
-    children.length > 0 &&
-    children.every((child) => child.stats.isComplete && child.stats.total > 0);
+    members.length > 0 &&
+    members.every((member) => member.stats.isComplete && member.stats.total > 0);
 
   // Trigger celebration video when everyone completes
   useEffect(() => {
-    if (allComplete && children.length > 0 && !hasShownVideo) {
+    if (allComplete && members.length > 0 && !hasShownVideo) {
       // Show celebration video
       setShowVideo(true);
       setHasShownVideo(true);
@@ -149,7 +138,7 @@ export default function KioskPage() {
       };
       frame();
     }
-  }, [allComplete, children.length, hasShownVideo]);
+  }, [allComplete, members.length, hasShownVideo]);
 
   // Auto-play video when shown
   useEffect(() => {
@@ -163,25 +152,25 @@ export default function KioskPage() {
     setShowVideo(false);
   };
 
-  async function toggleItem(childId: string, itemId: string, isCurrentlyCompleted: boolean) {
-    const itemKey = `${childId}-${itemId}`;
+  async function toggleItem(memberId: string, itemId: string, isCurrentlyCompleted: boolean) {
+    const itemKey = `${memberId}-${itemId}`;
     setTogglingItems((prev) => new Set(prev).add(itemKey));
     startSync();
 
-    // Check if this will complete the child's checklist
-    const child = children.find((c) => c.id === childId);
-    const willComplete = !isCurrentlyCompleted && child && child.stats.remaining === 1;
+    // Check if this will complete the member's checklist
+    const member = members.find((m) => m.id === memberId);
+    const willComplete = !isCurrentlyCompleted && member && member.stats.remaining === 1;
 
     // Optimistic update
-    setChildren((prev) =>
-      prev.map((c) => {
-        if (c.id !== childId) return c;
-        const newChecklist = c.checklist.map((item) =>
+    setMembers((prev) =>
+      prev.map((m) => {
+        if (m.id !== memberId) return m;
+        const newChecklist = m.checklist.map((item) =>
           item.id === itemId ? { ...item, isCompleted: !isCurrentlyCompleted } : item
         );
         const completed = newChecklist.filter((i) => i.isCompleted).length;
         return {
-          ...c,
+          ...m,
           checklist: newChecklist,
           stats: {
             total: newChecklist.length,
@@ -198,11 +187,11 @@ export default function KioskPage() {
       await fetch("/api/checklist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ childId, itemId, isCompleted: isCurrentlyCompleted }),
+        body: JSON.stringify({ memberId, itemId, isCompleted: isCurrentlyCompleted }),
       });
       endSync(true);
 
-      // Celebrate when a child completes their checklist
+      // Celebrate when a member completes their checklist
       if (willComplete) {
         confetti({
           particleCount: 100,
@@ -212,7 +201,7 @@ export default function KioskPage() {
         });
 
         const message = COMPLETION_MESSAGES[Math.floor(Math.random() * COMPLETION_MESSAGES.length)];
-        setCelebrationMessage(`${child?.name}: ${message}`);
+        setCelebrationMessage(`${member?.name}: ${message}`);
         setTimeout(() => setCelebrationMessage(null), 4000);
       }
     } catch (error) {
@@ -339,7 +328,7 @@ export default function KioskPage() {
           </div>
 
           {/* All Complete Message */}
-          {allComplete && children.length > 0 && (
+          {allComplete && members.length > 0 && (
             <Card className="p-6 bg-gradient-to-r from-green-100 to-blue-100 border-green-300">
               <div className="flex items-center gap-3">
                 <Sparkles className="h-8 w-8 text-green-600" />
@@ -356,24 +345,24 @@ export default function KioskPage() {
           )}
         </div>
 
-        {/* Children Grid - Horizontal layout with large avatars */}
-        {children.length === 0 ? (
+        {/* Members Grid - Horizontal layout with large avatars */}
+        {members.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-slate-600">No children configured yet</p>
+            <p className="text-slate-600">No members configured yet</p>
           </Card>
         ) : (
           <div className="space-y-6">
-            {children.map((child, index) => {
+            {members.map((member) => {
               const percentage =
-                child.stats.total > 0
-                  ? Math.round((child.stats.completed / child.stats.total) * 100)
+                member.stats.total > 0
+                  ? Math.round((member.stats.completed / member.stats.total) * 100)
                   : 0;
 
               return (
                 <Card
-                  key={child.id}
+                  key={member.id}
                   className={`p-4 md:p-6 ${
-                    child.stats.isComplete
+                    member.stats.isComplete
                       ? "bg-gradient-to-br from-green-50 to-blue-50 border-green-300"
                       : "bg-white"
                   }`}
@@ -382,27 +371,15 @@ export default function KioskPage() {
                     {/* Large Avatar Section */}
                     <div className="flex flex-col items-center md:items-start flex-shrink-0">
                       {/* Avatar - Large display */}
-                      {child.avatar_type === "custom" && child.avatar_data ? (
-                        <div className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-2xl overflow-hidden shadow-xl border-4 border-white">
-                          <img
-                            src={child.avatar_data}
-                            alt={child.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div
-                          className={`w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-2xl bg-gradient-to-br ${
-                            AVATAR_COLORS[index % AVATAR_COLORS.length]
-                          } flex items-center justify-center text-white text-5xl md:text-6xl lg:text-7xl font-bold shadow-xl`}
-                        >
-                          {child.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      <Avatar
+                        member={{ name: member.name, role: member.role, avatar_url: member.avatar_url }}
+                        size="xl"
+                        className="shadow-xl"
+                      />
                       {/* Name and completion badge below avatar */}
                       <div className="mt-3 text-center md:text-left">
-                        <h3 className="text-2xl md:text-3xl font-bold text-slate-900">{child.name}</h3>
-                        {child.stats.isComplete && child.stats.total > 0 && (
+                        <h3 className="text-2xl md:text-3xl font-bold text-slate-900">{member.name}</h3>
+                        {member.stats.isComplete && member.stats.total > 0 && (
                           <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
                             <CheckCircle2 className="h-6 w-6 text-green-600" />
                             <span className="text-green-600 font-bold">All done!</span>
@@ -414,12 +391,12 @@ export default function KioskPage() {
                     {/* Checklist Section */}
                     <div className="flex-1 min-w-0">
                       {/* Progress Bar */}
-                      {child.stats.total > 0 && (
+                      {member.stats.total > 0 && (
                         <div className="mb-4">
                           <div className="flex justify-between text-sm mb-2">
                             <span className="text-slate-600 font-medium">Progress</span>
                             <span className="font-bold text-slate-900">
-                              {child.stats.completed}/{child.stats.total}
+                              {member.stats.completed}/{member.stats.total}
                             </span>
                           </div>
                           <Progress value={percentage} className="h-3" />
@@ -427,19 +404,19 @@ export default function KioskPage() {
                       )}
 
                       {/* Checklist Items */}
-                      {child.checklist.length === 0 ? (
+                      {member.checklist.length === 0 ? (
                         <div className="text-center py-6 text-slate-500 text-sm">
                           <p>No checklist items yet</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {child.checklist.map((item) => {
-                            const itemKey = `${child.id}-${item.id}`;
+                          {member.checklist.map((item) => {
+                            const itemKey = `${member.id}-${item.id}`;
                             const isToggling = togglingItems.has(itemKey);
                             return (
                               <button
                                 key={item.id}
-                                onClick={() => toggleItem(child.id, item.id, item.isCompleted)}
+                                onClick={() => toggleItem(member.id, item.id, item.isCompleted)}
                                 disabled={isToggling}
                                 className={`w-full flex items-center gap-3 p-4 min-h-[56px] rounded-xl transition-all cursor-pointer hover:shadow-md active:scale-[0.98] ${
                                   item.isCompleted
