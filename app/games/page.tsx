@@ -10,15 +10,21 @@ import {
   Type,
   Grid3X3,
   ArrowLeft,
+  Search,
+  Shuffle,
+  GitBranch,
 } from "lucide-react";
 import { WordleGame } from "@/components/games/WordleGame";
 import { HangmanGame } from "@/components/games/HangmanGame";
 import { TicTacToeGame } from "@/components/games/TicTacToeGame";
+import { WordSearchGame } from "@/components/games/WordSearchGame";
+import { AnagramsGame } from "@/components/games/AnagramsGame";
+import { WordLadderGame } from "@/components/games/WordLadderGame";
 import { DifficultySelect } from "@/components/games/DifficultySelect";
 
 type Difficulty = "easy" | "medium" | "hard";
 
-type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe";
+type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe" | "wordsearch" | "anagrams" | "wordladder";
 
 const games = [
   {
@@ -53,12 +59,39 @@ const games = [
     color: "from-blue-500 to-cyan-500",
     bgColor: "from-blue-50 to-cyan-50",
   },
+  {
+    id: "wordsearch" as const,
+    name: "Word Search",
+    description: "Find hidden words in the grid!",
+    icon: Search,
+    color: "from-violet-500 to-purple-500",
+    bgColor: "from-violet-50 to-purple-50",
+  },
+  {
+    id: "anagrams" as const,
+    name: "Anagrams",
+    description: "Unscramble letters to make words!",
+    icon: Shuffle,
+    color: "from-rose-500 to-pink-500",
+    bgColor: "from-rose-50 to-pink-50",
+  },
+  {
+    id: "wordladder" as const,
+    name: "Word Ladder",
+    description: "Change one letter at a time!",
+    icon: GitBranch,
+    color: "from-teal-500 to-cyan-500",
+    bgColor: "from-teal-50 to-cyan-50",
+  },
 ];
 
 export default function GamesPage() {
   const [activeGame, setActiveGame] = useState<GameType>("menu");
   const [wordleDifficulty, setWordleDifficulty] = useState<Difficulty | null>(null);
   const [hangmanDifficulty, setHangmanDifficulty] = useState<Difficulty | null>(null);
+  const [wordSearchDifficulty, setWordSearchDifficulty] = useState<Difficulty | null>(null);
+  const [anagramsDifficulty, setAnagramsDifficulty] = useState<Difficulty | null>(null);
+  const [wordLadderDifficulty, setWordLadderDifficulty] = useState<Difficulty | null>(null);
 
   // Show game menu
   if (activeGame === "menu") {
@@ -164,6 +197,9 @@ export default function GamesPage() {
             // Reset difficulty when going back to menu
             if (activeGame === "wordle") setWordleDifficulty(null);
             if (activeGame === "hangman") setHangmanDifficulty(null);
+            if (activeGame === "wordsearch") setWordSearchDifficulty(null);
+            if (activeGame === "anagrams") setAnagramsDifficulty(null);
+            if (activeGame === "wordladder") setWordLadderDifficulty(null);
           }}
           className="mb-4 min-h-[48px]"
         >
@@ -199,6 +235,45 @@ export default function GamesPage() {
           )
         )}
         {activeGame === "tictactoe" && <TicTacToeGame />}
+        {activeGame === "wordsearch" && (
+          wordSearchDifficulty === null ? (
+            <DifficultySelect
+              gameName="Word Search"
+              onSelect={(difficulty) => setWordSearchDifficulty(difficulty)}
+            />
+          ) : (
+            <WordSearchGame
+              difficulty={wordSearchDifficulty}
+              onChangeDifficulty={() => setWordSearchDifficulty(null)}
+            />
+          )
+        )}
+        {activeGame === "anagrams" && (
+          anagramsDifficulty === null ? (
+            <DifficultySelect
+              gameName="Anagrams"
+              onSelect={(difficulty) => setAnagramsDifficulty(difficulty)}
+            />
+          ) : (
+            <AnagramsGame
+              difficulty={anagramsDifficulty}
+              onChangeDifficulty={() => setAnagramsDifficulty(null)}
+            />
+          )
+        )}
+        {activeGame === "wordladder" && (
+          wordLadderDifficulty === null ? (
+            <DifficultySelect
+              gameName="Word Ladder"
+              onSelect={(difficulty) => setWordLadderDifficulty(difficulty)}
+            />
+          ) : (
+            <WordLadderGame
+              difficulty={wordLadderDifficulty}
+              onChangeDifficulty={() => setWordLadderDifficulty(null)}
+            />
+          )
+        )}
       </div>
     </div>
   );

@@ -163,9 +163,7 @@ export function AnagramsGame({ difficulty = 'easy', onChangeDifficulty }: Anagra
             <button
               key={`answer-${i}`}
               onClick={() => handleTileClick(letterIndex)}
-              className="w-12 h-12 rounded-full bg-blue-500 text-white font-bold text-xl
-                flex items-center justify-center shadow-md
-                hover:bg-blue-600 active:scale-95 transition-all"
+              className="w-12 h-12 rounded-full bg-blue-500 text-white font-bold text-xl flex items-center justify-center shadow-md hover:bg-blue-600 active:scale-95 transition-all"
             >
               {scrambled[letterIndex]}
             </button>
