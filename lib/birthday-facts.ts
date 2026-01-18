@@ -1,5 +1,7 @@
 // Birthday facts utility - loads pre-generated facts and selects randomly
 
+import birthdayFactsData from './data/birthday-facts.json';
+
 export interface BirthdayFact {
   type: 'birthday' | 'event' | 'trivia';
   year?: number;
@@ -8,27 +10,8 @@ export interface BirthdayFact {
 
 type BirthdayFactsData = Record<string, BirthdayFact[]>;
 
-let factsCache: BirthdayFactsData | null = null;
-
-/**
- * Load birthday facts from the static JSON file
- */
-async function loadFacts(): Promise<BirthdayFactsData> {
-  if (factsCache) return factsCache;
-
-  try {
-    const response = await fetch('/data/birthday-facts.json');
-    if (!response.ok) {
-      console.error('Failed to load birthday facts:', response.status);
-      return {};
-    }
-    factsCache = await response.json();
-    return factsCache || {};
-  } catch (error) {
-    console.error('Error loading birthday facts:', error);
-    return {};
-  }
-}
+// Static import - data is bundled at build time, always available
+const factsData: BirthdayFactsData = birthdayFactsData as BirthdayFactsData;
 
 /**
  * Format date as MM-DD key for lookup
@@ -42,10 +25,9 @@ function formatDateKey(month: number, day: number): string {
  * @param month 1-12
  * @param day 1-31
  */
-export async function getRandomFact(month: number, day: number): Promise<BirthdayFact | null> {
-  const facts = await loadFacts();
+export function getRandomFact(month: number, day: number): BirthdayFact | null {
   const key = formatDateKey(month, day);
-  const dateFacts = facts[key];
+  const dateFacts = factsData[key];
 
   if (!dateFacts || dateFacts.length === 0) {
     return null;
@@ -58,7 +40,7 @@ export async function getRandomFact(month: number, day: number): Promise<Birthda
 /**
  * Get a random fact from a birthday string (YYYY-MM-DD format)
  */
-export async function getRandomFactFromBirthday(birthday: string): Promise<BirthdayFact | null> {
+export function getRandomFactFromBirthday(birthday: string): BirthdayFact | null {
   try {
     const parts = birthday.split('-');
     if (parts.length !== 3) return null;

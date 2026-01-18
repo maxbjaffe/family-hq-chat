@@ -216,7 +216,8 @@ export default function FamilyProfilePage() {
   // Load birthday fact when member is loaded
   useEffect(() => {
     if (member?.birthday) {
-      getRandomFactFromBirthday(member.birthday).then(setBirthdayFact);
+      const fact = getRandomFactFromBirthday(member.birthday);
+      setBirthdayFact(fact);
     }
   }, [member?.birthday]);
 

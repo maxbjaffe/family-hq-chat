@@ -146,7 +146,7 @@ async function main() {
   }
 
   // Write output
-  const outputPath = path.join(process.cwd(), 'public', 'data', 'birthday-facts.json');
+  const outputPath = path.join(process.cwd(), 'lib', 'data', 'birthday-facts.json');
 
   // Ensure directory exists
   const outputDir = path.dirname(outputPath);
