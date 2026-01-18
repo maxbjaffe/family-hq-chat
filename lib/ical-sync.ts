@@ -28,7 +28,12 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
     if (!response.ok) {
       throw new Error(`Failed to fetch calendar: ${response.status}`);
     }
-    const icalData = await response.text();
+    let icalData = await response.text();
+
+    // Fix malformed multi-line fields (Apple sometimes has improperly folded lines)
+    // Standard iCal folding uses a space or tab at the start of continuation lines
+    // This regex fixes lines that don't start with a valid iCal property
+    icalData = icalData.replace(/\r?\n(?![A-Z-]+[:;]|[ \t]|END:|BEGIN:)/g, ' ');
 
     // Parse with ical.js
     const jcalData = ICAL.parse(icalData);
