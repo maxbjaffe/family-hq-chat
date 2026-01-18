@@ -19,8 +19,12 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
   let errors = 0;
 
   try {
-    // Fetch the iCal feed
-    const response = await fetch(url);
+    // Fetch the iCal feed (Apple requires User-Agent header)
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; FamilyHQ/1.0)',
+      },
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch calendar: ${response.status}`);
     }
