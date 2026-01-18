@@ -16,10 +16,13 @@ import { Clock } from "@/components/Clock";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { HouseTasks } from "@/components/HouseTasks";
+import { Avatar } from "@/components/Avatar";
 
 interface ChildData {
   id: string;
   name: string;
+  role: string;
+  avatar_url: string | null;
   avatar_type: string | null;
   avatar_data: string | null;
   stats: {
@@ -52,12 +55,6 @@ interface ContentData {
   jokeNextRefresh: string;
   factNextRefresh: string;
 }
-
-const AVATAR_COLORS = [
-  "from-blue-400 to-blue-600",
-  "from-purple-400 to-purple-600",
-  "from-green-400 to-green-600",
-];
 
 export default function DashboardPage() {
   const [children, setChildren] = useState<ChildData[]>([]);
@@ -232,7 +229,7 @@ export default function DashboardPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {children.map((child, index) => {
+              {children.map((child) => {
                 const percentage = child.stats.total > 0
                   ? Math.round((child.stats.completed / child.stats.total) * 100)
                   : 0;
@@ -247,24 +244,16 @@ export default function DashboardPage() {
                       }`}
                     >
                       <div className="flex flex-col items-center">
-                        {/* Large Avatar */}
-                        {child.avatar_type === "custom" && child.avatar_data ? (
-                          <div className="w-36 h-36 md:w-44 md:h-44 rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                            <img
-                              src={child.avatar_data}
-                              alt={child.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div
-                            className={`w-36 h-36 md:w-44 md:h-44 rounded-3xl bg-gradient-to-br ${
-                              AVATAR_COLORS[index % AVATAR_COLORS.length]
-                            } flex items-center justify-center text-white text-6xl md:text-7xl font-bold shadow-2xl`}
-                          >
-                            {child.name.charAt(0)}
-                          </div>
-                        )}
+                        {/* Large Avatar - using Avatar component for consistency */}
+                        <Avatar
+                          member={{
+                            name: child.name,
+                            role: child.role || 'kid',
+                            avatar_url: child.avatar_url || child.avatar_data,
+                          }}
+                          size="2xl"
+                          className="shadow-2xl border-4 border-white"
+                        />
 
                         {/* Name */}
                         <h3

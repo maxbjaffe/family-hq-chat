@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { IconPicker } from "@/components/IconPicker";
 import { Avatar } from "@/components/Avatar";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface ChecklistItem {
   id: string;
@@ -118,21 +119,33 @@ function DaySelector({
   };
 
   return (
-    <div className="flex gap-1">
-      {DAYS.map(({ key, label }) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => toggleDay(key)}
-          className={`w-6 h-6 rounded text-xs font-medium transition-colors ${
-            activeDays.includes(key)
-              ? 'bg-purple-600 text-white'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="flex gap-1" role="group" aria-label="Active days">
+      {DAYS.map(({ key, label }) => {
+        const isActive = activeDays.includes(key);
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => toggleDay(key)}
+            aria-pressed={isActive}
+            aria-label={`${key === 'mon' ? 'Monday' : key === 'tue' ? 'Tuesday' : key === 'wed' ? 'Wednesday' : key === 'thu' ? 'Thursday' : key === 'fri' ? 'Friday' : key === 'sat' ? 'Saturday' : 'Sunday'} ${isActive ? '(active)' : '(inactive)'}`}
+            className={`w-7 h-7 rounded text-xs font-bold transition-all flex items-center justify-center ${
+              isActive
+                ? 'bg-purple-600 text-white ring-2 ring-purple-300 shadow-sm'
+                : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border border-dashed border-slate-300'
+            }`}
+          >
+            {isActive ? (
+              <span className="flex flex-col items-center leading-none">
+                <span>{label}</span>
+                <span className="text-[8px] mt-[-2px]">•</span>
+              </span>
+            ) : (
+              label
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -170,6 +183,19 @@ export default function AdminPage() {
   const [showNewIconPicker, setShowNewIconPicker] = useState(false);
   const [showEditIconPicker, setShowEditIconPicker] = useState(false);
   const [customIcons, setCustomIcons] = useState<MediaFile[]>([]);
+
+  // Loading states for buttons
+  const [savingMember, setSavingMember] = useState(false);
+  const [savingItem, setSavingItem] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<string | null>(null);
+  const [updatingDays, setUpdatingDays] = useState<string | null>(null);
+
+  // Confirmation dialog states
+  const [confirmDeleteMember, setConfirmDeleteMember] = useState<string | null>(null);
+  const [confirmDeleteItem, setConfirmDeleteItem] = useState<string | null>(null);
+  const [confirmDeleteMedia, setConfirmDeleteMedia] = useState<string | null>(null);
+  const [deletingMember, setDeletingMember] = useState(false);
+  const [deletingMedia, setDeletingMedia] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -225,6 +251,7 @@ export default function AdminPage() {
       }
     }
 
+    setSavingMember(true);
     try {
       const response = await fetch("/api/admin/family", {
         method: "POST",
@@ -242,12 +269,13 @@ export default function AdminPage() {
       }
     } catch (error) {
       toast.error("Failed to add member");
+    } finally {
+      setSavingMember(false);
     }
   }
 
   async function deleteMember(memberId: string) {
-    if (!confirm("Delete this family member? This cannot be undone.")) return;
-
+    setDeletingMember(true);
     try {
       const response = await fetch(`/api/admin/family?id=${memberId}`, {
         method: "DELETE",
@@ -264,6 +292,9 @@ export default function AdminPage() {
       }
     } catch (error) {
       toast.error("Failed to delete member");
+    } finally {
+      setDeletingMember(false);
+      setConfirmDeleteMember(null);
     }
   }
 
@@ -387,8 +418,7 @@ export default function AdminPage() {
   }
 
   async function deleteMedia(path: string) {
-    if (!confirm("Delete this file?")) return;
-
+    setDeletingMedia(true);
     try {
       const response = await fetch(`/api/admin/media?path=${encodeURIComponent(path)}`, {
         method: "DELETE",
@@ -402,6 +432,9 @@ export default function AdminPage() {
       }
     } catch (error) {
       toast.error("Delete failed");
+    } finally {
+      setDeletingMedia(false);
+      setConfirmDeleteMedia(null);
     }
   }
 
@@ -430,6 +463,7 @@ export default function AdminPage() {
   async function addItem() {
     if (!selectedMember || !newItemForm.title.trim()) return;
 
+    setSavingItem(true);
     try {
       const response = await fetch("/api/admin/checklist", {
         method: "POST",
@@ -452,6 +486,8 @@ export default function AdminPage() {
       }
     } catch (error) {
       toast.error("Failed to add item");
+    } finally {
+      setSavingItem(false);
     }
   }
 
@@ -480,8 +516,7 @@ export default function AdminPage() {
   }
 
   async function deleteItem(id: string) {
-    if (!confirm("Delete this checklist item?")) return;
-
+    setDeletingItem(id);
     try {
       const response = await fetch(`/api/admin/checklist?id=${id}`, {
         method: "DELETE",
@@ -495,6 +530,9 @@ export default function AdminPage() {
       }
     } catch (error) {
       toast.error("Failed to delete item");
+    } finally {
+      setDeletingItem(null);
+      setConfirmDeleteItem(null);
     }
   }
 
@@ -519,6 +557,16 @@ export default function AdminPage() {
   }
 
   async function updateItemDays(itemId: string, days: string[]) {
+    setUpdatingDays(itemId);
+
+    // Optimistic update - update local state immediately
+    setMembers(prev => prev.map(member => ({
+      ...member,
+      checklist_items: member.checklist_items.map(item =>
+        item.id === itemId ? { ...item, active_days: JSON.stringify(days) } : item
+      )
+    })));
+
     try {
       const res = await fetch('/api/admin/checklist', {
         method: 'PUT',
@@ -526,12 +574,20 @@ export default function AdminPage() {
         body: JSON.stringify({ id: itemId, active_days: JSON.stringify(days) }),
       });
       if (res.ok) {
-        loadData();
+        // No need to reload - state already updated
         toast.success('Days updated');
+      } else {
+        // Revert on failure
+        loadData();
+        toast.error('Failed to update days');
       }
     } catch (error) {
       console.error('Failed to update days:', error);
+      // Revert on error
+      loadData();
       toast.error('Failed to update days');
+    } finally {
+      setUpdatingDays(null);
     }
   }
 
@@ -734,14 +790,18 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="flex gap-2 mt-4">
-                    <Button size="sm" onClick={addMember}>
-                      <Save className="h-4 w-4 mr-1" />
-                      Save
+                    <Button size="sm" onClick={addMember} disabled={savingMember}>
+                      {savingMember ? (
+                        <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-1" />
+                      )}
+                      {savingMember ? 'Saving...' : 'Save'}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => {
                       setShowAddMember(false);
                       setNewMemberForm({ name: "", role: "kid", pin: "", has_checklist: false });
-                    }}>
+                    }} disabled={savingMember}>
                       <X className="h-4 w-4 mr-1" />
                       Cancel
                     </Button>
@@ -819,7 +879,7 @@ export default function AdminPage() {
                     size="sm"
                     variant="ghost"
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => deleteMember(currentMember.id)}
+                    onClick={() => setConfirmDeleteMember(currentMember.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete
@@ -1042,9 +1102,13 @@ export default function AdminPage() {
                       />
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={addItem} disabled={!newItemForm.title.trim()}>
-                        <Save className="h-4 w-4 mr-1" />
-                        Save
+                      <Button size="sm" onClick={addItem} disabled={!newItemForm.title.trim() || savingItem}>
+                        {savingItem ? (
+                          <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4 mr-1" />
+                        )}
+                        {savingItem ? 'Saving...' : 'Save'}
                       </Button>
                       <Button
                         size="sm"
@@ -1054,6 +1118,7 @@ export default function AdminPage() {
                           setShowNewIconPicker(false);
                           setNewItemForm({ title: "", icon: "" });
                         }}
+                        disabled={savingItem}
                       >
                         <X className="h-4 w-4 mr-1" />
                         Cancel
@@ -1146,16 +1211,23 @@ export default function AdminPage() {
                               )}
                             </span>
                             <span className="flex-1 font-medium">{item.title}</span>
-                            <DaySelector
-                              activeDays={(() => {
-                                try {
-                                  return JSON.parse(item.active_days || '["mon","tue","wed","thu","fri"]');
-                                } catch {
-                                  return ['mon', 'tue', 'wed', 'thu', 'fri'];
-                                }
-                              })()}
-                              onChange={(days) => updateItemDays(item.id, days)}
-                            />
+                            <div className="relative">
+                              {updatingDays === item.id && (
+                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded">
+                                  <RefreshCw className="h-3 w-3 animate-spin text-purple-600" />
+                                </div>
+                              )}
+                              <DaySelector
+                                activeDays={(() => {
+                                  try {
+                                    return JSON.parse(item.active_days || '["mon","tue","wed","thu","fri"]');
+                                  } catch {
+                                    return ['mon', 'tue', 'wed', 'thu', 'fri'];
+                                  }
+                                })()}
+                                onChange={(days) => updateItemDays(item.id, days)}
+                              />
+                            </div>
                             <div className="flex gap-1">
                               <Button
                                 size="sm"
@@ -1193,9 +1265,14 @@ export default function AdminPage() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => deleteItem(item.id)}
+                                onClick={() => setConfirmDeleteItem(item.id)}
+                                disabled={deletingItem === item.id}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                {deletingItem === item.id ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
                               </Button>
                             </div>
                           </>
@@ -1313,7 +1390,7 @@ export default function AdminPage() {
                           size="sm"
                           variant="destructive"
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0"
-                          onClick={() => deleteMedia(file.path)}
+                          onClick={() => setConfirmDeleteMedia(file.path)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -1383,6 +1460,50 @@ export default function AdminPage() {
           </>
         )}
       </div>
+
+      {/* Confirmation Dialogs */}
+      <ConfirmDialog
+        isOpen={!!confirmDeleteMember}
+        title="Delete Family Member"
+        message={
+          <>
+            Are you sure you want to delete{' '}
+            <strong>{members.find(m => m.id === confirmDeleteMember)?.name}</strong>?
+            This will also delete all their checklist items and cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deletingMember}
+        onConfirm={() => confirmDeleteMember && deleteMember(confirmDeleteMember)}
+        onCancel={() => setConfirmDeleteMember(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={!!confirmDeleteItem}
+        title="Delete Checklist Item"
+        message={
+          <>
+            Are you sure you want to delete this checklist item? This cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={!!deletingItem}
+        onConfirm={() => confirmDeleteItem && deleteItem(confirmDeleteItem)}
+        onCancel={() => setConfirmDeleteItem(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={!!confirmDeleteMedia}
+        title="Delete Media File"
+        message="Are you sure you want to delete this file? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deletingMedia}
+        onConfirm={() => confirmDeleteMedia && deleteMedia(confirmDeleteMedia)}
+        onCancel={() => setConfirmDeleteMedia(null)}
+      />
     </div>
   );
 }

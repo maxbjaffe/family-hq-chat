@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("checklist_items")
-      .select("id, title, icon, display_order, weekdays_only, reset_daily, is_active, member_id, child_id")
+      .select("id, title, icon, display_order, weekdays_only, reset_daily, is_active, member_id, child_id, active_days")
       .order("display_order");
 
     // Filter by member_id or child_id if provided (prefer member_id)

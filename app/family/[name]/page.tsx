@@ -61,10 +61,56 @@ const ROLE_EMOJI: Record<string, string> = {
 function formatBirthday(birthday: string | null): string | null {
   if (!birthday) return null;
   try {
-    const date = new Date(birthday);
+    // Parse date parts to avoid timezone issues
+    // Dates like "1985-05-12" get interpreted as UTC midnight,
+    // which becomes the previous day in local time zones
+    const parts = birthday.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+      const day = parseInt(parts[2], 10);
+      const date = new Date(year, month, day); // Creates local date
+      return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    // Fallback for other formats
+    const date = new Date(birthday + 'T12:00:00'); // Noon to avoid timezone issues
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   } catch {
     return birthday;
+  }
+}
+
+function getBirthdayCountdown(birthday: string | null): { days: number; isToday: boolean; isTomorrow: boolean } | null {
+  if (!birthday) return null;
+  try {
+    const parts = birthday.split('-');
+    if (parts.length !== 3) return null;
+
+    const birthMonth = parseInt(parts[1], 10) - 1;
+    const birthDay = parseInt(parts[2], 10);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get this year's birthday
+    let nextBirthday = new Date(today.getFullYear(), birthMonth, birthDay);
+    nextBirthday.setHours(0, 0, 0, 0);
+
+    // If birthday has passed this year, use next year
+    if (nextBirthday < today) {
+      nextBirthday = new Date(today.getFullYear() + 1, birthMonth, birthDay);
+    }
+
+    const diffTime = nextBirthday.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return {
+      days: diffDays,
+      isToday: diffDays === 0,
+      isTomorrow: diffDays === 1,
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -246,13 +292,51 @@ export default function FamilyProfilePage() {
 
         {/* Info Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {isVisible('birthday') && (
-            <InfoCard
-              icon={Cake}
-              label="Birthday"
-              value={formatBirthday(member.birthday)}
-            />
-          )}
+          {isVisible('birthday') && member.birthday && (() => {
+            const countdown = getBirthdayCountdown(member.birthday);
+            const formattedDate = formatBirthday(member.birthday);
+
+            if (countdown?.isToday) {
+              return (
+                <Card className="p-4 bg-gradient-to-br from-pink-50 to-purple-50 border-pink-200 sm:col-span-2">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-pink-100">
+                      <Cake className="h-5 w-5 text-pink-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-pink-600 mb-1">Birthday</p>
+                      <p className="font-medium text-slate-800">{formattedDate}</p>
+                      <p className="text-lg font-bold text-pink-600 mt-1">🎉 Happy Birthday! 🎂</p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            }
+
+            return (
+              <Card className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-slate-100">
+                    <Cake className="h-5 w-5 text-slate-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-slate-500 mb-1">Birthday</p>
+                    <p className="font-medium text-slate-800">{formattedDate}</p>
+                    {countdown && (
+                      <p className="text-sm text-purple-600 mt-1">
+                        {countdown.isTomorrow
+                          ? "🎈 Tomorrow!"
+                          : countdown.days <= 30
+                            ? `🎈 ${countdown.days} days away`
+                            : `${countdown.days} days away`
+                        }
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })()}
           {isVisible('bloodType') && (
             <InfoCard
               icon={Droplets}

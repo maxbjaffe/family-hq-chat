@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 interface CalendarEvent {
@@ -49,7 +49,10 @@ export function CalendarWidget() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading...</p>
+        <div className="flex items-center gap-2 py-2">
+          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+          <span className="text-sm text-gray-500">Loading events...</span>
+        </div>
       ) : events.length === 0 ? (
         <p className="text-sm text-gray-500">No events today</p>
       ) : (
