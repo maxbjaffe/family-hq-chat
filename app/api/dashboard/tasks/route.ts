@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTasks, getProjects, completeTask } from '@/lib/todoist';
-import { getFamilyDataClient } from '@/lib/supabase';
+
+const HOUSE_TASKS_PROJECT_NAME = 'House Tasks';
 
 export async function GET(request: Request) {
   try {
@@ -15,22 +16,19 @@ export async function GET(request: Request) {
 
     const projectMap = new Map(projects.map(p => [p.id, p.name]));
 
-    // If no user logged in, filter to "family" visibility only
-    // For MVP, return all tasks for authenticated users
     let filteredTasks = tasks;
 
     if (!userId) {
-      // Get family-visible project IDs from content_visibility
-      const supabase = getFamilyDataClient();
-      const { data: visibleContent } = await supabase
-        .from('content_visibility')
-        .select('content_id')
-        .eq('content_type', 'todoist_project')
-        .eq('visibility', 'family');
+      // For unauthenticated users, show only House Tasks (same as homepage)
+      const houseProject = projects.find(
+        p => p.name.toLowerCase() === HOUSE_TASKS_PROJECT_NAME.toLowerCase()
+      );
 
-      const familyProjectIds = new Set(visibleContent?.map(v => v.content_id) || []);
-
-      filteredTasks = tasks.filter(t => familyProjectIds.has(t.project_id));
+      if (houseProject) {
+        filteredTasks = tasks.filter(t => t.project_id === houseProject.id);
+      } else {
+        filteredTasks = [];
+      }
     }
 
     const enrichedTasks = filteredTasks.map(task => ({
