@@ -169,4 +169,44 @@ export const tools: Anthropic.Tool[] = [
       required: ['priority_number', 'content'],
     },
   },
+  {
+    name: 'get_free_time',
+    description: 'Analyze calendar to find free time slots during working hours. Use when the user asks about availability, wants to schedule something, or asks "when do I have time for..."',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        days: {
+          type: 'number',
+          description: 'Number of days to analyze (default 7)',
+        },
+        min_duration: {
+          type: 'number',
+          description: 'Minimum slot duration in minutes (default 30)',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'suggest_time_block',
+    description: 'Suggest when to schedule a task based on its estimated duration and calendar availability. Use when user wants to find time for a specific task.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        task_description: {
+          type: 'string',
+          description: 'What the user needs to do',
+        },
+        estimated_minutes: {
+          type: 'number',
+          description: 'Estimated time needed in minutes. If not provided, will estimate based on task type.',
+        },
+        prefer_morning: {
+          type: 'boolean',
+          description: 'Prefer morning slots if available (default true for focus work)',
+        },
+      },
+      required: ['task_description'],
+    },
+  },
 ];

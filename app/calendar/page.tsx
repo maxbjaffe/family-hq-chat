@@ -1,22 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, RefreshCw, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, RefreshCw, MapPin } from "lucide-react";
+import { getCalendarColor } from "@/lib/calendar-colors";
 
 interface CalendarEvent {
   id: string;
   title: string;
   start_time: string;
-  end_time?: string;
+  end_time?: string | null;
   all_day?: boolean;
-  category?: string;
+  calendar_name?: string | null;
+  location?: string | null;
 }
 
 export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
 
   useEffect(() => {
     loadEvents();
@@ -37,6 +40,21 @@ export default function CalendarPage() {
     }
   }
 
+  // Get unique calendar names from events
+  const calendarNames = useMemo(() => {
+    const names = new Set<string>();
+    events.forEach(e => {
+      if (e.calendar_name) names.add(e.calendar_name);
+    });
+    return Array.from(names).sort();
+  }, [events]);
+
+  // Filter events by selected calendar
+  const filteredEvents = useMemo(() => {
+    if (!selectedCalendar) return events;
+    return events.filter(e => e.calendar_name === selectedCalendar);
+  }, [events, selectedCalendar]);
+
   const formatEventTime = (dateStr: string, allDay?: boolean) => {
     if (allDay) return "All day";
     const date = new Date(dateStr);
@@ -49,11 +67,15 @@ export default function CalendarPage() {
   const formatEventDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) return "Today";
-    if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+    const eventDay = new Date(date);
+    eventDay.setHours(0, 0, 0, 0);
+
+    if (eventDay.getTime() === today.getTime()) return "Today";
+    if (eventDay.getTime() === tomorrow.getTime()) return "Tomorrow";
     return date.toLocaleDateString("en-US", {
       weekday: "long",
       month: "short",
@@ -62,7 +84,7 @@ export default function CalendarPage() {
   };
 
   // Group events by date
-  const groupedEvents = events.reduce((acc, event) => {
+  const groupedEvents = filteredEvents.reduce((acc, event) => {
     const dateKey = formatEventDate(event.start_time);
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(event);
@@ -89,18 +111,57 @@ export default function CalendarPage() {
           </Button>
         </div>
 
+        {/* Calendar Filter */}
+        {calendarNames.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setSelectedCalendar(null)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                !selectedCalendar
+                  ? "bg-purple-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              All ({events.length})
+            </button>
+            {calendarNames.map(name => {
+              const colors = getCalendarColor(name);
+              const count = events.filter(e => e.calendar_name === name).length;
+              return (
+                <button
+                  key={name}
+                  onClick={() => setSelectedCalendar(name === selectedCalendar ? null : name)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    selectedCalendar === name
+                      ? `${colors.bg} ${colors.text} ring-2 ring-offset-1 ${colors.border}`
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${colors.dot}`} />
+                  {name} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Events List */}
         {loading ? (
           <Card className="p-8 text-center">
             <RefreshCw className="h-8 w-8 animate-spin mx-auto text-slate-400" />
             <p className="mt-2 text-slate-500">Loading events...</p>
           </Card>
-        ) : events.length === 0 ? (
+        ) : filteredEvents.length === 0 ? (
           <Card className="p-8 text-center">
             <CalendarIcon className="h-16 w-16 mx-auto text-slate-300 mb-4" />
-            <p className="text-lg text-slate-500">No upcoming events</p>
+            <p className="text-lg text-slate-500">
+              {selectedCalendar ? `No events in ${selectedCalendar}` : "No upcoming events"}
+            </p>
             <p className="text-sm text-slate-400 mt-1">
-              Events will appear here once calendar sync is configured
+              {selectedCalendar
+                ? "Try selecting a different calendar or show all"
+                : "Events will appear here once calendar sync is configured"
+              }
             </p>
           </Card>
         ) : (
@@ -112,30 +173,39 @@ export default function CalendarPage() {
                   {date}
                 </h2>
                 <div className="space-y-2">
-                  {dateEvents.map((event) => (
-                    <Card
-                      key={event.id}
-                      className="p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-16 text-center">
-                          <div className="text-sm font-medium text-blue-600">
-                            {formatEventTime(event.start_time, event.all_day)}
+                  {dateEvents.map((event) => {
+                    const colors = getCalendarColor(event.calendar_name);
+                    return (
+                      <Card
+                        key={event.id}
+                        className={`p-4 hover:shadow-md transition-shadow border-l-4 ${colors.border} ${colors.bg}`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 w-16 text-center">
+                            <div className={`text-sm font-medium ${colors.text}`}>
+                              {formatEventTime(event.start_time, event.all_day)}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-slate-900">
+                              {event.title}
+                            </h3>
+                            {event.location && (
+                              <div className="flex items-center gap-1 mt-1 text-sm text-slate-500">
+                                <MapPin className="h-3 w-3" />
+                                <span className="truncate">{event.location}</span>
+                              </div>
+                            )}
+                            {event.calendar_name && (
+                              <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${colors.bg} ${colors.text} border ${colors.border}`}>
+                                {event.calendar_name}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-slate-900 truncate">
-                            {event.title}
-                          </h3>
-                          {event.category && (
-                            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600">
-                              {event.category}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             ))}

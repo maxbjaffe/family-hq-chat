@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
-import { getUpcomingEvents } from "@/lib/supabase";
+import { getCachedCalendarEvents } from "@/lib/supabase";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const events = await getUpcomingEvents(14); // Next 2 weeks
+    const { searchParams } = new URL(request.url);
+    const days = parseInt(searchParams.get('days') || '14');
+    const calendar = searchParams.get('calendar');
+
+    let events = await getCachedCalendarEvents(days);
+
+    // Filter by calendar name if specified
+    if (calendar) {
+      events = events.filter(e => e.calendar_name === calendar);
+    }
 
     return NextResponse.json({ events });
   } catch (error) {

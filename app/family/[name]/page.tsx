@@ -21,6 +21,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
+import { FamilyCalendarSection } from '@/components/FamilyCalendarSection';
 
 interface FamilyMember {
   id: string;
@@ -394,6 +395,11 @@ export default function FamilyProfilePage() {
               />
             )}
           </div>
+        )}
+
+        {/* Upcoming Calendar Events */}
+        {member.role !== 'Dog' && avatarInfo?.role !== 'pet' && (
+          <FamilyCalendarSection memberName={member.name.split(' ')[0]} />
         )}
 
         {/* Patient Portal Link */}

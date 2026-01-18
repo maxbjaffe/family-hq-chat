@@ -17,6 +17,7 @@ import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { HouseTasks } from "@/components/HouseTasks";
 import { Avatar } from "@/components/Avatar";
+import { UpcomingEventsCard } from "@/components/UpcomingEventsCard";
 
 interface ChildData {
   id: string;
@@ -186,8 +187,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Weather and House Tasks Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Weather, Calendar, and House Tasks Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Weather Card - Compact */}
           {weather && (
             <Card className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50">
@@ -205,6 +206,9 @@ export default function DashboardPage() {
               </div>
             </Card>
           )}
+
+          {/* Upcoming Events */}
+          <UpcomingEventsCard />
 
           {/* House Tasks */}
           <HouseTasks />

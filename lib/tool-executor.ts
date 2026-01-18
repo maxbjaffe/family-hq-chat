@@ -9,6 +9,12 @@ import {
   getCurrentWeekStart,
   getPreviousWeekStart,
 } from '@/lib/supabase';
+import {
+  calculateFreeSlots,
+  suggestTimeBlock,
+  formatTimeSlot,
+  estimateTaskDuration,
+} from '@/lib/time-blocking';
 
 export interface ToolResult {
   success: boolean;
@@ -145,6 +151,74 @@ export async function executeTool(
           data: {
             priority_number: toolInput.priority_number,
             content: toolInput.content,
+          },
+        };
+      }
+
+      case 'get_free_time': {
+        const days = (toolInput.days as number) || 7;
+        const minDuration = (toolInput.min_duration as number) || 30;
+
+        const events = await getCachedCalendarEvents(days);
+
+        const startDate = new Date();
+        const endDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+        const freeSlots = calculateFreeSlots(events, startDate, endDate);
+        const filteredSlots = freeSlots.filter(s => s.duration >= minDuration);
+
+        // Format slots for display, limit to top 10
+        const formattedSlots = filteredSlots.slice(0, 10).map(formatTimeSlot);
+
+        // Calculate total free time
+        const totalFreeMinutes = filteredSlots.reduce((sum, s) => sum + s.duration, 0);
+        const totalHours = Math.floor(totalFreeMinutes / 60);
+        const remainingMinutes = totalFreeMinutes % 60;
+
+        return {
+          success: true,
+          data: {
+            days_analyzed: days,
+            min_slot_duration: minDuration,
+            slots_found: filteredSlots.length,
+            total_free_time: `${totalHours}h ${remainingMinutes}m`,
+            slots: formattedSlots,
+          },
+        };
+      }
+
+      case 'suggest_time_block': {
+        const taskDescription = toolInput.task_description as string;
+        const estimatedMinutes = (toolInput.estimated_minutes as number) || estimateTaskDuration(taskDescription);
+        const preferMorning = (toolInput.prefer_morning as boolean) ?? true;
+
+        const events = await getCachedCalendarEvents(7);
+        const startDate = new Date();
+        const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        const freeSlots = calculateFreeSlots(events, startDate, endDate);
+        const suggestion = suggestTimeBlock(freeSlots, estimatedMinutes, { preferMorning });
+
+        if (!suggestion) {
+          return {
+            success: true,
+            data: {
+              found: false,
+              task: taskDescription,
+              estimated_duration: `${estimatedMinutes} minutes`,
+              message: 'No suitable time slot found in the next 7 days. Consider breaking the task into smaller chunks or clearing some calendar time.',
+            },
+          };
+        }
+
+        return {
+          success: true,
+          data: {
+            found: true,
+            task: taskDescription,
+            estimated_duration: `${estimatedMinutes} minutes`,
+            suggested_slot: formatTimeSlot(suggestion),
+            message: `I found a good time slot for "${taskDescription}". Would you like me to block this time on your calendar?`,
           },
         };
       }
