@@ -1,4 +1,4 @@
-import ical from 'node-ical';
+import ICAL from 'ical.js';
 import { getFamilyDataClient } from './supabase';
 
 interface CalendarFeed {
@@ -19,21 +19,33 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
   let errors = 0;
 
   try {
-    // Fetch and parse the iCal feed
-    const events = await ical.async.fromURL(url);
+    // Fetch the iCal feed
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch calendar: ${response.status}`);
+    }
+    const icalData = await response.text();
+
+    // Parse with ical.js
+    const jcalData = ICAL.parse(icalData);
+    const vcalendar = new ICAL.Component(jcalData);
+    const vevents = vcalendar.getAllSubcomponents('vevent');
 
     // Get date range: today to 14 days from now
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const futureLimit = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
-    for (const [uid, event] of Object.entries(events)) {
-      // Skip non-event entries (like VTIMEZONE)
-      if (event.type !== 'VEVENT') continue;
-
+    for (const vevent of vevents) {
       try {
-        const startDate = event.start ? new Date(event.start as Date) : null;
-        const endDate = event.end ? new Date(event.end as Date) : null;
+        const event = new ICAL.Event(vevent);
+        const uid = event.uid;
+        const summary = event.summary || 'Untitled Event';
+        const location = event.location || null;
+
+        // Get start and end times
+        const startDate = event.startDate?.toJSDate();
+        const endDate = event.endDate?.toJSDate();
 
         // Skip events outside our date range
         if (!startDate || startDate < now || startDate > futureLimit) continue;
@@ -42,18 +54,18 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
           .from('cached_calendar_events')
           .upsert({
             event_id: uid,
-            title: event.summary || 'Untitled Event',
+            title: summary,
             start_time: startDate.toISOString(),
             end_time: endDate?.toISOString() || null,
             calendar_name: feed.name,
-            location: event.location || null,
+            location: location,
             updated_at: new Date().toISOString(),
           }, {
             onConflict: 'event_id',
           });
 
         if (error) {
-          console.error(`Error syncing event ${event.summary}:`, error);
+          console.error(`Error syncing event ${summary}:`, error);
           errors++;
         } else {
           synced++;
