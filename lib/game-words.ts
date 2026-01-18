@@ -272,6 +272,55 @@ export const HANGMAN_WORDS: Record<Difficulty, HangmanDifficulty> = {
 };
 
 // =============================================================================
+// Word Search Words
+// =============================================================================
+
+/**
+ * Word Search word lists by difficulty:
+ * - Easy: 3-4 letter words, simple nouns
+ * - Medium: 4-5 letter words, common vocabulary
+ * - Hard: 5-7 letter words, challenging vocabulary
+ */
+export const WORD_SEARCH_WORDS: Record<Difficulty, string[]> = {
+  easy: [
+    'CAT', 'DOG', 'SUN', 'HAT', 'BED', 'CUP', 'RUN', 'FUN', 'MAP', 'PEN',
+    'BAT', 'RAT', 'JAM', 'VAN', 'FAN', 'CAN', 'MAN', 'PAN', 'TAN', 'BUS',
+    'BALL', 'TREE', 'BIRD', 'FISH', 'CAKE', 'MILK', 'BOOK', 'FROG', 'STAR', 'MOON',
+    'BEAR', 'DUCK', 'KITE', 'RAIN', 'SNOW', 'LEAF', 'NEST', 'BOAT', 'SHIP', 'WAVE',
+    'HAND', 'FOOT', 'NOSE', 'EYES', 'EARS', 'LIPS', 'TOES', 'HAIR', 'FACE', 'HEAD',
+  ],
+  medium: [
+    'APPLE', 'BEACH', 'CHAIR', 'DANCE', 'EARTH', 'FLAME', 'GRAPE', 'HOUSE', 'IGLOO', 'JELLY',
+    'KOALA', 'LEMON', 'MANGO', 'NURSE', 'OCEAN', 'PIANO', 'QUEEN', 'RIVER', 'SNAKE', 'TIGER',
+    'UNCLE', 'VOICE', 'WATER', 'YOUTH', 'ZEBRA', 'BREAD', 'CLOUD', 'DREAM', 'FAIRY', 'GHOST',
+    'HEART', 'JUICE', 'LAUGH', 'MAGIC', 'NIGHT', 'PAINT', 'QUIET', 'SMILE', 'TRAIN', 'WORLD',
+    'BRAIN', 'CROWN', 'FROST', 'GIANT', 'HORSE', 'JEWEL', 'LIGHT', 'MOUSE', 'PLANT', 'STORM',
+  ],
+  hard: [
+    'PLANET', 'GARDEN', 'FROZEN', 'CASTLE', 'DRAGON', 'FOREST', 'ISLAND', 'JUNGLE', 'KNIGHT', 'LADDER',
+    'MONKEY', 'NATURE', 'ORANGE', 'PARROT', 'RABBIT', 'SILVER', 'TURKEY', 'VALLEY', 'WINDOW', 'YELLOW',
+    'ANCHOR', 'BRIDGE', 'CANDLE', 'DESERT', 'EMPIRE', 'FLIGHT', 'GLOBAL', 'HARBOR', 'INSECT', 'JIGSAW',
+    'KITTEN', 'LIZARD', 'MARBLE', 'NAPKIN', 'OYSTER', 'PEPPER', 'QUIVER', 'ROCKET', 'SPHINX', 'TURTLE',
+    'UMPIRE', 'VELVET', 'WALRUS', 'ZOMBIE', 'BRANCH', 'SPLASH', 'STREAM', 'THRONE', 'VOYAGE', 'WIZARD',
+  ],
+};
+
+/**
+ * Get random words for Word Search puzzle
+ */
+export function getWordSearchWords(difficulty: Difficulty, count: number): string[] {
+  const words = [...WORD_SEARCH_WORDS[difficulty]];
+  const selected: string[] = [];
+
+  for (let i = 0; i < count && words.length > 0; i++) {
+    const index = Math.floor(Math.random() * words.length);
+    selected.push(words.splice(index, 1)[0]);
+  }
+
+  return selected;
+}
+
+// =============================================================================
 // Utility Functions
 // =============================================================================
 
