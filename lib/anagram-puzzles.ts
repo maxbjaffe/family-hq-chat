@@ -100,7 +100,7 @@ export const ANAGRAM_PUZZLES: Record<Difficulty, AnagramPuzzle[]> = {
     },
     {
       letters: 'ORANGE',
-      words: ['ORANGE', 'ONAGER', 'ORANG', 'ANGER', 'RANGE', 'ORGAN', 'GROAN', 'ARGON', 'GONER', 'GENRO', 'ERGON', 'AGONE', 'OATER', 'ORATE', 'RAGE', 'RANG', 'GORE', 'GONE', 'GEAR', 'NEAR', 'EARN', 'OGRE', 'ERGO', 'GOER', 'AEON', 'AREG', 'GNAR', 'GRAN', 'GEAN', 'GAEN', 'NARE', 'AERO', 'AGON', 'ROAN', 'AGE', 'AGO', 'ARE', 'EAR', 'ERA', 'ERG', 'NAG', 'NOR', 'OAR', 'ONE', 'ORE', 'RAG', 'RAN', 'REG', 'ROE', 'GOA', 'GAN', 'GAR', 'GEN', 'EGO', 'EON'],
+      words: ['ORANGE', 'ONAGER', 'ORANG', 'ANGER', 'RANGE', 'ORGAN', 'GROAN', 'ARGON', 'GONER', 'GENRO', 'ERGON', 'AGONE', 'RAGE', 'RANG', 'GORE', 'GONE', 'GEAR', 'NEAR', 'EARN', 'OGRE', 'ERGO', 'GOER', 'AEON', 'AREG', 'GNAR', 'GRAN', 'GEAN', 'GAEN', 'NARE', 'AERO', 'AGON', 'ROAN', 'AGE', 'AGO', 'ARE', 'EAR', 'ERA', 'ERG', 'NAG', 'NOR', 'OAR', 'ONE', 'ORE', 'RAG', 'RAN', 'REG', 'ROE', 'GOA', 'GAN', 'GAR', 'GEN', 'EGO', 'EON'],
       minWords: 5
     },
     {
@@ -110,7 +110,7 @@ export const ANAGRAM_PUZZLES: Record<Difficulty, AnagramPuzzle[]> = {
     },
     {
       letters: 'GARDEN',
-      words: ['GARDEN', 'DANGER', 'GANDER', 'RANGED', 'GRANDE', 'GRADE', 'GRAND', 'ANGER', 'RANGE', 'RAGED', 'DEAR', 'READ', 'DARE', 'RANG', 'DRAG', 'GRAD', 'NEAR', 'EARN', 'DEAN', 'DANE', 'RAND', 'NARD', 'DARN', 'AGER', 'GEAR', 'RAGE', 'AGED', 'EGAD', 'GADE', 'GNAR', 'GRAN', 'DANG', 'NERD', 'REND', 'DENE', 'DEN', 'END', 'AND', 'AGE', 'ARE', 'EAR', 'ERA', 'NAG', 'RAG', 'RAN', 'RED', 'GAR', 'GAN', 'REG', 'ERG', 'RAD', 'GAD', 'GED'],
+      words: ['GARDEN', 'DANGER', 'GANDER', 'RANGED', 'GRANDE', 'GRADE', 'GRAND', 'ANGER', 'RANGE', 'RAGED', 'DEAR', 'READ', 'DARE', 'RANG', 'DRAG', 'GRAD', 'NEAR', 'EARN', 'DEAN', 'DANE', 'RAND', 'NARD', 'DARN', 'AGER', 'GEAR', 'RAGE', 'AGED', 'EGAD', 'GADE', 'GNAR', 'GRAN', 'DANG', 'NERD', 'REND', 'DEN', 'END', 'AND', 'AGE', 'ARE', 'EAR', 'ERA', 'NAG', 'RAG', 'RAN', 'RED', 'GAR', 'GAN', 'REG', 'ERG', 'RAD', 'GAD', 'GED'],
       minWords: 5
     },
     {
