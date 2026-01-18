@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { FamilyCalendarSection } from '@/components/FamilyCalendarSection';
+import { getZodiacFromBirthday } from '@/lib/zodiac';
+import { getRandomFactFromBirthday, formatFact, type BirthdayFact } from '@/lib/birthday-facts';
 
 interface FamilyMember {
   id: string;
@@ -153,6 +155,7 @@ export default function FamilyProfilePage() {
   const [notFound, setNotFound] = useState(false);
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [avatarInfo, setAvatarInfo] = useState<{ avatar_url?: string | null; role?: string } | null>(null);
+  const [birthdayFact, setBirthdayFact] = useState<BirthdayFact | null>(null);
 
   const isVisible = (field: string) => visibility[field] !== false;
 
@@ -209,6 +212,13 @@ export default function FamilyProfilePage() {
       loadMember();
     }
   }, [name]);
+
+  // Load birthday fact when member is loaded
+  useEffect(() => {
+    if (member?.birthday) {
+      getRandomFactFromBirthday(member.birthday).then(setBirthdayFact);
+    }
+  }, [member?.birthday]);
 
   if (loading) {
     return (
@@ -296,6 +306,7 @@ export default function FamilyProfilePage() {
           {isVisible('birthday') && member.birthday && (() => {
             const countdown = getBirthdayCountdown(member.birthday);
             const formattedDate = formatBirthday(member.birthday);
+            const zodiac = getZodiacFromBirthday(member.birthday);
 
             if (countdown?.isToday) {
               return (
@@ -307,7 +318,17 @@ export default function FamilyProfilePage() {
                     <div className="flex-1">
                       <p className="text-sm text-pink-600 mb-1">Birthday</p>
                       <p className="font-medium text-slate-800">{formattedDate}</p>
+                      {zodiac && (
+                        <p className="text-sm text-purple-600 mt-1">
+                          {zodiac.symbol} {zodiac.sign} - {zodiac.trait}
+                        </p>
+                      )}
                       <p className="text-lg font-bold text-pink-600 mt-1">🎉 Happy Birthday! 🎂</p>
+                      {birthdayFact && (
+                        <p className="text-sm text-slate-600 mt-2 italic">
+                          {formatFact(birthdayFact)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -315,7 +336,7 @@ export default function FamilyProfilePage() {
             }
 
             return (
-              <Card className="p-4">
+              <Card className="p-4 sm:col-span-2">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-slate-100">
                     <Cake className="h-5 w-5 text-slate-600" />
@@ -323,8 +344,18 @@ export default function FamilyProfilePage() {
                   <div className="flex-1">
                     <p className="text-sm text-slate-500 mb-1">Birthday</p>
                     <p className="font-medium text-slate-800">{formattedDate}</p>
-                    {countdown && (
+                    {zodiac && (
                       <p className="text-sm text-purple-600 mt-1">
+                        {zodiac.symbol} {zodiac.sign} - {zodiac.trait}
+                      </p>
+                    )}
+                    {birthdayFact && (
+                      <p className="text-sm text-slate-500 mt-2 italic">
+                        {formatFact(birthdayFact)}
+                      </p>
+                    )}
+                    {countdown && (
+                      <p className="text-sm text-purple-600 mt-2">
                         {countdown.isTomorrow
                           ? "🎈 Tomorrow!"
                           : countdown.days <= 30
