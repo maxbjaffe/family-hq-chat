@@ -4,12 +4,14 @@
 Unified family command center combining the functionality of the original Family HQ Chat (kids checklists, family reference data) with Morning Rundown (agentic task management, weekly priorities). Now a single hub for the whole family.
 
 **Key Features:**
-- Kids Zone with morning checklists and progress tracking
-- Agentic AI chat with Todoist task management
-- PIN-protected personal spaces (Max, Alex)
-- House Tasks shared list for family contributions
-- Weekly priorities tracking
-- Family reference data (doctors, contacts, insurance)
+- **Unified Home** - Family hub with weather, calendar, family grid, house tasks, quotes/jokes
+- **Quick Chat Widget** - Always-visible read-only chat for quick queries
+- **Parent Dashboard** - PIN-protected personal command center (calendar, tasks, priorities, full chat)
+- **Kids Zone** - Morning checklists with progress tracking
+- **House Tasks** - Shared family task list
+- **Family Profiles** - Role-based views (kids/pets show profile, adults redirect to dashboard)
+- **iCal Calendar Sync** - Recurring events expanded, color-coded by calendar
+- **Agentic AI Chat** - Full Todoist/priorities management with tools
 
 ## Tech Stack
 - **Frontend:** Next.js 16, TypeScript, Tailwind, shadcn/ui
@@ -21,16 +23,22 @@ Unified family command center combining the functionality of the original Family
 ## Key Paths
 ```
 app/                    # Pages and API routes
-  page.tsx              # Homepage with kids progress + House Tasks
-  chat/                 # AI chat interface
-  dashboard/            # Family dashboard with space cards
-  family/[name]/        # Family member profile pages
-  max/, alex/           # PIN-protected personal spaces
+  page.tsx              # Unified Home - family hub with weather, calendar, family grid
+  chat/                 # Full AI chat interface
+  parents/              # Parent Dashboard (PIN-protected command center)
+  dashboard/            # DEPRECATED - redirects to /
+  family/[name]/        # Family member profile pages (role-based)
+  max/, alex/           # Legacy personal spaces
   kiosk/                # Kids morning checklist interface
-  admin/                # Unified family & checklist management
+  admin/                # Family & checklist management
+  games/                # Breaktime activities
   api/
-    chat/               # Agentic chat with tools
-    admin/family/       # Family member CRUD (unified)
+    chat/               # Full agentic chat with tools
+    chat/quick/         # Read-only quick chat (no task creation)
+    content/            # Jokes, facts, motivational quotes
+    weather/            # Weather + 3-day forecast
+    calendar/           # Calendar events from iCal sync
+    admin/family/       # Family member CRUD
     admin/checklist/    # Checklist item management
     family/             # Notion health data lookup
     house-tasks/        # House Tasks CRUD
@@ -38,7 +46,11 @@ app/                    # Pages and API routes
     shortcuts/          # iOS Shortcuts endpoints
 components/
   Avatar.tsx            # Shared avatar (photo + emoji fallback)
-  FamilyCards.tsx       # Dashboard family member grid
+  FamilyMemberCard.tsx  # Role-based family member cards
+  WeatherForecast.tsx   # 3-day weather forecast
+  QuickChatWidget.tsx   # Fixed mini chat for home screen
+  MotivationalQuote.tsx # Daily inspiration card
+  ParentsButton.tsx     # PIN-protected parent access
   HouseTasks.tsx        # Shared family task list
   PinModal.tsx          # PIN entry
   UserProvider.tsx      # Auth context
@@ -49,6 +61,8 @@ lib/
   claude.ts             # Claude client + system prompt
   tools.ts              # Tool definitions (11 tools)
   tool-executor.ts      # Tool execution with user filtering
+  ical-sync.ts          # iCal calendar sync with recurring events
+  calendar-colors.ts    # Calendar color coding
 ```
 
 ## Chat Tools
@@ -102,15 +116,34 @@ SHORTCUTS_SECRET_KEY=   # iOS Shortcuts auth
 - `cached_reminders` - Apple Reminders sync
 
 ## Routes
-- `/` - Homepage (kids progress, weather, House Tasks, jokes)
-- `/chat` - AI chat with tools
-- `/dashboard` - Space cards for Max, Alex, Kids Zone
-- `/max` - Max's space (PIN) - Todoist tasks by project
-- `/alex` - Alex's space (PIN) - Apple Reminders
-- `/kiosk` - Kids checklist interface
-- `/admin` - User management, checklist config
+
+### Main Navigation (3 items)
+- `/` - **Home** - Unified family hub (weather, calendar, family grid, house tasks, quotes/jokes)
+- `/kiosk` - **Checklists** - Kids morning/evening routines
+- `/games` - **Breaktime** - Games and activities
+
+### Additional Routes
+- `/parents` - Parent Dashboard (PIN-protected, identifies user by PIN)
+- `/family/[name]` - Family member profiles (kids/pets show profile, adults redirect to PIN → dashboard)
+- `/chat` - Full AI chat with all tools
+- `/calendar` - Full calendar view
+- `/admin` - Family & checklist management
+- `/dashboard` - DEPRECATED (redirects to /)
+- `/max`, `/alex` - Legacy personal spaces
 
 ## Recent Changes
+
+### Jan 19, 2025 - Unified Home & Parent Portal
+- **Consolidated Home + Dashboard** into single family-first screen
+- **Simplified navigation** from 7 items to 3 (Home, Checklists, Breaktime)
+- **New Parent Dashboard** (`/parents`) - PIN identifies user, routes to personal command center
+- **Quick Chat Widget** - Always-visible mini chat on home for read-only queries
+- **3-day Weather Forecast** - Enhanced weather display
+- **Motivational Quotes** - Hourly AI-generated inspiration
+- **Family Grid** - Role-based cards (kids show progress, adults show PIN hint, pets have profiles)
+- **Role-based Profile Views** - Adults redirect to PIN → dashboard; kids/pets show profiles
+- **iCal Recurring Events** - Calendar sync now expands recurring events properly
+- **48px+ Touch Targets** - All buttons kiosk-ready
 
 ### Jan 17, 2025 - Unified Family Profiles
 - Consolidated `users` + `children` tables into unified `family_members`
