@@ -13,8 +13,14 @@ interface CachedContent {
     topic: string;
     generatedAt: string;
   };
+  quote: {
+    quote: string;
+    author: string;
+    generatedAt: string;
+  };
   jokeExpiresAt: number;
   factExpiresAt: number;
+  quoteExpiresAt: number;
 }
 
 let cache: CachedContent | null = null;
@@ -78,6 +84,21 @@ const FALLBACK_FACTS = [
   { fact: "Did you know the hottest planet isn't the closest to the sun? Venus is hotter than Mercury because of its thick atmosphere!", topic: "space" },
 ];
 
+const FALLBACK_QUOTES = [
+  { quote: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+  { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { quote: "In the middle of difficulty lies opportunity.", author: "Albert Einstein" },
+  { quote: "Be the change you wish to see in the world.", author: "Mahatma Gandhi" },
+  { quote: "Every moment is a fresh beginning.", author: "T.S. Eliot" },
+  { quote: "You are braver than you believe, stronger than you seem, and smarter than you think.", author: "A.A. Milne" },
+  { quote: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb" },
+  { quote: "Kindness is a language which the deaf can hear and the blind can see.", author: "Mark Twain" },
+  { quote: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
+  { quote: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+  { quote: "It always seems impossible until it's done.", author: "Nelson Mandela" },
+  { quote: "Happiness is not something ready made. It comes from your own actions.", author: "Dalai Lama" },
+];
+
 async function generateJoke(client: Anthropic): Promise<{ setup: string; punchline: string }> {
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -129,6 +150,30 @@ Return ONLY valid JSON in this exact format, no other text:
   }
 }
 
+async function generateQuote(client: Anthropic): Promise<{ quote: string; author: string }> {
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 200,
+    messages: [
+      {
+        role: "user",
+        content: `Generate one short, family-friendly motivational or inspirational quote. Can be from a famous person or a wise saying. Keep it uplifting and suitable for all ages.
+
+Return ONLY valid JSON in this exact format, no other text:
+{"quote": "the quote text", "author": "attribution"}`
+      }
+    ]
+  });
+
+  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  try {
+    return JSON.parse(text.trim());
+  } catch (e) {
+    console.warn('Quote generation failed, using fallback:', e);
+    return FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
+  }
+}
+
 export async function GET() {
   const now = Date.now();
 
@@ -136,13 +181,17 @@ export async function GET() {
   const needNewJoke = !cache || now >= cache.jokeExpiresAt;
   // Check if we need to refresh fact
   const needNewFact = !cache || now >= cache.factExpiresAt;
+  // Check if we need to refresh quote
+  const needNewQuote = !cache || now >= cache.quoteExpiresAt;
 
-  if (!needNewJoke && !needNewFact && cache) {
+  if (!needNewJoke && !needNewFact && !needNewQuote && cache) {
     return NextResponse.json({
       joke: cache.joke,
       funFact: cache.funFact,
+      quote: cache.quote,
       jokeNextRefresh: new Date(cache.jokeExpiresAt).toISOString(),
       factNextRefresh: new Date(cache.factExpiresAt).toISOString(),
+      quoteNextRefresh: new Date(cache.quoteExpiresAt).toISOString(),
     });
   }
 
@@ -152,11 +201,14 @@ export async function GET() {
     // Return fallback if no API key
     const fallbackJoke = FALLBACK_JOKES[Math.floor(Math.random() * FALLBACK_JOKES.length)];
     const fallbackFact = FALLBACK_FACTS[Math.floor(Math.random() * FALLBACK_FACTS.length)];
+    const fallbackQuote = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
     return NextResponse.json({
       joke: { ...fallbackJoke, generatedAt: new Date().toISOString() },
       funFact: { ...fallbackFact, generatedAt: new Date().toISOString() },
+      quote: { ...fallbackQuote, generatedAt: new Date().toISOString() },
       jokeNextRefresh: new Date(now + HOUR_MS).toISOString(),
       factNextRefresh: new Date(now + HOUR_MS).toISOString(),
+      quoteNextRefresh: new Date(now + HOUR_MS).toISOString(),
     });
   }
 
@@ -182,19 +234,32 @@ export async function GET() {
       factExpiresAt = now + HOUR_MS;
     }
 
+    let quote = cache?.quote;
+    let quoteExpiresAt = cache?.quoteExpiresAt || 0;
+
+    if (needNewQuote) {
+      const newQuote = await generateQuote(client);
+      quote = { ...newQuote, generatedAt: new Date().toISOString() };
+      quoteExpiresAt = now + HOUR_MS;
+    }
+
     // Update cache
     cache = {
       joke: joke!,
       funFact: funFact!,
+      quote: quote!,
       jokeExpiresAt,
       factExpiresAt,
+      quoteExpiresAt,
     };
 
     return NextResponse.json({
       joke: cache.joke,
       funFact: cache.funFact,
+      quote: cache.quote,
       jokeNextRefresh: new Date(cache.jokeExpiresAt).toISOString(),
       factNextRefresh: new Date(cache.factExpiresAt).toISOString(),
+      quoteNextRefresh: new Date(cache.quoteExpiresAt).toISOString(),
     });
   } catch (error) {
     console.error("Error generating content:", error);
@@ -202,12 +267,15 @@ export async function GET() {
     // Return fallback on error
     const fallbackJoke = FALLBACK_JOKES[Math.floor(Math.random() * FALLBACK_JOKES.length)];
     const fallbackFact = FALLBACK_FACTS[Math.floor(Math.random() * FALLBACK_FACTS.length)];
+    const fallbackQuote = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
 
     return NextResponse.json({
       joke: { ...fallbackJoke, generatedAt: new Date().toISOString() },
       funFact: { ...fallbackFact, generatedAt: new Date().toISOString() },
+      quote: { ...fallbackQuote, generatedAt: new Date().toISOString() },
       jokeNextRefresh: new Date(now + HOUR_MS).toISOString(),
       factNextRefresh: new Date(now + HOUR_MS).toISOString(),
+      quoteNextRefresh: new Date(now + HOUR_MS).toISOString(),
     });
   }
 }
