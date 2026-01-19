@@ -4,6 +4,14 @@ import { NextResponse } from "next/server";
 const DEFAULT_LAT = 40.9385;
 const DEFAULT_LON = -73.8326;
 
+interface ForecastDay {
+  day: string;  // "Today", "Tomorrow", "Wed", etc.
+  high: number;
+  low: number;
+  icon: string;
+  description: string;
+}
+
 interface WeatherData {
   temperature: number;
   feelsLike: number;
@@ -13,6 +21,7 @@ interface WeatherData {
   windSpeed: number;
   high: number;
   low: number;
+  forecast: ForecastDay[];
 }
 
 // Simple in-memory cache
@@ -28,7 +37,7 @@ export async function GET() {
 
     // Use Open-Meteo (free, no API key needed)
     const response = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${DEFAULT_LAT}&longitude=${DEFAULT_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York`
+      `https://api.open-meteo.com/v1/forecast?latitude=${DEFAULT_LAT}&longitude=${DEFAULT_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=3&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York`
     );
 
     if (!response.ok) {
@@ -73,6 +82,30 @@ export async function GET() {
       icon: "🌡️",
     };
 
+    // Build 3-day forecast
+    const forecast: ForecastDay[] = data.daily.time.slice(0, 3).map((date: string, index: number) => {
+      const dayDate = new Date(date + 'T12:00:00');
+      let dayName: string;
+      if (index === 0) {
+        dayName = 'Today';
+      } else if (index === 1) {
+        dayName = 'Tomorrow';
+      } else {
+        dayName = dayDate.toLocaleDateString('en-US', { weekday: 'short' });
+      }
+
+      const dailyCode = data.daily.weather_code[index];
+      const dailyWeather = weatherDescriptions[dailyCode] || { description: "Unknown", icon: "🌡️" };
+
+      return {
+        day: dayName,
+        high: Math.round(data.daily.temperature_2m_max[index]),
+        low: Math.round(data.daily.temperature_2m_min[index]),
+        icon: dailyWeather.icon,
+        description: dailyWeather.description,
+      };
+    });
+
     const weatherData: WeatherData = {
       temperature: Math.round(data.current.temperature_2m),
       feelsLike: Math.round(data.current.apparent_temperature),
@@ -82,6 +115,7 @@ export async function GET() {
       windSpeed: Math.round(data.current.wind_speed_10m),
       high: Math.round(data.daily.temperature_2m_max[0]),
       low: Math.round(data.daily.temperature_2m_min[0]),
+      forecast,
     };
 
     // Update cache
