@@ -2,16 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  CheckSquare,
-  MessageSquare,
-  Gamepad2,
-  Calendar,
-  Settings,
-  Maximize,
-  LayoutDashboard,
-} from "lucide-react";
+import { Home, CheckSquare, Gamepad2, Maximize } from "lucide-react";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { SyncIndicator } from "./SyncIndicator";
 import { HeaderClock } from "./Clock";
@@ -31,12 +22,8 @@ function useIsEmbedded() {
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
-  { href: "/chat", label: "Chat", icon: MessageSquare },
-  { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/games", label: "Breaktime", icon: Gamepad2 },
-  { href: "/admin", label: "Admin", icon: Settings },
 ];
 
 // Secret exit: tap logo 5 times in 3 seconds
