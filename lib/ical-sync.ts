@@ -40,44 +40,104 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
     const vcalendar = new ICAL.Component(jcalData);
     const vevents = vcalendar.getAllSubcomponents('vevent');
 
-    // Get date range: today to 14 days from now
+    // Get date range: today to 30 days from now
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    const futureLimit = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const futureLimit = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     for (const vevent of vevents) {
       try {
         const event = new ICAL.Event(vevent);
-        const uid = event.uid;
+        const baseUid = event.uid;
         const summary = event.summary || 'Untitled Event';
         const location = event.location || null;
+        const duration = event.duration;
 
-        // Get start and end times
-        const startDate = event.startDate?.toJSDate();
-        const endDate = event.endDate?.toJSDate();
+        // Check if this is a recurring event
+        const isRecurring = !!vevent.getFirstProperty('rrule');
 
-        // Skip events outside our date range
-        if (!startDate || startDate < now || startDate > futureLimit) continue;
+        if (isRecurring) {
+          // Expand recurring events
+          try {
+            const iterator = event.iterator();
+            let next = iterator.next();
+            let count = 0;
+            const maxOccurrences = 100; // Safety limit
 
-        const { error } = await supabase
-          .from('cached_calendar_events')
-          .upsert({
-            event_id: uid,
-            title: summary,
-            start_time: startDate.toISOString(),
-            end_time: endDate?.toISOString() || null,
-            calendar_name: feed.name,
-            location: location,
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'event_id',
-          });
+            while (next && count < maxOccurrences) {
+              const occurrenceStart = next.toJSDate();
 
-        if (error) {
-          console.error(`Error syncing event ${summary}:`, error);
-          errors++;
+              // Stop if past our window
+              if (occurrenceStart > futureLimit) break;
+
+              // Only sync if within our date range
+              if (occurrenceStart >= now && occurrenceStart <= futureLimit) {
+                // Create unique ID for this occurrence
+                const occurrenceUid = `${baseUid}_${occurrenceStart.toISOString()}`;
+
+                // Calculate end time based on duration
+                let occurrenceEnd: Date | null = null;
+                if (duration) {
+                  occurrenceEnd = new Date(occurrenceStart.getTime() + duration.toSeconds() * 1000);
+                }
+
+                const { error } = await supabase
+                  .from('cached_calendar_events')
+                  .upsert({
+                    event_id: occurrenceUid,
+                    title: summary,
+                    start_time: occurrenceStart.toISOString(),
+                    end_time: occurrenceEnd?.toISOString() || null,
+                    calendar_name: feed.name,
+                    location: location,
+                    updated_at: new Date().toISOString(),
+                  }, {
+                    onConflict: 'event_id',
+                  });
+
+                if (error) {
+                  console.error(`Error syncing recurring event ${summary}:`, error);
+                  errors++;
+                } else {
+                  synced++;
+                }
+              }
+
+              next = iterator.next();
+              count++;
+            }
+          } catch (recurError) {
+            console.error(`Error expanding recurring event ${summary}:`, recurError);
+            errors++;
+          }
         } else {
-          synced++;
+          // Non-recurring event - original logic
+          const startDate = event.startDate?.toJSDate();
+          const endDate = event.endDate?.toJSDate();
+
+          // Skip events outside our date range
+          if (!startDate || startDate < now || startDate > futureLimit) continue;
+
+          const { error } = await supabase
+            .from('cached_calendar_events')
+            .upsert({
+              event_id: baseUid,
+              title: summary,
+              start_time: startDate.toISOString(),
+              end_time: endDate?.toISOString() || null,
+              calendar_name: feed.name,
+              location: location,
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'event_id',
+            });
+
+          if (error) {
+            console.error(`Error syncing event ${summary}:`, error);
+            errors++;
+          } else {
+            synced++;
+          }
         }
       } catch (eventError) {
         console.error(`Error processing event:`, eventError);
