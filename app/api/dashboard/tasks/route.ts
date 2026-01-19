@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const includeAll = searchParams.get('includeAll') === 'true';
 
     // Get tasks from Todoist
     const [tasks, projects] = await Promise.all([
@@ -29,7 +30,19 @@ export async function GET(request: Request) {
       } else {
         filteredTasks = [];
       }
+    } else if (userId.toLowerCase() === 'max' && includeAll) {
+      // Max with includeAll flag gets ALL tasks including Personal
+      filteredTasks = tasks;
+    } else if (userId.toLowerCase() !== 'max') {
+      // Non-Max authenticated users: exclude Personal project
+      const personalProject = projects.find(
+        p => p.name.toLowerCase() === 'personal'
+      );
+      if (personalProject) {
+        filteredTasks = tasks.filter(t => t.project_id !== personalProject.id);
+      }
     }
+    // else: Max without includeAll also gets all tasks (default behavior)
 
     const enrichedTasks = filteredTasks.map(task => ({
       ...task,
