@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { FamilyCalendarSection } from '@/components/FamilyCalendarSection';
+import { PinModal } from '@/components/PinModal';
 import { getZodiacFromBirthday } from '@/lib/zodiac';
 import { getRandomFactFromBirthday, formatFact, type BirthdayFact } from '@/lib/birthday-facts';
 
@@ -147,6 +148,12 @@ function InfoCard({
   );
 }
 
+interface UserInfo {
+  id: string;
+  name: string;
+  role: 'admin' | 'adult' | 'kid';
+}
+
 export default function FamilyProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -156,10 +163,18 @@ export default function FamilyProfilePage() {
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [avatarInfo, setAvatarInfo] = useState<{ avatar_url?: string | null; role?: string } | null>(null);
   const [birthdayFact, setBirthdayFact] = useState<BirthdayFact | null>(null);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [isAdult, setIsAdult] = useState(false);
 
   const isVisible = (field: string) => visibility[field] !== false;
 
   const name = typeof params.name === 'string' ? decodeURIComponent(params.name) : '';
+
+  // Handle PIN success for adults
+  const handlePinSuccess = (user: UserInfo) => {
+    setShowPinModal(false);
+    router.push(`/parents?user=${encodeURIComponent(user.name)}`);
+  };
 
   useEffect(() => {
     async function loadMember() {
@@ -192,6 +207,11 @@ export default function FamilyProfilePage() {
                     setVisibility(supabaseMember.profile_visibility);
                   }
                   setAvatarInfo({ avatar_url: supabaseMember.avatar_url, role: supabaseMember.role });
+                  // Check if this is an adult - show PIN modal instead of profile
+                  if (supabaseMember.role === 'admin' || supabaseMember.role === 'adult') {
+                    setIsAdult(true);
+                    setShowPinModal(true);
+                  }
                 }
               }
             } catch (e) {
@@ -229,13 +249,35 @@ export default function FamilyProfilePage() {
     );
   }
 
+  // Show PIN modal for adults
+  if (isAdult) {
+    return (
+      <>
+        <PinModal
+          isOpen={showPinModal}
+          onSuccess={handlePinSuccess}
+          onCancel={() => router.push('/')}
+          title="Parent Access"
+        />
+        {/* Show loading state while PIN modal is up */}
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+        </div>
+      </>
+    );
+  }
+
   if (notFound || !member) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30">
         <div className="container mx-auto px-4 py-6 max-w-2xl">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+          <Button
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="mb-6 min-h-[48px] min-w-[48px] text-base font-medium"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Back to Home
           </Button>
           <Card className="p-8 text-center">
             <p className="text-slate-500">Family member not found</p>
@@ -250,10 +292,14 @@ export default function FamilyProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30">
       <div className="container mx-auto px-4 py-6 max-w-2xl">
-        {/* Back Button */}
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+        {/* Back Button - Large, clear for kiosk use */}
+        <Button
+          variant="outline"
+          onClick={() => router.push('/')}
+          className="mb-6 min-h-[48px] min-w-[48px] text-base font-medium"
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Back to Home
         </Button>
 
         {/* Profile Header */}
