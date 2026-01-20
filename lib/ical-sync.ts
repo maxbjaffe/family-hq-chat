@@ -81,19 +81,24 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
                   occurrenceEnd = new Date(occurrenceStart.getTime() + duration.toSeconds() * 1000);
                 }
 
-                const { error } = await supabase
-                  .from('cached_calendar_events')
-                  .upsert({
-                    event_id: occurrenceUid,
-                    title: summary,
-                    start_time: occurrenceStart.toISOString(),
-                    end_time: occurrenceEnd?.toISOString() || null,
-                    calendar_name: feed.name,
-                    location: location,
-                    updated_at: new Date().toISOString(),
-                  }, {
-                    onConflict: 'event_id',
-                  });
+                // Delete existing event first to handle updates properly
+              // (upsert onConflict only works if event_id has a unique constraint)
+              await supabase
+                .from('cached_calendar_events')
+                .delete()
+                .eq('event_id', occurrenceUid);
+
+              const { error } = await supabase
+                .from('cached_calendar_events')
+                .insert({
+                  event_id: occurrenceUid,
+                  title: summary,
+                  start_time: occurrenceStart.toISOString(),
+                  end_time: occurrenceEnd?.toISOString() || null,
+                  calendar_name: feed.name,
+                  location: location,
+                  updated_at: new Date().toISOString(),
+                });
 
                 if (error) {
                   console.error(`Error syncing recurring event ${summary}:`, error);
@@ -118,9 +123,16 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
           // Skip events outside our date range
           if (!startDate || startDate < now || startDate > futureLimit) continue;
 
+          // Delete existing event first to handle updates properly
+          // (upsert onConflict only works if event_id has a unique constraint)
+          await supabase
+            .from('cached_calendar_events')
+            .delete()
+            .eq('event_id', baseUid);
+
           const { error } = await supabase
             .from('cached_calendar_events')
-            .upsert({
+            .insert({
               event_id: baseUid,
               title: summary,
               start_time: startDate.toISOString(),
@@ -128,8 +140,6 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
               calendar_name: feed.name,
               location: location,
               updated_at: new Date().toISOString(),
-            }, {
-              onConflict: 'event_id',
             });
 
           if (error) {
@@ -152,10 +162,54 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
   return { synced, errors };
 }
 
+// Clean up duplicate events (keeps the most recently updated one for each event_id)
+export async function cleanupDuplicateEvents(): Promise<number> {
+  const supabase = getFamilyDataClient();
+
+  // Get all events grouped by event_id
+  const { data: allEvents, error } = await supabase
+    .from('cached_calendar_events')
+    .select('id, event_id, updated_at')
+    .order('updated_at', { ascending: false });
+
+  if (error || !allEvents) {
+    console.error('Error fetching events for cleanup:', error);
+    return 0;
+  }
+
+  // Find duplicates - keep only the most recent for each event_id
+  const seenEventIds = new Set<string>();
+  const idsToDelete: string[] = [];
+
+  for (const event of allEvents) {
+    if (seenEventIds.has(event.event_id)) {
+      // This is a duplicate (older one since we sorted by updated_at desc)
+      idsToDelete.push(event.id);
+    } else {
+      seenEventIds.add(event.event_id);
+    }
+  }
+
+  if (idsToDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('cached_calendar_events')
+      .delete()
+      .in('id', idsToDelete);
+
+    if (deleteError) {
+      console.error('Error deleting duplicate events:', deleteError);
+      return 0;
+    }
+  }
+
+  return idsToDelete.length;
+}
+
 export async function syncAllCalendars(): Promise<{
   total: number;
   synced: number;
   errors: number;
+  duplicatesRemoved: number;
   calendars: { name: string; synced: number; errors: number }[];
 }> {
   // Get calendar feeds from environment variable
@@ -163,7 +217,7 @@ export async function syncAllCalendars(): Promise<{
   const feedsEnv = process.env.ICAL_FEEDS || '';
 
   if (!feedsEnv) {
-    return { total: 0, synced: 0, errors: 0, calendars: [] };
+    return { total: 0, synced: 0, errors: 0, duplicatesRemoved: 0, calendars: [] };
   }
 
   const feeds: CalendarFeed[] = feedsEnv.split(',').map(f => {
@@ -171,13 +225,16 @@ export async function syncAllCalendars(): Promise<{
     return { name: name.trim(), url: url.trim() };
   }).filter(f => f.name && f.url);
 
-  // Clean up old events before syncing
+  // Clean up old events and duplicates before syncing
   const supabase = getFamilyDataClient();
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   await supabase
     .from('cached_calendar_events')
     .delete()
     .lt('start_time', oneWeekAgo);
+
+  // Clean up any existing duplicates
+  const duplicatesRemoved = await cleanupDuplicateEvents();
 
   let totalSynced = 0;
   let totalErrors = 0;
@@ -200,6 +257,7 @@ export async function syncAllCalendars(): Promise<{
     total: feeds.length,
     synced: totalSynced,
     errors: totalErrors,
+    duplicatesRemoved,
     calendars: calendarResults,
   };
 }

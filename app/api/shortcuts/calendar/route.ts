@@ -58,9 +58,16 @@ export async function POST(request: Request) {
 
         const eventId = event.id || event.identifier || `${event.title}-${startTime}`;
 
+        // Delete existing event first to handle updates properly
+        // (upsert onConflict only works if event_id has a unique constraint)
+        await supabase
+          .from('cached_calendar_events')
+          .delete()
+          .eq('event_id', eventId);
+
         const { error } = await supabase
           .from('cached_calendar_events')
-          .upsert({
+          .insert({
             event_id: eventId,
             title: event.title || 'Untitled Event',
             start_time: startTime,
@@ -68,8 +75,6 @@ export async function POST(request: Request) {
             calendar_name: event.calendar_name || event.calendar || null,
             location: event.location || null,
             updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'event_id',
           });
 
         if (error) {
