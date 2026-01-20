@@ -197,6 +197,24 @@ export default function AdminPage() {
   const [deletingMember, setDeletingMember] = useState(false);
   const [deletingMedia, setDeletingMedia] = useState(false);
 
+  // Bulk setup state
+  const [bulkSetupInProgress, setBulkSetupInProgress] = useState(false);
+  const [showBulkSetupConfirm, setShowBulkSetupConfirm] = useState(false);
+
+  // Standard checklist items for kids
+  const STANDARD_CHECKLIST_ITEMS = [
+    { title: "Make Bed", icon: "🛏️" },
+    { title: "Get Dressed", icon: "👕" },
+    { title: "Brush Teeth", icon: "🪥" },
+    { title: "Eat Breakfast", icon: "🥣" },
+    { title: "Pack Backpack", icon: "🎒" },
+    { title: "Put On Shoes", icon: "👟" },
+    { title: "Water Bottle", icon: "💧" },
+    { title: "Snack", icon: "🍎" },
+    { title: "Gizmo", icon: "🐹" },
+    { title: "Chromebook", icon: "💻" },
+  ];
+
   useEffect(() => {
     loadData();
   }, []);
@@ -477,10 +495,17 @@ export default function AdminPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        // Update local state directly instead of reloading all data
+        // This prevents overwriting other pending changes (like day selections)
+        setMembers(prev => prev.map(member =>
+          member.id === selectedMember
+            ? { ...member, checklist_items: [...member.checklist_items, data.item] }
+            : member
+        ));
         toast.success("Item added");
         setNewItemForm({ title: "", icon: "" });
         setShowNewItem(false);
-        loadData();
       } else {
         toast.error("Failed to add item");
       }
@@ -504,9 +529,17 @@ export default function AdminPage() {
       });
 
       if (response.ok) {
+        // Update local state directly instead of reloading all data
+        setMembers(prev => prev.map(member => ({
+          ...member,
+          checklist_items: member.checklist_items.map(item =>
+            item.id === id
+              ? { ...item, title: editForm.title.trim(), icon: editForm.icon.trim() || null }
+              : item
+          )
+        })));
         toast.success("Item updated");
         setEditingItem(null);
-        loadData();
       } else {
         toast.error("Failed to update item");
       }
@@ -523,8 +556,13 @@ export default function AdminPage() {
       });
 
       if (response.ok) {
+        // Update local state directly instead of reloading all data
+        // This prevents overwriting other pending changes (like day selections)
+        setMembers(prev => prev.map(member => ({
+          ...member,
+          checklist_items: member.checklist_items.filter(item => item.id !== id)
+        })));
         toast.success("Item deleted");
-        loadData();
       } else {
         toast.error("Failed to delete item");
       }
@@ -548,11 +586,79 @@ export default function AdminPage() {
       });
 
       if (response.ok) {
+        // Update local state directly instead of reloading all data
+        setMembers(prev => prev.map(member => ({
+          ...member,
+          checklist_items: member.checklist_items.map(i =>
+            i.id === item.id ? { ...i, is_active: !item.is_active } : i
+          )
+        })));
         toast.success(item.is_active ? "Item disabled" : "Item enabled");
-        loadData();
       }
     } catch (error) {
       toast.error("Failed to update item");
+    }
+  }
+
+  async function bulkSetupChecklists() {
+    setBulkSetupInProgress(true);
+    setShowBulkSetupConfirm(false);
+
+    // Find all kids with checklists enabled
+    const kidsWithChecklists = members.filter(m => m.role === 'kid' && m.has_checklist);
+
+    if (kidsWithChecklists.length === 0) {
+      toast.error("No kids with checklists enabled");
+      setBulkSetupInProgress(false);
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const kid of kidsWithChecklists) {
+      // Delete existing items for this kid
+      for (const existingItem of kid.checklist_items) {
+        try {
+          await fetch(`/api/admin/checklist?id=${existingItem.id}`, {
+            method: "DELETE",
+          });
+        } catch (error) {
+          console.error("Error deleting item:", error);
+        }
+      }
+
+      // Add standard items
+      for (let i = 0; i < STANDARD_CHECKLIST_ITEMS.length; i++) {
+        const item = STANDARD_CHECKLIST_ITEMS[i];
+        try {
+          await fetch("/api/admin/checklist", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              member_id: kid.id,
+              title: item.title,
+              icon: item.icon,
+              weekdays_only: true,
+            }),
+          });
+          successCount++;
+        } catch (error) {
+          console.error("Error adding item:", error);
+          errorCount++;
+        }
+      }
+    }
+
+    // Reload data to show updated checklists
+    await loadData();
+
+    setBulkSetupInProgress(false);
+
+    if (errorCount === 0) {
+      toast.success(`Setup complete! Added ${successCount} items across ${kidsWithChecklists.length} kids`);
+    } else {
+      toast.warning(`Setup partially complete. ${successCount} items added, ${errorCount} errors`);
     }
   }
 
@@ -635,10 +741,26 @@ export default function AdminPage() {
 
     if (swapIndex < 0 || swapIndex >= items.length) return;
 
+    const newOrderA = items[swapIndex].display_order;
+    const newOrderB = items[index].display_order;
+
     const updates = [
-      { id: items[index].id, display_order: items[swapIndex].display_order },
-      { id: items[swapIndex].id, display_order: items[index].display_order },
+      { id: items[index].id, display_order: newOrderA },
+      { id: items[swapIndex].id, display_order: newOrderB },
     ];
+
+    // Update local state immediately (optimistic update)
+    setMembers(prev => prev.map(member => {
+      if (member.id !== currentMember.id) return member;
+      return {
+        ...member,
+        checklist_items: member.checklist_items.map(i => {
+          if (i.id === items[index].id) return { ...i, display_order: newOrderA };
+          if (i.id === items[swapIndex].id) return { ...i, display_order: newOrderB };
+          return i;
+        })
+      };
+    }));
 
     try {
       const response = await fetch("/api/admin/checklist", {
@@ -647,10 +769,13 @@ export default function AdminPage() {
         body: JSON.stringify({ items: updates }),
       });
 
-      if (response.ok) {
+      if (!response.ok) {
+        // Revert on failure
         loadData();
+        toast.error("Failed to reorder items");
       }
     } catch (error) {
+      loadData();
       toast.error("Failed to reorder items");
     }
   }
@@ -1051,14 +1176,30 @@ export default function AdminPage() {
                       ({currentMember.checklist_items.length} items)
                     </span>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowNewItem(true)}
-                    disabled={showNewItem}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Item
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowBulkSetupConfirm(true)}
+                      disabled={bulkSetupInProgress}
+                      title="Setup standard checklist for all kids"
+                    >
+                      {bulkSetupInProgress ? (
+                        <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-1" />
+                      )}
+                      {bulkSetupInProgress ? "Setting up..." : "Bulk Setup All Kids"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setShowNewItem(true)}
+                      disabled={showNewItem}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Item
+                    </Button>
+                  </div>
                 </div>
 
                 {/* New Item Form */}
@@ -1503,6 +1644,28 @@ export default function AdminPage() {
         isLoading={deletingMedia}
         onConfirm={() => confirmDeleteMedia && deleteMedia(confirmDeleteMedia)}
         onCancel={() => setConfirmDeleteMedia(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={showBulkSetupConfirm}
+        title="Setup Standard Checklists"
+        message={
+          <>
+            This will <strong>replace all existing checklist items</strong> for{' '}
+            <strong>{members.filter(m => m.role === 'kid' && m.has_checklist).map(m => m.name).join(', ')}</strong>{' '}
+            with the standard morning checklist:
+            <ul className="mt-2 text-sm text-slate-600 list-disc list-inside">
+              {STANDARD_CHECKLIST_ITEMS.map(item => (
+                <li key={item.title}>{item.icon} {item.title}</li>
+              ))}
+            </ul>
+          </>
+        }
+        confirmLabel="Setup All Kids"
+        variant="default"
+        isLoading={bulkSetupInProgress}
+        onConfirm={bulkSetupChecklists}
+        onCancel={() => setShowBulkSetupConfirm(false)}
       />
     </div>
   );
