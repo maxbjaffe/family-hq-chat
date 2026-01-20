@@ -210,6 +210,7 @@ export async function syncAllCalendars(): Promise<{
   synced: number;
   errors: number;
   duplicatesRemoved: number;
+  staleEventsRemoved: number;
   calendars: { name: string; synced: number; errors: number }[];
 }> {
   // Get calendar feeds from environment variable
@@ -217,7 +218,7 @@ export async function syncAllCalendars(): Promise<{
   const feedsEnv = process.env.ICAL_FEEDS || '';
 
   if (!feedsEnv) {
-    return { total: 0, synced: 0, errors: 0, duplicatesRemoved: 0, calendars: [] };
+    return { total: 0, synced: 0, errors: 0, duplicatesRemoved: 0, staleEventsRemoved: 0, calendars: [] };
   }
 
   const feeds: CalendarFeed[] = feedsEnv.split(',').map(f => {
@@ -225,13 +226,26 @@ export async function syncAllCalendars(): Promise<{
     return { name: name.trim(), url: url.trim() };
   }).filter(f => f.name && f.url);
 
-  // Clean up old events and duplicates before syncing
+  // Clean up old events and stale events before syncing
   const supabase = getFamilyDataClient();
+
+  // Delete events that are more than a week in the past
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   await supabase
     .from('cached_calendar_events')
     .delete()
     .lt('start_time', oneWeekAgo);
+
+  // Delete events that weren't updated in the last 2 hours (stale/deleted events)
+  // This handles the case where an event was deleted in Apple Calendar
+  // but our sync never removed it
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+  const { data: staleDeleted } = await supabase
+    .from('cached_calendar_events')
+    .delete()
+    .lt('updated_at', twoHoursAgo)
+    .select('id');
+  const staleEventsRemoved = staleDeleted?.length || 0;
 
   // Clean up any existing duplicates
   const duplicatesRemoved = await cleanupDuplicateEvents();
@@ -258,6 +272,7 @@ export async function syncAllCalendars(): Promise<{
     synced: totalSynced,
     errors: totalErrors,
     duplicatesRemoved,
+    staleEventsRemoved,
     calendars: calendarResults,
   };
 }
