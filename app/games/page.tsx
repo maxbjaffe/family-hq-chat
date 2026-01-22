@@ -13,6 +13,9 @@ import {
   Search,
   Shuffle,
   GitBranch,
+  Eye,
+  Layers,
+  ScanSearch,
 } from "lucide-react";
 import { WordleGame } from "@/components/games/WordleGame";
 import { HangmanGame } from "@/components/games/HangmanGame";
@@ -20,11 +23,14 @@ import { TicTacToeGame } from "@/components/games/TicTacToeGame";
 import { WordSearchGame } from "@/components/games/WordSearchGame";
 import { AnagramsGame } from "@/components/games/AnagramsGame";
 import { WordLadderGame } from "@/components/games/WordLadderGame";
+import { MemoryMatchGame } from "@/components/games/MemoryMatchGame";
+import { SpotDifferenceGame } from "@/components/games/SpotDifferenceGame";
+import { HiddenObjectsGame } from "@/components/games/HiddenObjectsGame";
 import { DifficultySelect } from "@/components/games/DifficultySelect";
 
 type Difficulty = "easy" | "medium" | "hard";
 
-type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe" | "wordsearch" | "anagrams" | "wordladder";
+type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe" | "wordsearch" | "anagrams" | "wordladder" | "memorymatch" | "spotdifference" | "hiddenobjects";
 
 const games = [
   {
@@ -83,6 +89,30 @@ const games = [
     color: "from-teal-500 to-cyan-500",
     bgColor: "from-teal-50 to-cyan-50",
   },
+  {
+    id: "memorymatch" as const,
+    name: "Memory Match",
+    description: "Flip cards to find matching pairs!",
+    icon: Layers,
+    color: "from-amber-500 to-orange-500",
+    bgColor: "from-amber-50 to-orange-50",
+  },
+  {
+    id: "spotdifference" as const,
+    name: "Spot Difference",
+    description: "Find what's different between two pictures!",
+    icon: Eye,
+    color: "from-sky-500 to-blue-500",
+    bgColor: "from-sky-50 to-blue-50",
+  },
+  {
+    id: "hiddenobjects" as const,
+    name: "Hidden Objects",
+    description: "Find hidden items in the scene!",
+    icon: ScanSearch,
+    color: "from-lime-500 to-green-500",
+    bgColor: "from-lime-50 to-green-50",
+  },
 ];
 
 export default function GamesPage() {
@@ -92,6 +122,9 @@ export default function GamesPage() {
   const [wordSearchDifficulty, setWordSearchDifficulty] = useState<Difficulty | null>(null);
   const [anagramsDifficulty, setAnagramsDifficulty] = useState<Difficulty | null>(null);
   const [wordLadderDifficulty, setWordLadderDifficulty] = useState<Difficulty | null>(null);
+  const [memoryMatchDifficulty, setMemoryMatchDifficulty] = useState<Difficulty | null>(null);
+  const [spotDifferenceDifficulty, setSpotDifferenceDifficulty] = useState<Difficulty | null>(null);
+  const [hiddenObjectsDifficulty, setHiddenObjectsDifficulty] = useState<Difficulty | null>(null);
 
   // Show game menu
   if (activeGame === "menu") {
@@ -200,6 +233,9 @@ export default function GamesPage() {
             if (activeGame === "wordsearch") setWordSearchDifficulty(null);
             if (activeGame === "anagrams") setAnagramsDifficulty(null);
             if (activeGame === "wordladder") setWordLadderDifficulty(null);
+            if (activeGame === "memorymatch") setMemoryMatchDifficulty(null);
+            if (activeGame === "spotdifference") setSpotDifferenceDifficulty(null);
+            if (activeGame === "hiddenobjects") setHiddenObjectsDifficulty(null);
           }}
           className="mb-4 min-h-[48px]"
         >
@@ -272,6 +308,36 @@ export default function GamesPage() {
               difficulty={wordLadderDifficulty}
               onChangeDifficulty={() => setWordLadderDifficulty(null)}
             />
+          )
+        )}
+        {activeGame === "memorymatch" && (
+          memoryMatchDifficulty === null ? (
+            <DifficultySelect
+              gameName="Memory Match"
+              onSelect={(difficulty) => setMemoryMatchDifficulty(difficulty)}
+            />
+          ) : (
+            <MemoryMatchGame difficulty={memoryMatchDifficulty} />
+          )
+        )}
+        {activeGame === "spotdifference" && (
+          spotDifferenceDifficulty === null ? (
+            <DifficultySelect
+              gameName="Spot the Difference"
+              onSelect={(difficulty) => setSpotDifferenceDifficulty(difficulty)}
+            />
+          ) : (
+            <SpotDifferenceGame difficulty={spotDifferenceDifficulty} />
+          )
+        )}
+        {activeGame === "hiddenobjects" && (
+          hiddenObjectsDifficulty === null ? (
+            <DifficultySelect
+              gameName="Hidden Objects"
+              onSelect={(difficulty) => setHiddenObjectsDifficulty(difficulty)}
+            />
+          ) : (
+            <HiddenObjectsGame difficulty={hiddenObjectsDifficulty} />
           )
         )}
       </div>
