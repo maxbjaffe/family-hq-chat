@@ -179,10 +179,8 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Spacer for fixed nav */}
+      {/* Spacer for desktop sidebar */}
       <div className="hidden md:block w-20 lg:w-56 flex-shrink-0" />
-      {/* Mobile top spacer */}
-      <div className="md:hidden h-14" />
     </>
   );
 }
@@ -191,7 +189,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Navigation />
-      <main className="flex-1 pb-20 md:pb-0">{children}</main>
+      <main className="flex-1 pt-14 pb-20 md:pt-0 md:pb-0">{children}</main>
     </div>
   );
 }
