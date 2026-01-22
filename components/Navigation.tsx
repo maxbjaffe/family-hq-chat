@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CheckSquare, Gamepad2, Maximize } from "lucide-react";
+import { Home, CheckSquare, Gamepad2, Maximize, MessageCircle } from "lucide-react";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { SyncIndicator } from "./SyncIndicator";
 import { HeaderClock } from "./Clock";
@@ -22,6 +22,7 @@ function useIsEmbedded() {
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
   { href: "/games", label: "Breaktime", icon: Gamepad2 },
 ];

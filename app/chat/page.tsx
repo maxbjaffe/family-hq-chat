@@ -160,26 +160,26 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-teal-50/30">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] md:h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-teal-50/30">
       <header className="flex items-center gap-3 px-4 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-200/60">
         <Image
-          src="/IMG_3028.JPG"
+          src="/Images/JaffeFamilyHubLogo.PNG"
           alt="Family HQ"
-          width={36}
-          height={36}
-          className="rounded-full ring-2 ring-purple-100"
+          width={40}
+          height={40}
+          className="rounded-xl ring-2 ring-purple-100 shadow-md"
         />
         <div className="flex-1">
-          <h1 className="text-base font-semibold bg-gradient-to-r from-slate-800 to-purple-900 bg-clip-text text-transparent">Family HQ</h1>
-          <p className="text-xs text-slate-400">Always here to help</p>
+          <h1 className="text-base font-semibold bg-gradient-to-r from-slate-800 to-purple-900 bg-clip-text text-transparent">Family Chat</h1>
+          <p className="text-xs text-slate-400">Ask me anything about schedules, tasks, or family info</p>
         </div>
 
         {/* User status and actions */}
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
-              <span className="text-sm text-slate-600">
-                <span className="text-slate-400">Logged in as</span>{" "}
+              <span className="hidden sm:inline text-sm text-slate-600">
+                <span className="text-slate-400">as</span>{" "}
                 <span className="font-medium">{userName}</span>
               </span>
               <button
@@ -202,7 +202,7 @@ export default function Home() {
               onClick={handleNewChat}
               className="px-3 py-1.5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
             >
-              New Chat
+              New
             </button>
           )}
         </div>
