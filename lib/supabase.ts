@@ -555,3 +555,50 @@ export async function updateWeeklyPriority(priorityNumber: number, content: stri
 
   if (error) throw new Error(`Failed to update priority: ${error.message}`);
 }
+
+// Agent Analytics (shared with Focus Hub via agent_analytics table)
+export interface AgentAnalyticsInput {
+  app: "focus_hub" | "family_hq";
+  userId?: string;
+  sessionId?: string;
+  query: string;
+  intentDetected?: string;
+  agentPath?: string;
+  agentHandled: boolean;
+  confidence?: number;
+  responseTimeMs?: number;
+  fallbackReason?: "low_confidence" | "no_match" | "agent_error" | "capability_gap";
+  fallbackTo?: "claude";
+  userFeedback?: "positive" | "negative";
+  feedbackComment?: string;
+  responseLength?: number;
+  toolsUsed?: string[];
+}
+
+export async function logAgentAnalytics(input: AgentAnalyticsInput): Promise<void> {
+  try {
+    const supabase = getFamilyDataClient();
+
+    await supabase.from("agent_analytics").insert({
+      app: input.app,
+      user_id: input.userId || 'guest',
+      session_id: input.sessionId,
+      query: input.query,
+      query_length: input.query.length,
+      intent_detected: input.intentDetected,
+      agent_path: input.agentPath,
+      agent_handled: input.agentHandled,
+      confidence: input.confidence,
+      response_time_ms: input.responseTimeMs,
+      fallback_reason: input.fallbackReason,
+      fallback_to: input.fallbackTo,
+      user_feedback: input.userFeedback,
+      feedback_comment: input.feedbackComment,
+      response_length: input.responseLength,
+      tools_used: input.toolsUsed,
+    });
+  } catch (error) {
+    // Fire and forget - don't let analytics failures affect the user
+    console.error("Failed to log agent analytics:", error);
+  }
+}

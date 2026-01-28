@@ -5,6 +5,7 @@ import { getSystemPrompt, getClient, ChatMessage } from "@/lib/claude";
 import { tools } from "@/lib/tools";
 import { executeTool } from "@/lib/tool-executor";
 import { logChatEvent } from "@/lib/analytics";
+import { logAgentAnalytics } from "@/lib/supabase";
 import { processWithAgents, shouldUseAgents, formatAgentResponse } from "@/lib/agents/integration";
 import { FamilyMember } from "@/lib/agents/types";
 
@@ -47,7 +48,21 @@ export async function POST(request: NextRequest) {
       if (agentResult && agentResult.confidence >= 0.8) {
         // High confidence agent result - return directly
         const formatted = formatAgentResponse(agentResult);
-        
+        const responseTimeMs = Date.now() - startTime;
+
+        // Log agent analytics (fire and forget)
+        logAgentAnalytics({
+          app: "family_hq",
+          userId: userContext?.id || 'guest',
+          query: message,
+          intentDetected: agentResult.agentPath?.[agentResult.agentPath.length - 1],
+          agentPath: agentResult.agentPath?.join(" → "),
+          agentHandled: true,
+          confidence: agentResult.confidence,
+          responseTimeMs,
+          responseLength: formatted.message?.length,
+        });
+
         // Stream the agent response
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
@@ -57,7 +72,7 @@ export async function POST(request: NextRequest) {
                 `data: ${JSON.stringify({ type: "text", content: formatted.message })}\n\n`
               )
             );
-            
+
             if (formatted.data) {
               controller.enqueue(
                 encoder.encode(
@@ -65,15 +80,14 @@ export async function POST(request: NextRequest) {
                 )
               );
             }
-            
+
             controller.enqueue(encoder.encode("data: [DONE]\n\n"));
             controller.close();
-            
-            // Log analytics
-            const responseTime = Date.now() - startTime;
+
+            // Log analytics (legacy)
             logChatEvent({
               query: message,
-              response_time_ms: responseTime,
+              response_time_ms: responseTimeMs,
               user_agent: request.headers.get("user-agent") || undefined,
               agent_handled: true,
               agent_path: agentResult.agentPath.join(' → '),
@@ -89,6 +103,32 @@ export async function POST(request: NextRequest) {
           },
         });
       }
+
+      // Agent attempted but low confidence - log fallback
+      if (agentResult) {
+        logAgentAnalytics({
+          app: "family_hq",
+          userId: userContext?.id || 'guest',
+          query: message,
+          intentDetected: agentResult.agentPath?.[agentResult.agentPath.length - 1],
+          agentPath: agentResult.agentPath?.join(" → "),
+          agentHandled: false,
+          confidence: agentResult.confidence,
+          responseTimeMs: Date.now() - startTime,
+          fallbackReason: "low_confidence",
+          fallbackTo: "claude",
+        });
+      }
+    } else {
+      // No agent match - log fallback
+      logAgentAnalytics({
+        app: "family_hq",
+        userId: userContext?.id || 'guest',
+        query: message,
+        agentHandled: false,
+        fallbackReason: "no_match",
+        fallbackTo: "claude",
+      });
     }
 
     // Fall back to full Claude with tools for complex queries
