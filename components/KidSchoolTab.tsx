@@ -21,8 +21,8 @@ interface SchoolEvent {
 interface ActionItem {
   id: string;
   title: string;
-  deadline?: string;
-  urgency: string;
+  deadline?: string | null;
+  urgency: string | null;
   source: string;
 }
 
@@ -88,9 +88,12 @@ function formatRelativeDate(dateStr: string): string {
   });
 }
 
-function UrgencyBadge({ urgency }: { urgency: string }) {
-  const isHigh = urgency.toLowerCase() === "high";
-  const isMedium = urgency.toLowerCase() === "medium";
+function UrgencyBadge({ urgency }: { urgency: string | null | undefined }) {
+  if (!urgency || typeof urgency !== 'string') return null;
+
+  const urgencyLower = urgency.toLowerCase();
+  const isHigh = urgencyLower === "high";
+  const isMedium = urgencyLower === "medium";
 
   if (!isHigh && !isMedium) return null;
 
