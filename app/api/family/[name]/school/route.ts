@@ -68,15 +68,32 @@ export async function GET(
 
   return NextResponse.json({
     child: childName,
-    events: events || [],
-    actions: actions || [],
-    announcements: announcements || [],
-    teacherEmails: teacherEmails?.map(e => ({
+    events: (events || []).map(e => ({
       id: e.id,
-      date: e.email_date,
-      from: e.from_name || e.from_address,
+      title: e.title,
+      date: e.event_date,
+      source: e.source || '',
+      scope: e.scope || 'individual',
+    })),
+    actions: (actions || []).map(a => ({
+      id: a.id,
+      title: a.title,
+      deadline: a.deadline,
+      urgency: a.urgency || 'medium',
+      source: a.source || '',
+    })),
+    announcements: (announcements || []).map(a => ({
+      id: a.id,
+      title: a.title,
+      source: a.source || '',
+      created_at: a.created_at,
+    })),
+    teacherEmails: (teacherEmails || []).map(e => ({
+      id: e.id,
       subject: e.subject,
-      teacher: e.source_name,
-    })) || [],
+      from_name: e.from_name || e.from_address,
+      teacher_name: e.source_name,
+      created_at: e.email_date,
+    })),
   });
 }

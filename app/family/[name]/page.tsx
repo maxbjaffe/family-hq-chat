@@ -19,8 +19,6 @@ import {
   GraduationCap,
   Users,
   Sparkles,
-  BookOpen,
-  User,
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { FamilyCalendarSection } from '@/components/FamilyCalendarSection';
@@ -168,7 +166,6 @@ export default function FamilyProfilePage() {
   const [birthdayFact, setBirthdayFact] = useState<BirthdayFact | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [isAdult, setIsAdult] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'school'>('profile');
 
   const isVisible = (field: string) => visibility[field] !== false;
   const isKid = avatarInfo?.role === 'kid';
@@ -331,36 +328,6 @@ export default function FamilyProfilePage() {
           </div>
         </Card>
 
-        {/* Tab Navigation (only for kids) */}
-        {isKid && (
-          <div className="flex gap-2 mb-6">
-            <Button
-              variant={activeTab === 'profile' ? 'default' : 'outline'}
-              onClick={() => setActiveTab('profile')}
-              className="flex-1 min-h-[48px]"
-            >
-              <User className="h-5 w-5 mr-2" />
-              Profile
-            </Button>
-            <Button
-              variant={activeTab === 'school' ? 'default' : 'outline'}
-              onClick={() => setActiveTab('school')}
-              className="flex-1 min-h-[48px]"
-            >
-              <BookOpen className="h-5 w-5 mr-2" />
-              School
-            </Button>
-          </div>
-        )}
-
-        {/* School Tab Content */}
-        {isKid && activeTab === 'school' && (
-          <KidSchoolTab childName={member.name.split(' ')[0].toLowerCase()} />
-        )}
-
-        {/* Profile Tab Content */}
-        {(activeTab === 'profile' || !isKid) && (
-          <>
         {/* Emergency Info - Highlighted */}
         {((hasAllergies && isVisible('allergies')) || (member.emergencyNotes && isVisible('emergencyNotes'))) && (
           <Card className="p-4 mb-6 border-amber-200 bg-amber-50">
@@ -515,6 +482,13 @@ export default function FamilyProfilePage() {
           <FamilyCalendarSection memberName={member.name.split(' ')[0]} />
         )}
 
+        {/* School Updates (for kids) */}
+        {isKid && (
+          <div className="mt-6">
+            <KidSchoolTab childName={member.name.split(' ')[0].toLowerCase()} />
+          </div>
+        )}
+
         {/* Patient Portal Link */}
         {member.patientPortal && isVisible('patientPortal') && (
           <Card className="p-4">
@@ -528,8 +502,6 @@ export default function FamilyProfilePage() {
               <span className="font-medium">Open Patient Portal</span>
             </a>
           </Card>
-        )}
-          </>
         )}
       </div>
     </div>
