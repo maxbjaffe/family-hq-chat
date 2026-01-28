@@ -23,6 +23,8 @@ export interface ChatEvent {
   response_time_ms: number;
   user_agent?: string;
   cached_notion?: boolean;
+  agent_handled?: boolean;
+  agent_path?: string;
 }
 
 export async function logChatEvent(event: ChatEvent): Promise<void> {
