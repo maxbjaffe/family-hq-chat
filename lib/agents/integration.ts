@@ -77,9 +77,14 @@ export function shouldUseAgents(message: string): boolean {
     /what\s+(do\s+)?i\s+(have\s+to|need\s+to)\s+do/i,
     
     // Calendar triggers
+    /what'?s?\s+(on\s+)?(the\s+)?calendar/i,
     /what'?s?\s+(on\s+)?today/i,
     /what'?s?\s+happening/i,
     /family\s+calendar/i,
+    /today'?s?\s+(schedule|events|calendar)/i,
+    /any(thing)?\s+on\s+(the\s+)?calendar/i,
+    /show\s+(me\s+)?(the\s+)?calendar/i,
+    /calendar\s+for\s+today/i,
     
     // Games triggers
     /play\s+(a\s+)?game/i,
