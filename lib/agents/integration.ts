@@ -96,6 +96,24 @@ export function shouldUseAgents(message: string): boolean {
     /house\s+(task|chore)/i,
     /who'?s?\s+(doing|responsible)/i,
     /chore\s+list/i,
+    /show\s+(house\s+)?chores/i,
+    /what\s+chores/i,
+    /add\s+.+\s+to\s+(house\s+)?tasks/i,
+    /took\s+out\s+the\s+trash/i,
+    /did\s+the\s+dishes/i,
+
+    // Family info triggers
+    /allerg(y|ies)/i,
+    /blood\s*type/i,
+    /medication|medicine/i,
+    /birthday/i,
+    /how\s+old\s+is/i,
+    /who\s+is\s+.+'s\s+(doctor|teacher|pediatrician)/i,
+    /.+'s\s+(doctor|teacher|allergies|birthday|blood\s*type)/i,
+    /emergency\s+contact/i,
+    /pediatrician/i,
+    /dentist/i,
+    /family\s+(health|info)/i,
   ];
 
   return agentTriggers.some(trigger => trigger.test(text));

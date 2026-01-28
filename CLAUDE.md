@@ -133,6 +133,21 @@ SHORTCUTS_SECRET_KEY=   # iOS Shortcuts auth
 
 ## Recent Changes
 
+### Jan 28, 2026 - Agent Improvements
+- **FamilyInfoAgent** - Full implementation with Notion integration
+  - Health info: allergies, medications, blood type, conditions
+  - Contacts: doctors, teachers, emergency contacts
+  - Birthdays and ages
+  - Smart family member detection (Riley, Parker, Devin, etc.)
+- **HouseTasksAgent** - Full Todoist integration
+  - View, add, and complete house tasks
+  - Fuzzy task name matching for completion
+  - Kid-friendly responses
+- **CalendarAgent** - Fixed trigger patterns for "what's on the calendar"
+- **Agent Analytics** - Cross-app observability via shared `agent_analytics` table
+  - Hit rate tracking, fallback analysis
+  - Dashboard at `radar.maxjaffe.ai/radar/admin`
+
 ### Jan 19, 2025 - Unified Home & Parent Portal
 - **Consolidated Home + Dashboard** into single family-first screen
 - **Simplified navigation** from 7 items to 3 (Home, Checklists, Breaktime)
@@ -195,11 +210,11 @@ FamilyHQOrchestrator (persona: "Family Helper")
 │
 ├── ChecklistAgent           ← connected to checklist_items, checklist_completions
 │
-├── FamilyInfoAgent          ← stub (needs Notion sync)
+├── FamilyInfoAgent          ← connected to Notion (People, Health databases)
 │
 ├── GamesAgent               ← stateless (game suggestions)
 │
-└── HouseTasksAgent          ← stub (needs table or Todoist integration)
+└── HouseTasksAgent          ← connected to Todoist "House Tasks" project
 ```
 
 ### Key Files
@@ -228,11 +243,13 @@ lib/agents/
 7. Kid-friendly responses when familyMember.role === 'kid'
 
 ### Connected Data Sources
-| Agent | Table(s) | Operations |
-|-------|----------|------------|
+| Agent | Table(s) / API | Operations |
+|-------|----------------|------------|
 | SchoolAgent | radar_family_feed, family_members | Read |
 | CalendarAgent | cached_calendar_events | Read |
 | ChecklistAgent | checklist_items, checklist_completions | Read, Toggle |
+| FamilyInfoAgent | Notion (People, Health, Accounts DBs) | Read |
+| HouseTasksAgent | Todoist "House Tasks" project | Read, Create, Complete |
 
 ### Radar Integration
 The SchoolAgent pulls data from `radar_family_feed` which is populated by Radar's email processing pipeline:
@@ -242,6 +259,10 @@ The SchoolAgent pulls data from `radar_family_feed` which is populated by Radar'
 - Family HQ agents read from feed for school updates
 
 ### Remaining Work
-- FamilyInfoAgent → family_members + Notion health/reference data sync
-- HouseTasksAgent → Create house_tasks table or integrate with Todoist
 - GamesAgent → Expand game options
+
+### Agent Analytics (January 2026)
+Agent performance is tracked via the shared `agent_analytics` table:
+- Hit rate, response times, confidence scores
+- Fallback analysis (no_match, low_confidence)
+- Dashboard at `radar.maxjaffe.ai/radar/admin` → Agent Analytics tab
