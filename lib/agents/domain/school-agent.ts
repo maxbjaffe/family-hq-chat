@@ -119,12 +119,13 @@ export class SchoolAgent extends BaseAgent {
       const twoWeeksOut = new Date(now);
       twoWeeksOut.setDate(twoWeeksOut.getDate() + 14);
 
-      // Query radar_family_feed for school events
+      // Query radar_family_feed for school events (all school-related source types)
+      const schoolSources = ['district', 'pta', 'teacher', 'athletics', 'extracurricular', 'theater', 'chorus', 'scouts', 'general', 'unknown'];
       const { data: events, error } = await supabase
         .from('radar_family_feed')
         .select('*')
         .eq('item_type', 'event')
-        .in('source_type', ['district', 'pta', 'teacher', 'athletics', 'extracurricular'])
+        .in('source_type', schoolSources)
         .gte('event_date', now.toISOString())
         .lte('event_date', twoWeeksOut.toISOString())
         .eq('dismissed', false)
@@ -172,11 +173,12 @@ export class SchoolAgent extends BaseAgent {
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-      // Query radar_family_feed for recent school communications
+      // Query radar_family_feed for recent school communications (all school-related source types)
+      const schoolSources = ['district', 'pta', 'teacher', 'athletics', 'extracurricular', 'theater', 'chorus', 'scouts', 'general', 'unknown'];
       const { data: updates, error } = await supabase
         .from('radar_family_feed')
         .select('*')
-        .in('source_type', ['district', 'pta', 'teacher', 'athletics'])
+        .in('source_type', schoolSources)
         .gte('created_at', threeDaysAgo.toISOString())
         .eq('dismissed', false)
         .order('created_at', { ascending: false })
@@ -234,21 +236,22 @@ export class SchoolAgent extends BaseAgent {
       oneWeekOut.setDate(oneWeekOut.getDate() + 7);
 
       // Get action items (things that need attention)
+      const schoolSources = ['district', 'pta', 'teacher', 'athletics', 'extracurricular', 'theater', 'chorus', 'scouts', 'general', 'unknown'];
       const { data: actions } = await supabase
         .from('radar_family_feed')
         .select('*')
-        .in('source_type', ['district', 'pta', 'teacher', 'athletics'])
+        .in('source_type', schoolSources)
         .eq('item_type', 'action')
         .eq('dismissed', false)
         .order('urgency', { ascending: false })
         .limit(5);
 
-      // Get upcoming events
+      // Get upcoming events (reusing schoolSources from above)
       const { data: events } = await supabase
         .from('radar_family_feed')
         .select('*')
         .eq('item_type', 'event')
-        .in('source_type', ['district', 'pta', 'teacher', 'athletics'])
+        .in('source_type', schoolSources)
         .gte('event_date', now.toISOString())
         .lte('event_date', oneWeekOut.toISOString())
         .eq('dismissed', false)
