@@ -17,9 +17,10 @@ interface CalendarEvent {
 
 interface FamilyCalendarSectionProps {
   memberName: string;
+  excludeEventTitles?: string[];
 }
 
-export function FamilyCalendarSection({ memberName }: FamilyCalendarSectionProps) {
+export function FamilyCalendarSection({ memberName, excludeEventTitles = [] }: FamilyCalendarSectionProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(true);
@@ -32,9 +33,20 @@ export function FamilyCalendarSection({ memberName }: FamilyCalendarSectionProps
           const data = await res.json();
           // Filter to calendars relevant to this family member
           const relevantCalendars = getCalendarsForMember(memberName);
-          const relevantEvents = (data.events || []).filter((e: CalendarEvent) =>
+          let relevantEvents = (data.events || []).filter((e: CalendarEvent) =>
             !e.calendar_name || relevantCalendars.includes(e.calendar_name)
           );
+
+          // Deduplicate: exclude events that match school event titles
+          if (excludeEventTitles.length > 0) {
+            relevantEvents = relevantEvents.filter((e: CalendarEvent) => {
+              const title = e.title?.toLowerCase().trim() || '';
+              return !excludeEventTitles.some(excluded =>
+                title.includes(excluded) || excluded.includes(title)
+              );
+            });
+          }
+
           setEvents(relevantEvents.slice(0, 10));
         }
       } catch {
@@ -43,7 +55,7 @@ export function FamilyCalendarSection({ memberName }: FamilyCalendarSectionProps
       setLoading(false);
     }
     fetchEvents();
-  }, [memberName]);
+  }, [memberName, excludeEventTitles]);
 
   function formatTime(dateStr: string): string {
     const date = new Date(dateStr);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -166,9 +166,15 @@ export default function FamilyProfilePage() {
   const [birthdayFact, setBirthdayFact] = useState<BirthdayFact | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [isAdult, setIsAdult] = useState(false);
+  const [schoolEventTitles, setSchoolEventTitles] = useState<string[]>([]);
 
   const isVisible = (field: string) => visibility[field] !== false;
   const isKid = avatarInfo?.role === 'kid';
+
+  // Callback to receive school event titles for deduplication
+  const handleSchoolEventsLoaded = useCallback((titles: string[]) => {
+    setSchoolEventTitles(titles);
+  }, []);
 
   const name = typeof params.name === 'string' ? decodeURIComponent(params.name) : '';
 
@@ -332,12 +338,16 @@ export default function FamilyProfilePage() {
         {isKid && (
           <>
             {/* School Updates from Radar */}
-            <KidSchoolTab childName={member.name.split(' ')[0].toLowerCase()} />
+            <KidSchoolTab
+              childName={member.name.split(' ')[0].toLowerCase()}
+              onEventsLoaded={handleSchoolEventsLoaded}
+            />
 
-            {/* Their Calendar */}
-            <div className="mt-6">
-              <FamilyCalendarSection memberName={member.name.split(' ')[0]} />
-            </div>
+            {/* Their Calendar (deduplicated) */}
+            <FamilyCalendarSection
+              memberName={member.name.split(' ')[0]}
+              excludeEventTitles={schoolEventTitles}
+            />
           </>
         )}
 
