@@ -41,6 +41,7 @@ app/                    # Pages and API routes
     admin/family/       # Family member CRUD
     admin/checklist/    # Checklist item management
     family/             # Notion health data lookup
+    family/[name]/school/ # Kid-specific school data from Radar
     house-tasks/        # House Tasks CRUD
     auth/               # PIN verification
     shortcuts/          # iOS Shortcuts endpoints
@@ -54,6 +55,7 @@ components/
   HouseTasks.tsx        # Shared family task list
   PinModal.tsx          # PIN entry
   UserProvider.tsx      # Auth context
+  KidSchoolTab.tsx      # Kid-specific school data (events, actions, teacher emails)
   widgets/              # Dashboard widgets
 lib/
   supabase.ts           # DB client + auth + family members
@@ -133,7 +135,13 @@ SHORTCUTS_SECRET_KEY=   # iOS Shortcuts auth
 
 ## Recent Changes
 
-### Jan 28, 2026 - Agent Improvements
+### Jan 28, 2026 - Agent Improvements & Kid School Tabs
+- **Kid School Tabs** - New School tab on kid profile pages (`/family/[name]`)
+  - Action items section with urgency badges
+  - Upcoming events from school calendar
+  - Teacher communications
+  - Announcements section
+  - Data pulled from Radar via `/api/family/[name]/school`
 - **FamilyInfoAgent** - Full implementation with Notion integration
   - Health info: allergies, medications, blood type, conditions
   - Contacts: doctors, teachers, emergency contacts
