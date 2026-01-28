@@ -328,6 +328,22 @@ export default function FamilyProfilePage() {
           </div>
         </Card>
 
+        {/* Kid View: School Items + Calendar Only */}
+        {isKid && (
+          <>
+            {/* School Updates from Radar */}
+            <KidSchoolTab childName={member.name.split(' ')[0].toLowerCase()} />
+
+            {/* Their Calendar */}
+            <div className="mt-6">
+              <FamilyCalendarSection memberName={member.name.split(' ')[0]} />
+            </div>
+          </>
+        )}
+
+        {/* Non-Kid View: Full Profile */}
+        {!isKid && (
+          <>
         {/* Emergency Info - Highlighted */}
         {((hasAllergies && isVisible('allergies')) || (member.emergencyNotes && isVisible('emergencyNotes'))) && (
           <Card className="p-4 mb-6 border-amber-200 bg-amber-50">
@@ -477,16 +493,9 @@ export default function FamilyProfilePage() {
           </div>
         )}
 
-        {/* Upcoming Calendar Events */}
+        {/* Upcoming Calendar Events (non-kids, non-pets) */}
         {member.role !== 'Dog' && avatarInfo?.role !== 'pet' && (
           <FamilyCalendarSection memberName={member.name.split(' ')[0]} />
-        )}
-
-        {/* School Updates (for kids) */}
-        {isKid && (
-          <div className="mt-6">
-            <KidSchoolTab childName={member.name.split(' ')[0].toLowerCase()} />
-          </div>
         )}
 
         {/* Patient Portal Link */}
@@ -502,6 +511,8 @@ export default function FamilyProfilePage() {
               <span className="font-medium">Open Patient Portal</span>
             </a>
           </Card>
+        )}
+          </>
         )}
       </div>
     </div>
