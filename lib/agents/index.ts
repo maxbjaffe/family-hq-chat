@@ -8,3 +8,4 @@ export * from './types';
 export * from './base-agent';
 export { FamilyHQOrchestrator } from './orchestrator';
 export * from './domain';
+export * from './integration';

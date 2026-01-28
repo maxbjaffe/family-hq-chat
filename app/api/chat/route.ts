@@ -5,6 +5,8 @@ import { getSystemPrompt, getClient, ChatMessage } from "@/lib/claude";
 import { tools } from "@/lib/tools";
 import { executeTool } from "@/lib/tool-executor";
 import { logChatEvent } from "@/lib/analytics";
+import { processWithAgents, shouldUseAgents, formatAgentResponse } from "@/lib/agents/integration";
+import { FamilyMember } from "@/lib/agents/types";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -23,6 +25,74 @@ export async function POST(request: NextRequest) {
       role: user.role as string,
     } : null;
 
+    // Build family member context for agents
+    const familyMember: FamilyMember | undefined = user ? {
+      id: user.id,
+      name: user.name,
+      displayName: user.name,
+      role: (user.role === 'admin' || user.role === 'adult' || user.role === 'kid') 
+        ? user.role 
+        : 'adult',
+    } : undefined;
+
+    // Check if this should be handled by agents (quick operations)
+    if (shouldUseAgents(message)) {
+      const agentResult = await processWithAgents(
+        message, 
+        userContext?.id || 'guest',
+        undefined,
+        familyMember
+      );
+      
+      if (agentResult && agentResult.confidence >= 0.8) {
+        // High confidence agent result - return directly
+        const formatted = formatAgentResponse(agentResult);
+        
+        // Stream the agent response
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({ type: "text", content: formatted.message })}\n\n`
+              )
+            );
+            
+            if (formatted.data) {
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({ type: "agent_result", data: formatted.data })}\n\n`
+                )
+              );
+            }
+            
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+            
+            // Log analytics
+            const responseTime = Date.now() - startTime;
+            logChatEvent({
+              query: message,
+              response_time_ms: responseTime,
+              user_agent: request.headers.get("user-agent") || undefined,
+              agent_handled: true,
+              agent_path: agentResult.agentPath.join(' → '),
+            }).catch(() => {});
+          },
+        });
+
+        return new Response(stream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
+        });
+      }
+    }
+
+    // Fall back to full Claude with tools for complex queries
+    
     // Fetch family data for reference info tool
     const notionStartTime = Date.now();
     const notionData = await fetchAllFamilyData();
