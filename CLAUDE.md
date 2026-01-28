@@ -178,3 +178,70 @@ Push to GitHub → Vercel auto-deploys
 - **Vercel:** family-hq-chat
 - **Supabase:** fpxardwqswlofxrupyhz
 - **GitHub:** github.com/maxbjaffe/family-hq-chat
+
+
+## Agent Architecture (Added January 2026)
+
+### Overview
+Family HQ uses a hierarchical agent architecture with a warm, family-friendly persona. Simple queries are handled directly by specialized agents without a full Claude API call.
+
+### Architecture
+```
+FamilyHQOrchestrator (persona: "Family Helper")
+│
+├── SchoolAgent              ← connected to radar_family_feed, family_members
+│
+├── CalendarAgent            ← connected to cached_calendar_events
+│
+├── ChecklistAgent           ← connected to checklist_items, checklist_completions
+│
+├── FamilyInfoAgent          ← stub (needs Notion sync)
+│
+├── GamesAgent               ← stateless (game suggestions)
+│
+└── HouseTasksAgent          ← stub (needs table or Todoist integration)
+```
+
+### Key Files
+```
+lib/agents/
+├── base-agent.ts              # Abstract base class (family-friendly adaptations)
+├── orchestrator.ts            # FamilyHQOrchestrator - warm persona, routes to agents
+├── types.ts                   # AgentResult, AgentContext, UserInput, AgentPersona
+├── integration.ts             # shouldUseAgents(), bridging helpers
+└── domain/
+    ├── school-agent.ts        # School updates from Radar feed
+    ├── calendar-agent.ts      # Family calendar queries
+    ├── checklist-agent.ts     # Morning/evening checklists
+    ├── family-info-agent.ts   # Family member info (doctors, contacts)
+    ├── games-agent.ts         # Fun activities and games
+    └── house-tasks-agent.ts   # Household chore tracking
+```
+
+### How It Works
+1. Chat API receives message
+2. `shouldUseAgents()` checks for quick-trigger patterns
+3. Orchestrator detects intent (school, calendar, checklist, etc.)
+4. Routes to appropriate agent
+5. High-confidence (≥0.8) results return directly
+6. Low-confidence falls back to full Claude + tools
+7. Kid-friendly responses when familyMember.role === 'kid'
+
+### Connected Data Sources
+| Agent | Table(s) | Operations |
+|-------|----------|------------|
+| SchoolAgent | radar_family_feed, family_members | Read |
+| CalendarAgent | cached_calendar_events | Read |
+| ChecklistAgent | checklist_items, checklist_completions | Read, Toggle |
+
+### Radar Integration
+The SchoolAgent pulls data from `radar_family_feed` which is populated by Radar's email processing pipeline:
+- Radar scans Gmail for school emails
+- Extracts events, announcements, action items → `radar_school_extractions`
+- Syncs to `radar_family_feed` via CRON job
+- Family HQ agents read from feed for school updates
+
+### Remaining Work
+- FamilyInfoAgent → family_members + Notion health/reference data sync
+- HouseTasksAgent → Create house_tasks table or integrate with Todoist
+- GamesAgent → Expand game options
