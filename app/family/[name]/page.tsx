@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { FamilyCalendarSection } from '@/components/FamilyCalendarSection';
-import { KidSchoolTab } from '@/components/KidSchoolTab';
+import { KidProfileDashboard } from '@/components/kid-profile';
 import { PinModal } from '@/components/PinModal';
 import { getZodiacFromBirthday } from '@/lib/zodiac';
 import { getRandomFactFromBirthday, formatFact, type BirthdayFact } from '@/lib/birthday-facts';
@@ -166,15 +166,10 @@ export default function FamilyProfilePage() {
   const [birthdayFact, setBirthdayFact] = useState<BirthdayFact | null>(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [isAdult, setIsAdult] = useState(false);
-  const [schoolEventTitles, setSchoolEventTitles] = useState<string[]>([]);
+  const [memberId, setMemberId] = useState<string | null>(null);
 
   const isVisible = (field: string) => visibility[field] !== false;
   const isKid = avatarInfo?.role === 'kid';
-
-  // Callback to receive school event titles for deduplication
-  const handleSchoolEventsLoaded = useCallback((titles: string[]) => {
-    setSchoolEventTitles(titles);
-  }, []);
 
   const name = typeof params.name === 'string' ? decodeURIComponent(params.name) : '';
 
@@ -211,6 +206,7 @@ export default function FamilyProfilePage() {
                   }
                 );
                 if (supabaseMember) {
+                  setMemberId(supabaseMember.id);
                   if (supabaseMember.profile_visibility) {
                     setVisibility(supabaseMember.profile_visibility);
                   }
@@ -334,21 +330,15 @@ export default function FamilyProfilePage() {
           </div>
         </Card>
 
-        {/* Kid View: School Items + Calendar Only */}
-        {isKid && (
-          <>
-            {/* School Updates from Radar */}
-            <KidSchoolTab
-              childName={member.name.split(' ')[0].toLowerCase()}
-              onEventsLoaded={handleSchoolEventsLoaded}
-            />
-
-            {/* Their Calendar (deduplicated) */}
-            <FamilyCalendarSection
-              memberName={member.name.split(' ')[0]}
-              excludeEventTitles={schoolEventTitles}
-            />
-          </>
+        {/* Kid View: Dashboard with To-Dos, Checklist, School, Calendar */}
+        {isKid && memberId && (
+          <KidProfileDashboard
+            memberId={memberId}
+            memberName={member.name}
+            birthday={member.birthday}
+            school={member.school}
+            teachers={member.teachers}
+          />
         )}
 
         {/* Non-Kid View: Full Profile */}

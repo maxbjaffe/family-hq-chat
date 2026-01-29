@@ -6,6 +6,8 @@ import {
   AlertTriangle,
   Calendar,
   Loader2,
+  Mail,
+  Megaphone,
 } from "lucide-react";
 
 interface SchoolEvent {
@@ -24,9 +26,26 @@ interface ActionItem {
   source: string;
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  source: string;
+  created_at: string;
+}
+
+interface TeacherEmail {
+  id: string;
+  subject: string;
+  from_name: string;
+  teacher_name: string | null;
+  created_at: string;
+}
+
 interface KidSchoolData {
   events: SchoolEvent[];
   actions: ActionItem[];
+  announcements: Announcement[];
+  teacherEmails: TeacherEmail[];
 }
 
 interface KidSchoolTabProps {
@@ -138,9 +157,11 @@ export function KidSchoolTab({ childName, onEventsLoaded }: KidSchoolTabProps) {
 
   const hasActions = data.actions && data.actions.length > 0;
   const hasEvents = data.events && data.events.length > 0;
+  const hasAnnouncements = data.announcements && data.announcements.length > 0;
+  const hasTeacherEmails = data.teacherEmails && data.teacherEmails.length > 0;
 
   // If no data at all, show nothing
-  if (!hasActions && !hasEvents) {
+  if (!hasActions && !hasEvents && !hasAnnouncements && !hasTeacherEmails) {
     return null;
   }
 
@@ -194,6 +215,56 @@ export function KidSchoolTab({ childName, onEventsLoaded }: KidSchoolTabProps) {
                 </div>
                 <p className="font-medium text-slate-800 text-sm">
                   {event.title}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Teacher Communications */}
+      {hasTeacherEmails && (
+        <Card className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Mail className="h-5 w-5 text-green-600" />
+            <h3 className="font-semibold text-slate-800">From Teachers</h3>
+          </div>
+          <div className="space-y-2">
+            {data.teacherEmails.map((email) => (
+              <div
+                key={email.id}
+                className="p-3 bg-white/70 rounded-lg border border-green-200"
+              >
+                <p className="font-medium text-slate-800 text-sm">
+                  {email.subject}
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  {email.teacher_name || email.from_name} · {formatDate(email.created_at)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Announcements */}
+      {hasAnnouncements && (
+        <Card className="p-4 bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Megaphone className="h-5 w-5 text-purple-600" />
+            <h3 className="font-semibold text-slate-800">Announcements</h3>
+          </div>
+          <div className="space-y-2">
+            {data.announcements.map((announcement) => (
+              <div
+                key={announcement.id}
+                className="p-3 bg-white/70 rounded-lg border border-purple-200"
+              >
+                <p className="font-medium text-slate-800 text-sm">
+                  {announcement.title}
+                </p>
+                <p className="text-xs text-purple-700 mt-1">
+                  {announcement.source} · {formatDate(announcement.created_at)}
                 </p>
               </div>
             ))}
