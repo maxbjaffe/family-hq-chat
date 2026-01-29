@@ -7,10 +7,10 @@ import { Calendar, Loader2 } from 'lucide-react';
 interface CalendarEvent {
   id: string;
   title: string;
-  start: string;
-  all_day: boolean;
+  start_time: string;
+  end_time: string;
   calendar_name: string;
-  color: string;
+  location: string | null;
 }
 
 interface ComingUpCardProps {
@@ -19,7 +19,10 @@ interface ComingUpCardProps {
 }
 
 function formatEventDate(dateStr: string): string {
+  if (!dateStr) return '';
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -39,9 +42,11 @@ function formatEventDate(dateStr: string): string {
   });
 }
 
-function formatEventTime(dateStr: string, allDay: boolean): string {
-  if (allDay) return '';
+function formatEventTime(dateStr: string): string {
+  if (!dateStr) return '';
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+
   return date.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -133,10 +138,8 @@ export function ComingUpCard({ memberName, excludeEventTitles = [] }: ComingUpCa
             className="p-2 rounded-lg bg-white/50"
           >
             <div className="flex items-center gap-2 text-xs text-amber-700 font-medium">
-              <span>{formatEventDate(event.start)}</span>
-              {!event.all_day && (
-                <span className="text-slate-500">{formatEventTime(event.start, event.all_day)}</span>
-              )}
+              <span>{formatEventDate(event.start_time)}</span>
+              <span className="text-slate-500">{formatEventTime(event.start_time)}</span>
             </div>
             <p className="text-sm font-medium text-slate-800 mt-0.5">
               {event.title}

@@ -35,7 +35,18 @@ export function KidProfileDashboard({
 
   return (
     <div className="space-y-4">
-      {/* My To-Dos - Full width, most important */}
+      {/* 2x2 Grid of Cards - At the top */}
+      <div className="grid grid-cols-2 gap-3">
+        <BirthdayCard birthday={birthday} />
+        <ChecklistCard memberId={memberId} />
+        <SchoolCard school={school} teachers={teachers} />
+        <ComingUpCard
+          memberName={firstName}
+          excludeEventTitles={schoolEventTitles}
+        />
+      </div>
+
+      {/* My To-Dos */}
       <KidTodosCard childName={firstName} />
 
       {/* School Updates from Radar */}
@@ -43,24 +54,6 @@ export function KidProfileDashboard({
         childName={firstName.toLowerCase()}
         onEventsLoaded={handleSchoolEventsLoaded}
       />
-
-      {/* 2x2 Grid of Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Birthday Card */}
-        <BirthdayCard birthday={birthday} />
-
-        {/* Checklist Card */}
-        <ChecklistCard memberId={memberId} />
-
-        {/* School Card */}
-        <SchoolCard school={school} teachers={teachers} />
-
-        {/* Coming Up Card */}
-        <ComingUpCard
-          memberName={firstName}
-          excludeEventTitles={schoolEventTitles}
-        />
-      </div>
     </div>
   );
 }

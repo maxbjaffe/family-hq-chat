@@ -132,9 +132,25 @@ export function ChecklistCard({ memberId }: ChecklistCardProps) {
       </div>
 
       {allDone && !expanded && (
-        <div className="flex items-center justify-center gap-2 py-2 text-green-600">
+        <div className="flex items-center justify-center gap-2 py-1 text-green-600">
           <PartyPopper className="h-5 w-5" />
-          <span className="font-medium">All done!</span>
+          <span className="font-medium text-sm">All done!</span>
+        </div>
+      )}
+
+      {/* Preview when collapsed - show first 3 incomplete items */}
+      {!expanded && !allDone && (
+        <div className="mt-2 space-y-1">
+          {items
+            .sort((a, b) => a.sort_order - b.sort_order)
+            .filter(item => !item.is_completed)
+            .slice(0, 3)
+            .map(item => (
+              <div key={item.id} className="flex items-center gap-2 text-xs text-slate-600">
+                <Circle className="h-3 w-3 text-slate-400" />
+                <span className="truncate">{item.icon} {item.title}</span>
+              </div>
+            ))}
         </div>
       )}
 
