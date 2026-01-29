@@ -67,6 +67,26 @@ function isKidRelevantItem(title: string): boolean {
 }
 
 // Deduplicate items by normalized title (handles slight variations)
+// Senders that are NOT actual teachers (newsletters, subscriptions, etc.)
+const NON_TEACHER_SENDERS = [
+  'amar chitra',
+  'amar chitra katha',
+  'ack media',
+  'newsletter',
+  'noreply',
+  'no-reply',
+  'donotreply',
+  'notifications',
+  'updates@',
+  'info@',
+  'marketing',
+];
+
+function isActualTeacher(fromName: string, fromAddress: string): boolean {
+  const combined = `${fromName} ${fromAddress}`.toLowerCase();
+  return !NON_TEACHER_SENDERS.some(pattern => combined.includes(pattern));
+}
+
 function deduplicateItems<T extends { title: string }>(items: T[]): T[] {
   const seen = new Set<string>();
   return items.filter(item => {
@@ -184,12 +204,14 @@ export async function GET(
     events: transformedEvents,
     actions: transformedActions,
     announcements: transformedAnnouncements,
-    teacherEmails: (teacherEmails || []).map(e => ({
-      id: e.id || '',
-      subject: e.subject || 'No Subject',
-      from_name: e.from_name || e.from_address || 'Unknown',
-      teacher_name: e.source_name || null,
-      created_at: e.email_date || '',
-    })),
+    teacherEmails: (teacherEmails || [])
+      .filter(e => isActualTeacher(e.from_name || '', e.from_address || ''))
+      .map(e => ({
+        id: e.id || '',
+        subject: e.subject || 'No Subject',
+        from_name: e.from_name || e.from_address || 'Unknown',
+        teacher_name: e.source_name || null,
+        created_at: e.email_date || '',
+      })),
   });
 }
