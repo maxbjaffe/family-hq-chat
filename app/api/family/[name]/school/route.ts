@@ -8,6 +8,81 @@ function getSupabaseClient() {
   return createClient(url, key);
 }
 
+// Keywords that indicate parent-only events (case-insensitive)
+const PARENT_ONLY_KEYWORDS = [
+  'ladies night',
+  'parents night out',
+  'parents\' night out',
+  'parent night out',
+  'moms night',
+  'dads night',
+  'wine',
+  'cocktail',
+  'happy hour',
+  'adult only',
+  'adults only',
+  '21+',
+  'pta meeting',
+  'pta board',
+  'board meeting',
+  'volunteer meeting',
+  'parent meeting',
+  'parent conference',
+];
+
+// Keywords that indicate kid-relevant events
+const KID_KEYWORDS = [
+  'kids night',
+  'kids\' night',
+  'children',
+  'student',
+  'field trip',
+  'assembly',
+  'concert',
+  'recital',
+  'game',
+  'practice',
+  'class',
+  'grade',
+  'recess',
+  'lunch',
+  'dismissal',
+  'bus',
+  'homework',
+  'test',
+  'quiz',
+];
+
+function isParentOnlyItem(title: string): boolean {
+  const lowerTitle = title.toLowerCase();
+  return PARENT_ONLY_KEYWORDS.some(keyword => lowerTitle.includes(keyword));
+}
+
+function isKidRelevantItem(title: string): boolean {
+  const lowerTitle = title.toLowerCase();
+  // If it has kid keywords, it's relevant
+  if (KID_KEYWORDS.some(keyword => lowerTitle.includes(keyword))) return true;
+  // If it doesn't have parent-only keywords, default to relevant
+  return !isParentOnlyItem(title);
+}
+
+// Deduplicate items by normalized title (handles slight variations)
+function deduplicateItems<T extends { title: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter(item => {
+    // Normalize: lowercase, remove punctuation, collapse whitespace
+    const normalized = item.title
+      .toLowerCase()
+      .replace(/['']/g, "'")
+      .replace(/[^\w\s']/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
@@ -66,28 +141,49 @@ export async function GET(
     .order('email_date', { ascending: false })
     .limit(5);
 
+  // Transform and filter events - only kid-relevant, deduplicated
+  const transformedEvents = deduplicateItems(
+    (events || [])
+      .map(e => ({
+        id: e.id || '',
+        title: e.title || 'Untitled Event',
+        date: e.event_date || '',
+        source: e.source || '',
+        scope: e.scope || 'individual',
+      }))
+      .filter(e => isKidRelevantItem(e.title))
+  );
+
+  // Transform and filter actions - only kid-relevant, deduplicated
+  const transformedActions = deduplicateItems(
+    (actions || [])
+      .map(a => ({
+        id: a.id || '',
+        title: a.title || 'Untitled Action',
+        deadline: a.deadline || null,
+        urgency: typeof a.urgency === 'string' ? a.urgency : 'medium',
+        source: a.source || '',
+      }))
+      .filter(a => isKidRelevantItem(a.title))
+  );
+
+  // Transform and filter announcements - only kid-relevant, deduplicated
+  const transformedAnnouncements = deduplicateItems(
+    (announcements || [])
+      .map(a => ({
+        id: a.id || '',
+        title: a.title || 'Untitled Announcement',
+        source: a.source || '',
+        created_at: a.created_at || '',
+      }))
+      .filter(a => isKidRelevantItem(a.title))
+  );
+
   return NextResponse.json({
     child: childName,
-    events: (events || []).map(e => ({
-      id: e.id || '',
-      title: e.title || 'Untitled Event',
-      date: e.event_date || '',
-      source: e.source || '',
-      scope: e.scope || 'individual',
-    })),
-    actions: (actions || []).map(a => ({
-      id: a.id || '',
-      title: a.title || 'Untitled Action',
-      deadline: a.deadline || null,
-      urgency: typeof a.urgency === 'string' ? a.urgency : 'medium',
-      source: a.source || '',
-    })),
-    announcements: (announcements || []).map(a => ({
-      id: a.id || '',
-      title: a.title || 'Untitled Announcement',
-      source: a.source || '',
-      created_at: a.created_at || '',
-    })),
+    events: transformedEvents,
+    actions: transformedActions,
+    announcements: transformedAnnouncements,
     teacherEmails: (teacherEmails || []).map(e => ({
       id: e.id || '',
       subject: e.subject || 'No Subject',

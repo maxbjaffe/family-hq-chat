@@ -167,59 +167,59 @@ export function KidSchoolTab({ childName, onEventsLoaded }: KidSchoolTabProps) {
 
   return (
     <div className="space-y-4 mb-6">
-      {/* Action Items - Only show if there are any */}
-      {hasActions && (
-        <Card className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
-            <h3 className="font-semibold text-slate-800">Things To Do</h3>
-          </div>
-          <div className="space-y-2">
-            {data.actions.map((action) => (
-              <div
-                key={action.id}
-                className="p-3 bg-white/70 rounded-lg border border-amber-200"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-medium text-slate-800 text-sm">
-                    {action.title}
-                  </p>
-                  <UrgencyBadge urgency={action.urgency} />
-                </div>
-                {action.deadline && (
-                  <p className="text-xs text-amber-700 mt-1">
-                    Due: {formatDate(action.deadline)}
-                  </p>
-                )}
+      {/* Things To Do + School Events - Side by side */}
+      {(hasActions || hasEvents) && (
+        <div className="grid grid-cols-2 gap-3">
+          {/* Action Items */}
+          {hasActions && (
+            <Card className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <h3 className="font-semibold text-slate-800 text-sm">Things To Do</h3>
               </div>
-            ))}
-          </div>
-        </Card>
-      )}
+              <div className="space-y-1.5">
+                {data.actions.slice(0, 4).map((action) => (
+                  <div
+                    key={action.id}
+                    className="p-2 bg-white/70 rounded-lg border border-amber-200"
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="font-medium text-slate-800 text-xs leading-tight">
+                        {action.title}
+                      </p>
+                      <UrgencyBadge urgency={action.urgency} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
-      {/* Upcoming School Events */}
-      {hasEvents && (
-        <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-slate-800">School Events</h3>
-          </div>
-          <div className="space-y-2">
-            {data.events.map((event) => (
-              <div
-                key={event.id}
-                className="p-3 bg-white/70 rounded-lg border border-blue-200"
-              >
-                <div className="flex items-center gap-2 text-xs text-blue-600 font-medium mb-1">
-                  <span>{formatDate(event.date)}</span>
-                </div>
-                <p className="font-medium text-slate-800 text-sm">
-                  {event.title}
-                </p>
+          {/* School Events */}
+          {hasEvents && (
+            <Card className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                <h3 className="font-semibold text-slate-800 text-sm">School Events</h3>
               </div>
-            ))}
-          </div>
-        </Card>
+              <div className="space-y-1.5">
+                {data.events.slice(0, 4).map((event) => (
+                  <div
+                    key={event.id}
+                    className="p-2 bg-white/70 rounded-lg border border-blue-200"
+                  >
+                    <p className="text-xs text-blue-600 font-medium">
+                      {formatDate(event.date)}
+                    </p>
+                    <p className="font-medium text-slate-800 text-xs leading-tight">
+                      {event.title}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Teacher Communications */}
