@@ -166,25 +166,25 @@ export function KidSchoolTab({ childName, onEventsLoaded }: KidSchoolTabProps) {
   }
 
   return (
-    <div className="space-y-4 mb-6">
+    <div className="space-y-5 mb-6">
       {/* Things To Do + School Events - Side by side */}
       {(hasActions || hasEvents) && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {/* Action Items */}
           {hasActions && (
-            <Card className="p-3 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <h3 className="font-semibold text-slate-800 text-sm">Things To Do</h3>
+            <Card className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                <h3 className="font-bold text-slate-800 text-base">Things To Do</h3>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-3">
                 {data.actions.slice(0, 4).map((action) => (
                   <div
                     key={action.id}
-                    className="p-2 bg-white/70 rounded-lg border border-amber-200"
+                    className="p-3 bg-white/70 rounded-lg border border-amber-200"
                   >
-                    <div className="flex items-start justify-between gap-1">
-                      <p className="font-medium text-slate-800 text-xs leading-tight">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-slate-800 text-sm leading-snug">
                         {action.title}
                       </p>
                       <UrgencyBadge urgency={action.urgency} />
@@ -197,21 +197,21 @@ export function KidSchoolTab({ childName, onEventsLoaded }: KidSchoolTabProps) {
 
           {/* School Events */}
           {hasEvents && (
-            <Card className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                <h3 className="font-semibold text-slate-800 text-sm">School Events</h3>
+            <Card className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <h3 className="font-bold text-slate-800 text-base">School Events</h3>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-3">
                 {data.events.slice(0, 4).map((event) => (
                   <div
                     key={event.id}
-                    className="p-2 bg-white/70 rounded-lg border border-blue-200"
+                    className="p-3 bg-white/70 rounded-lg border border-blue-200"
                   >
-                    <p className="text-xs text-blue-600 font-medium">
+                    <p className="text-sm text-blue-600 font-medium">
                       {formatDate(event.date)}
                     </p>
-                    <p className="font-medium text-slate-800 text-xs leading-tight">
+                    <p className="font-medium text-slate-800 text-sm leading-snug mt-1">
                       {event.title}
                     </p>
                   </div>
@@ -224,21 +224,21 @@ export function KidSchoolTab({ childName, onEventsLoaded }: KidSchoolTabProps) {
 
       {/* Teacher Communications */}
       {hasTeacherEmails && (
-        <Card className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-          <div className="flex items-center gap-2 mb-3">
+        <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <div className="flex items-center gap-2 mb-4">
             <Mail className="h-5 w-5 text-green-600" />
-            <h3 className="font-semibold text-slate-800">From Teachers</h3>
+            <h3 className="font-bold text-slate-800 text-lg">From Teachers</h3>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {data.teacherEmails.map((email) => (
               <div
                 key={email.id}
-                className="p-3 bg-white/70 rounded-lg border border-green-200"
+                className="p-4 bg-white/70 rounded-lg border border-green-200"
               >
-                <p className="font-medium text-slate-800 text-sm">
+                <p className="font-medium text-slate-800 text-base">
                   {email.subject}
                 </p>
-                <p className="text-xs text-green-700 mt-1">
+                <p className="text-sm text-green-700 mt-2">
                   {email.teacher_name || email.from_name} · {formatDate(email.created_at)}
                 </p>
               </div>
@@ -249,21 +249,21 @@ export function KidSchoolTab({ childName, onEventsLoaded }: KidSchoolTabProps) {
 
       {/* Announcements */}
       {hasAnnouncements && (
-        <Card className="p-4 bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
-          <div className="flex items-center gap-2 mb-3">
+        <Card className="p-6 bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+          <div className="flex items-center gap-2 mb-4">
             <Megaphone className="h-5 w-5 text-purple-600" />
-            <h3 className="font-semibold text-slate-800">Announcements</h3>
+            <h3 className="font-bold text-slate-800 text-lg">Announcements</h3>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {data.announcements.map((announcement) => (
               <div
                 key={announcement.id}
-                className="p-3 bg-white/70 rounded-lg border border-purple-200"
+                className="p-4 bg-white/70 rounded-lg border border-purple-200"
               >
-                <p className="font-medium text-slate-800 text-sm">
+                <p className="font-medium text-slate-800 text-base">
                   {announcement.title}
                 </p>
-                <p className="text-xs text-purple-700 mt-1">
+                <p className="text-sm text-purple-700 mt-2">
                   {announcement.source} · {formatDate(announcement.created_at)}
                 </p>
               </div>

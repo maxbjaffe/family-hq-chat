@@ -34,9 +34,9 @@ export function KidProfileDashboard({
   }, []);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* 2x2 Grid of Cards - At the top */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <BirthdayCard birthday={birthday} />
         <ChecklistCard memberId={memberId} />
         <SchoolCard school={school} teachers={teachers} />

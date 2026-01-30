@@ -80,10 +80,10 @@ export function ChecklistCard({ memberId }: ChecklistCardProps) {
 
   if (loading) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-200">
+      <Card className="p-5 bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-200">
         <div className="flex items-center gap-2 mb-3">
           <ClipboardList className="h-5 w-5 text-cyan-600" />
-          <h3 className="font-semibold text-slate-800">Checklist</h3>
+          <h3 className="font-bold text-slate-800 text-base">Checklist</h3>
         </div>
         <div className="flex items-center justify-center py-6">
           <Loader2 className="h-6 w-6 animate-spin text-cyan-500" />
@@ -102,25 +102,25 @@ export function ChecklistCard({ memberId }: ChecklistCardProps) {
   const allDone = completedCount === totalCount && totalCount > 0;
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-200">
+    <Card className="p-5 bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-200">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-2 min-h-[48px]"
       >
         <ClipboardList className="h-5 w-5 text-cyan-600" />
-        <h3 className="font-semibold text-slate-800">Checklist</h3>
-        <span className="ml-auto text-sm text-cyan-600 font-medium">
+        <h3 className="font-bold text-slate-800 text-base">Checklist</h3>
+        <span className="ml-auto text-base text-cyan-600 font-medium">
           {completedCount}/{totalCount}
         </span>
         {expanded ? (
-          <ChevronUp className="h-4 w-4 text-slate-400" />
+          <ChevronUp className="h-5 w-5 text-slate-400" />
         ) : (
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <ChevronDown className="h-5 w-5 text-slate-400" />
         )}
       </button>
 
       {/* Progress bar */}
-      <div className="mt-3 mb-2">
+      <div className="mt-3 mb-3">
         <div className="h-3 bg-white/50 rounded-full overflow-hidden">
           <div
             className={`h-full transition-all duration-500 rounded-full ${
@@ -132,22 +132,22 @@ export function ChecklistCard({ memberId }: ChecklistCardProps) {
       </div>
 
       {allDone && !expanded && (
-        <div className="flex items-center justify-center gap-2 py-1 text-green-600">
+        <div className="flex items-center justify-center gap-2 py-2 text-green-600">
           <PartyPopper className="h-5 w-5" />
-          <span className="font-medium text-sm">All done!</span>
+          <span className="font-medium text-base">All done!</span>
         </div>
       )}
 
       {/* Preview when collapsed - show first 3 incomplete items */}
       {!expanded && !allDone && (
-        <div className="mt-2 space-y-1">
+        <div className="mt-3 space-y-2">
           {items
             .sort((a, b) => a.sort_order - b.sort_order)
             .filter(item => !item.is_completed)
             .slice(0, 3)
             .map(item => (
-              <div key={item.id} className="flex items-center gap-2 text-xs text-slate-600">
-                <Circle className="h-3 w-3 text-slate-400" />
+              <div key={item.id} className="flex items-center gap-2 text-sm text-slate-600">
+                <Circle className="h-4 w-4 text-slate-400" />
                 <span className="truncate">{item.icon} {item.title}</span>
               </div>
             ))}
@@ -155,7 +155,7 @@ export function ChecklistCard({ memberId }: ChecklistCardProps) {
       )}
 
       {expanded && (
-        <div className="mt-3 space-y-2">
+        <div className="mt-4 space-y-3">
           {items
             .sort((a, b) => a.sort_order - b.sort_order)
             .map(item => (
@@ -166,19 +166,19 @@ export function ChecklistCard({ memberId }: ChecklistCardProps) {
                   handleToggle(item.id);
                 }}
                 disabled={toggling === item.id}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all
-                  hover:shadow-md active:scale-[0.98] disabled:opacity-50 min-h-[48px]
+                className={`w-full flex items-center gap-3 p-4 rounded-lg transition-all
+                  hover:shadow-md active:scale-[0.98] disabled:opacity-50 min-h-[56px]
                   ${item.is_completed ? 'bg-green-100/50' : 'bg-white/50'}`}
               >
                 {toggling === item.id ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-cyan-500" />
+                  <Loader2 className="h-6 w-6 animate-spin text-cyan-500" />
                 ) : item.is_completed ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <CheckCircle2 className="h-6 w-6 text-green-500" />
                 ) : (
-                  <Circle className="h-5 w-5 text-slate-400" />
+                  <Circle className="h-6 w-6 text-slate-400" />
                 )}
-                <span className="text-lg">{item.icon}</span>
-                <span className={`font-medium ${item.is_completed ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                <span className="text-xl">{item.icon}</span>
+                <span className={`font-medium text-base ${item.is_completed ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
                   {item.title}
                 </span>
               </button>

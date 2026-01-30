@@ -67,13 +67,13 @@ export function KidTodosCard({ childName }: KidTodosCardProps) {
 
   if (loading) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
-        <div className="flex items-center gap-2 mb-3">
-          <ListTodo className="h-5 w-5 text-violet-600" />
-          <h3 className="font-semibold text-slate-800">My To-Dos</h3>
+      <Card className="p-6 bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
+        <div className="flex items-center gap-2 mb-4">
+          <ListTodo className="h-6 w-6 text-violet-600" />
+          <h3 className="font-bold text-slate-800 text-lg">My To-Dos</h3>
         </div>
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
         </div>
       </Card>
     );
@@ -81,58 +81,58 @@ export function KidTodosCard({ childName }: KidTodosCardProps) {
 
   if (tasks.length === 0) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
-        <div className="flex items-center gap-2 mb-3">
-          <ListTodo className="h-5 w-5 text-violet-600" />
-          <h3 className="font-semibold text-slate-800">My To-Dos</h3>
+      <Card className="p-6 bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
+        <div className="flex items-center gap-2 mb-4">
+          <ListTodo className="h-6 w-6 text-violet-600" />
+          <h3 className="font-bold text-slate-800 text-lg">My To-Dos</h3>
         </div>
-        <div className="text-center py-4">
-          <CheckCircle2 className="h-10 w-10 text-violet-500 mx-auto mb-2" />
-          <p className="text-violet-700 font-medium">All done!</p>
-          <p className="text-sm text-slate-500 mt-1">No tasks right now</p>
+        <div className="text-center py-6">
+          <CheckCircle2 className="h-12 w-12 text-violet-500 mx-auto mb-3" />
+          <p className="text-violet-700 font-bold text-lg">All done!</p>
+          <p className="text-base text-slate-500 mt-2">No tasks right now</p>
         </div>
       </Card>
     );
   }
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
-      <div className="flex items-center gap-2 mb-3">
-        <ListTodo className="h-5 w-5 text-violet-600" />
-        <h3 className="font-semibold text-slate-800">My To-Dos</h3>
-        <span className="ml-auto text-sm text-violet-600 font-medium">
+    <Card className="p-6 bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
+      <div className="flex items-center gap-2 mb-4">
+        <ListTodo className="h-6 w-6 text-violet-600" />
+        <h3 className="font-bold text-slate-800 text-lg">My To-Dos</h3>
+        <span className="ml-auto text-base text-violet-600 font-medium">
           {tasks.length} task{tasks.length !== 1 ? 's' : ''}
         </span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {tasks.map(task => (
           <button
             key={task.id}
             onClick={() => handleComplete(task.id)}
             disabled={completing === task.id}
-            className={`w-full flex items-start gap-3 p-3 rounded-lg border-l-4 transition-all
-              hover:shadow-md active:scale-[0.98] disabled:opacity-50 min-h-[48px]
+            className={`w-full flex items-start gap-4 p-4 rounded-lg border-l-4 transition-all
+              hover:shadow-md active:scale-[0.98] disabled:opacity-50 min-h-[56px]
               ${getPriorityColor(task.priority)}`}
           >
             <div className="mt-0.5">
               {completing === task.id ? (
-                <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
+                <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
               ) : (
-                <Circle className="h-5 w-5 text-slate-400 hover:text-violet-500 transition-colors" />
+                <Circle className="h-6 w-6 text-slate-400 hover:text-violet-500 transition-colors" />
               )}
             </div>
             <div className="flex-1 text-left">
-              <p className="font-medium text-slate-800">{task.content}</p>
+              <p className="font-medium text-slate-800 text-base">{task.content}</p>
               {task.due && (
-                <p className="text-xs text-slate-500 mt-0.5">{task.due}</p>
+                <p className="text-sm text-slate-500 mt-1">{task.due}</p>
               )}
             </div>
           </button>
         ))}
       </div>
 
-      <p className="text-xs text-slate-400 mt-3 text-center">
+      <p className="text-sm text-slate-400 mt-4 text-center">
         Tap a task to mark it done
       </p>
     </Card>

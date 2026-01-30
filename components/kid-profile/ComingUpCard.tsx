@@ -98,10 +98,10 @@ export function ComingUpCard({ memberName, excludeEventTitles = [] }: ComingUpCa
 
   if (loading) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+      <Card className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="h-5 w-5 text-amber-600" />
-          <h3 className="font-semibold text-slate-800">Coming Up</h3>
+          <h3 className="font-bold text-slate-800 text-base">Coming Up</h3>
         </div>
         <div className="flex items-center justify-center py-6">
           <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
@@ -112,12 +112,12 @@ export function ComingUpCard({ memberName, excludeEventTitles = [] }: ComingUpCa
 
   if (events.length === 0) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+      <Card className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="h-5 w-5 text-amber-600" />
-          <h3 className="font-semibold text-slate-800">Coming Up</h3>
+          <h3 className="font-bold text-slate-800 text-base">Coming Up</h3>
         </div>
-        <p className="text-sm text-slate-500 text-center py-4">
+        <p className="text-base text-slate-500 text-center py-4">
           No upcoming events
         </p>
       </Card>
@@ -125,23 +125,23 @@ export function ComingUpCard({ memberName, excludeEventTitles = [] }: ComingUpCa
   }
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+    <Card className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
       <div className="flex items-center gap-2 mb-3">
         <Calendar className="h-5 w-5 text-amber-600" />
-        <h3 className="font-semibold text-slate-800">Coming Up</h3>
+        <h3 className="font-bold text-slate-800 text-base">Coming Up</h3>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {events.map(event => (
           <div
             key={event.id}
-            className="p-2 rounded-lg bg-white/50"
+            className="p-3 rounded-lg bg-white/50"
           >
-            <div className="flex items-center gap-2 text-xs text-amber-700 font-medium">
+            <div className="flex items-center gap-2 text-sm text-amber-700 font-medium">
               <span>{formatEventDate(event.start_time)}</span>
               <span className="text-slate-500">{formatEventTime(event.start_time)}</span>
             </div>
-            <p className="text-sm font-medium text-slate-800 mt-0.5">
+            <p className="text-base font-medium text-slate-800 mt-1">
               {event.title}
             </p>
           </div>

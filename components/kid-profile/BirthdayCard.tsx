@@ -55,15 +55,15 @@ export function BirthdayCard({ birthday }: BirthdayCardProps) {
 
   if (countdown?.isToday) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-pink-100 to-purple-100 border-pink-300">
-        <div className="flex items-center gap-2 mb-2">
+      <Card className="p-5 bg-gradient-to-br from-pink-100 to-purple-100 border-pink-300">
+        <div className="flex items-center gap-2 mb-3">
           <Cake className="h-5 w-5 text-pink-600" />
-          <h3 className="font-semibold text-slate-800">Birthday</h3>
+          <h3 className="font-bold text-slate-800 text-base">Birthday</h3>
         </div>
-        <p className="text-slate-700">{formattedDate}</p>
-        <p className="text-2xl font-bold text-pink-600 mt-1">Happy Birthday!</p>
+        <p className="text-slate-700 text-base">{formattedDate}</p>
+        <p className="text-2xl font-bold text-pink-600 mt-2">Happy Birthday!</p>
         {zodiac && (
-          <p className="text-sm text-purple-600 mt-2">
+          <p className="text-base text-purple-600 mt-2">
             {zodiac.symbol} {zodiac.sign}
           </p>
         )}
@@ -72,14 +72,14 @@ export function BirthdayCard({ birthday }: BirthdayCardProps) {
   }
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-pink-50 to-rose-50 border-pink-200">
-      <div className="flex items-center gap-2 mb-2">
+    <Card className="p-5 bg-gradient-to-br from-pink-50 to-rose-50 border-pink-200">
+      <div className="flex items-center gap-2 mb-3">
         <Cake className="h-5 w-5 text-pink-600" />
-        <h3 className="font-semibold text-slate-800">Birthday</h3>
+        <h3 className="font-bold text-slate-800 text-base">Birthday</h3>
       </div>
-      <p className="text-slate-700 font-medium">{formattedDate}</p>
+      <p className="text-slate-700 font-medium text-base">{formattedDate}</p>
       {countdown && (
-        <p className="text-pink-600 font-bold mt-1">
+        <p className="text-pink-600 font-bold text-lg mt-2">
           {countdown.isTomorrow
             ? "Tomorrow!"
             : countdown.days <= 30
@@ -89,7 +89,7 @@ export function BirthdayCard({ birthday }: BirthdayCardProps) {
         </p>
       )}
       {zodiac && (
-        <p className="text-sm text-purple-600 mt-2">
+        <p className="text-base text-purple-600 mt-3">
           {zodiac.symbol} {zodiac.sign} - {zodiac.trait}
         </p>
       )}
