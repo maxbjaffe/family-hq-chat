@@ -35,31 +35,31 @@ export function KidGreetingHeader({ name, avatarInfo, age }: KidGreetingHeaderPr
   // Don't render until client-side initialization
   if (!palette) {
     return (
-      <div className="relative mb-6 pt-8">
-        <div className="absolute -top-2 left-6 z-20 w-40 h-40 rounded-2xl bg-slate-200 animate-pulse" />
-        <Card className="pt-24 pb-6 px-6 min-h-[140px] animate-pulse bg-slate-100" />
+      <div className="relative mb-6 pt-12">
+        <div className="absolute -top-4 left-4 z-20 w-52 h-52 rounded-2xl bg-slate-200 animate-pulse" />
+        <Card className="pt-32 pb-6 px-6 min-h-[160px] animate-pulse bg-slate-100" />
       </div>
     );
   }
 
   return (
-    <div className="relative mb-6 pt-8">
+    <div className="relative mb-6 pt-12">
       {/* Avatar - Breaking out of the card */}
-      <div className="absolute -top-2 left-6 z-20">
+      <div className="absolute -top-4 left-4 z-20">
         <Avatar
           member={{
             name: name,
             role: avatarInfo?.role || 'kid',
             avatar_url: avatarInfo?.avatar_url,
           }}
-          size="4xl"
+          size="5xl"
           shape="rounded"
-          className="shadow-xl border-4 border-white ring-4 ring-white/30"
+          className="shadow-2xl border-4 border-white ring-4 ring-white/40"
         />
       </div>
 
       <Card
-        className="pt-24 pb-6 px-6 relative overflow-visible"
+        className="pt-32 pb-6 px-6 relative overflow-visible"
         style={{ backgroundColor: palette.background }}
       >
         {/* Decorative Elements */}
@@ -73,8 +73,8 @@ export function KidGreetingHeader({ name, avatarInfo, age }: KidGreetingHeaderPr
           </span>
         ))}
 
-        {/* Main Content - shifted right to account for avatar */}
-        <div className="relative z-10 ml-44 sm:ml-48">
+        {/* Main Content - shifted right to account for larger avatar */}
+        <div className="relative z-10 ml-56 sm:ml-60">
           <h1
             className="text-3xl sm:text-4xl font-bold mb-3"
             style={{ color: palette.accent }}

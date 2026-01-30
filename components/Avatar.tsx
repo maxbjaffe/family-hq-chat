@@ -11,7 +11,7 @@ interface AvatarMember {
 }
 
 // Size variants
-type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
+type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
 
 // Shape variants
 type AvatarShape = 'circle' | 'rounded';
@@ -51,6 +51,7 @@ const SIZE_CLASSES: Record<AvatarSize, string> = {
   '2xl': 'w-44 h-44 text-6xl',
   '3xl': 'w-28 h-28 text-7xl',
   '4xl': 'w-40 h-40 text-8xl',
+  '5xl': 'w-52 h-52 text-9xl',
 };
 
 export function Avatar({ member, size = 'md', shape = 'circle', className }: AvatarProps) {
@@ -76,7 +77,7 @@ export function Avatar({ member, size = 'md', shape = 'circle', className }: Ava
           alt={member.name}
           fill
           className="object-cover"
-          sizes={size === '4xl' ? '160px' : size === '3xl' ? '112px' : size === '2xl' ? '176px' : size === 'xl' ? '128px' : size === 'lg' ? '96px' : size === 'md' ? '64px' : size === 'sm' ? '48px' : '32px'}
+          sizes={size === '5xl' ? '208px' : size === '4xl' ? '160px' : size === '3xl' ? '112px' : size === '2xl' ? '176px' : size === 'xl' ? '128px' : size === 'lg' ? '96px' : size === 'md' ? '64px' : size === 'sm' ? '48px' : '32px'}
         />
       </div>
     );
