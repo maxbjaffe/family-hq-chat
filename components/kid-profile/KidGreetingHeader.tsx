@@ -35,56 +35,60 @@ export function KidGreetingHeader({ name, avatarInfo, age }: KidGreetingHeaderPr
   // Don't render until client-side initialization
   if (!palette) {
     return (
-      <Card className="p-6 mb-6 min-h-[160px] animate-pulse bg-slate-100" />
+      <div className="relative mb-6 pt-8">
+        <div className="absolute -top-2 left-6 z-20 w-40 h-40 rounded-2xl bg-slate-200 animate-pulse" />
+        <Card className="pt-24 pb-6 px-6 min-h-[140px] animate-pulse bg-slate-100" />
+      </div>
     );
   }
 
   return (
-    <Card
-      className="p-6 mb-6 relative overflow-hidden"
-      style={{ backgroundColor: palette.background }}
-    >
-      {/* Decorative Elements */}
-      {decorativeElements.map((el, index) => (
-        <span
-          key={index}
-          className={`absolute ${el.position} ${el.size} ${el.rotation} opacity-70 select-none pointer-events-none`}
-          aria-hidden="true"
-        >
-          {el.emoji}
-        </span>
-      ))}
-
-      {/* Main Content */}
-      <div className="relative z-10 flex items-center gap-5">
-        {/* Avatar - larger, rounded rectangle */}
+    <div className="relative mb-6 pt-8">
+      {/* Avatar - Breaking out of the card */}
+      <div className="absolute -top-2 left-6 z-20">
         <Avatar
           member={{
             name: name,
             role: avatarInfo?.role || 'kid',
             avatar_url: avatarInfo?.avatar_url,
           }}
-          size="3xl"
+          size="4xl"
           shape="rounded"
-          className="shadow-lg border-4 border-white/50"
+          className="shadow-xl border-4 border-white ring-4 ring-white/30"
         />
+      </div>
 
-        {/* Greeting and Quote */}
-        <div className="flex-1 min-w-0">
+      <Card
+        className="pt-24 pb-6 px-6 relative overflow-visible"
+        style={{ backgroundColor: palette.background }}
+      >
+        {/* Decorative Elements */}
+        {decorativeElements.map((el, index) => (
+          <span
+            key={index}
+            className={`absolute ${el.position} ${el.size} ${el.rotation} opacity-70 select-none pointer-events-none`}
+            aria-hidden="true"
+          >
+            {el.emoji}
+          </span>
+        ))}
+
+        {/* Main Content - shifted right to account for avatar */}
+        <div className="relative z-10 ml-44 sm:ml-48">
           <h1
-            className="text-2xl sm:text-3xl font-bold mb-2"
+            className="text-3xl sm:text-4xl font-bold mb-3"
             style={{ color: palette.accent }}
           >
             {greeting}
           </h1>
-          <p className="text-lg sm:text-xl text-slate-700 font-medium leading-relaxed">
+          <p className="text-xl sm:text-2xl text-slate-700 font-medium leading-relaxed">
             &ldquo;{quote}&rdquo;
           </p>
           {age && (
-            <p className="text-sm text-slate-500 mt-2">{age}</p>
+            <p className="text-base text-slate-500 mt-3">{age}</p>
           )}
         </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 }
