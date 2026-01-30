@@ -275,7 +275,7 @@ export default function FamilyProfilePage() {
   if (notFound || !member) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30">
-        <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="container mx-auto px-4 py-6 max-w-5xl">
           <Button
             variant="outline"
             onClick={() => router.push('/')}
@@ -296,7 +296,7 @@ export default function FamilyProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30">
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
         {/* Back Button - Large, clear for kiosk use */}
         <Button
           variant="outline"
