@@ -11,11 +11,15 @@ interface AvatarMember {
 }
 
 // Size variants
-type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+
+// Shape variants
+type AvatarShape = 'circle' | 'rounded';
 
 interface AvatarProps {
   member: AvatarMember;
   size?: AvatarSize;
+  shape?: AvatarShape;
   className?: string;
 }
 
@@ -45,20 +49,23 @@ const SIZE_CLASSES: Record<AvatarSize, string> = {
   lg: 'w-24 h-24 text-4xl',
   xl: 'w-32 h-32 text-5xl',
   '2xl': 'w-44 h-44 text-6xl',
+  '3xl': 'w-28 h-28 text-7xl',
 };
 
-export function Avatar({ member, size = 'md', className }: AvatarProps) {
+export function Avatar({ member, size = 'md', shape = 'circle', className }: AvatarProps) {
   const roleKey = member.role?.toLowerCase() || 'default';
   const gradient = ROLE_COLORS[roleKey] || ROLE_COLORS.default;
   const emoji = ROLE_EMOJIS[roleKey] || ROLE_EMOJIS.default;
   const sizeClasses = SIZE_CLASSES[size];
+  const shapeClass = shape === 'circle' ? 'rounded-full' : 'rounded-2xl';
 
   // If avatar_url exists, render image
   if (member.avatar_url) {
     return (
       <div
         className={cn(
-          'relative rounded-full overflow-hidden flex-shrink-0',
+          'relative overflow-hidden flex-shrink-0',
+          shapeClass,
           sizeClasses,
           className
         )}
@@ -68,7 +75,7 @@ export function Avatar({ member, size = 'md', className }: AvatarProps) {
           alt={member.name}
           fill
           className="object-cover"
-          sizes={size === '2xl' ? '176px' : size === 'xl' ? '128px' : size === 'lg' ? '96px' : size === 'md' ? '64px' : size === 'sm' ? '48px' : '32px'}
+          sizes={size === '3xl' ? '112px' : size === '2xl' ? '176px' : size === 'xl' ? '128px' : size === 'lg' ? '96px' : size === 'md' ? '64px' : size === 'sm' ? '48px' : '32px'}
         />
       </div>
     );
@@ -78,7 +85,8 @@ export function Avatar({ member, size = 'md', className }: AvatarProps) {
   return (
     <div
       className={cn(
-        'rounded-full bg-gradient-to-br flex items-center justify-center flex-shrink-0',
+        'bg-gradient-to-br flex items-center justify-center flex-shrink-0',
+        shapeClass,
         gradient,
         sizeClasses,
         className
@@ -90,4 +98,4 @@ export function Avatar({ member, size = 'md', className }: AvatarProps) {
 }
 
 // Export types for consumers
-export type { AvatarMember, AvatarSize, AvatarProps };
+export type { AvatarMember, AvatarSize, AvatarShape, AvatarProps };

@@ -23,6 +23,7 @@ import {
 import { Avatar } from '@/components/Avatar';
 import { FamilyCalendarSection } from '@/components/FamilyCalendarSection';
 import { KidProfileDashboard } from '@/components/kid-profile';
+import { KidGreetingHeader } from '@/components/kid-profile/KidGreetingHeader';
 import { PinModal } from '@/components/PinModal';
 import { getZodiacFromBirthday } from '@/lib/zodiac';
 import { getRandomFactFromBirthday, formatFact, type BirthdayFact } from '@/lib/birthday-facts';
@@ -306,29 +307,40 @@ export default function FamilyProfilePage() {
           Back to Home
         </Button>
 
-        {/* Profile Header */}
-        <Card className="p-6 mb-6">
-          <div className="flex items-center gap-4">
-            <Avatar
-              member={{
-                name: member.name,
-                role: avatarInfo?.role || member.role || 'default',
-                avatar_url: avatarInfo?.avatar_url,
-              }}
-              size="2xl"
-              className="shadow-lg"
-            />
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">{member.name}</h1>
-              {member.role && (
-                <p className="text-slate-500">{member.role}</p>
-              )}
-              {member.age && (
-                <p className="text-sm text-slate-400">{member.age}</p>
-              )}
+        {/* Profile Header - Whimsical for kids, plain for others */}
+        {isKid ? (
+          <KidGreetingHeader
+            name={member.name.split(' ')[0]}
+            avatarInfo={{
+              avatar_url: avatarInfo?.avatar_url,
+              role: avatarInfo?.role,
+            }}
+            age={member.age}
+          />
+        ) : (
+          <Card className="p-6 mb-6">
+            <div className="flex items-center gap-4">
+              <Avatar
+                member={{
+                  name: member.name,
+                  role: avatarInfo?.role || member.role || 'default',
+                  avatar_url: avatarInfo?.avatar_url,
+                }}
+                size="2xl"
+                className="shadow-lg"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800">{member.name}</h1>
+                {member.role && (
+                  <p className="text-slate-500">{member.role}</p>
+                )}
+                {member.age && (
+                  <p className="text-sm text-slate-400">{member.age}</p>
+                )}
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Kid View: Dashboard with To-Dos, Checklist, School, Calendar */}
         {isKid && memberId && (
