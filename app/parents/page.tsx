@@ -102,18 +102,38 @@ function ParentDashboardContent() {
 
   const fetchData = useCallback(async () => {
     try {
+      // First, fetch family members to get user ID and avatar
+      const familyRes = await fetch("/api/admin/family");
+      let userId: string | null = null;
+
+      if (familyRes.ok) {
+        const data = await familyRes.json();
+        const members: FamilyMember[] = data.members || [];
+        const currentUser = members.find(
+          (m) => m.name.toLowerCase().includes(userName.toLowerCase()) ||
+                 userName.toLowerCase().includes(m.name.split(' ')[0].toLowerCase())
+        );
+        if (currentUser) {
+          userId = currentUser.id;
+          if (currentUser.avatar_url) {
+            setUserAvatar(currentUser.avatar_url);
+          }
+        }
+      }
+
+      // Now fetch everything else in parallel
       const promises: Promise<Response>[] = [
         fetch("/api/calendar?days=7"),
         fetch("/api/dashboard/priorities"),
         fetch("/api/house-tasks"),
-        fetch("/api/admin/family"), // Fetch family members for avatar
       ];
 
       if (isMax) {
         // Fetch ALL tasks for Max (including Personal)
         promises.push(fetch("/api/dashboard/tasks?userId=max&includeAll=true"));
-      } else {
-        promises.push(fetch("/api/alex/reminders"));
+      } else if (userId) {
+        // Fetch reminders for Alex with her user ID
+        promises.push(fetch(`/api/alex/reminders?userId=${userId}`));
       }
 
       const results = await Promise.all(promises);
@@ -136,21 +156,9 @@ function ParentDashboardContent() {
         setHouseTasks(data.tasks || []);
       }
 
-      // Family members for avatar
-      if (results[3].ok) {
-        const data = await results[3].json();
-        const members: FamilyMember[] = data.members || [];
-        const currentUser = members.find(
-          (m) => m.name.toLowerCase() === userName.toLowerCase()
-        );
-        if (currentUser?.avatar_url) {
-          setUserAvatar(currentUser.avatar_url);
-        }
-      }
-
       // Tasks or Reminders
-      if (results[4].ok) {
-        const data = await results[4].json();
+      if (results[3]?.ok) {
+        const data = await results[3].json();
         if (isMax) {
           setTasks(data.tasks || []);
         } else {

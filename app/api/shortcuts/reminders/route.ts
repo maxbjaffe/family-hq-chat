@@ -16,11 +16,11 @@ export async function POST(request: Request) {
 
     const supabase = getFamilyDataClient();
 
-    // Look up user by name
+    // Look up user by name in family_members table
     const { data: userData } = await supabase
-      .from('users')
+      .from('family_members')
       .select('id')
-      .ilike('name', user)
+      .ilike('name', `%${user}%`)
       .single();
 
     if (!userData) {
