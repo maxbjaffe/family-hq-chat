@@ -83,11 +83,23 @@ export default function UnifiedHomePage() {
           stats: m.stats,
         }));
 
-        // Add Jaffe (pet) to the family grid
-        // We'll fetch from family members API to get pets
+        // Fetch all family members to get adults and pets
         const familyRes = await fetch("/api/admin/family");
         if (familyRes.ok) {
           const familyData = await familyRes.json();
+
+          // Get adults (admin/adult roles)
+          const adults = (familyData.members || [])
+            .filter((m: FamilyMember) => m.role === "admin" || m.role === "adult")
+            .map((m: FamilyMember) => ({
+              id: m.id,
+              name: m.name,
+              role: m.role,
+              avatar_url: m.avatar_url,
+              has_checklist: false,
+            }));
+
+          // Get pets
           const pets = (familyData.members || [])
             .filter((m: FamilyMember) => m.role === "pet")
             .map((m: FamilyMember) => ({
@@ -98,7 +110,7 @@ export default function UnifiedHomePage() {
               has_checklist: false,
             }));
 
-          setFamilyMembers([...kidsWithChecklists, ...pets]);
+          setFamilyMembers([...kidsWithChecklists, ...adults, ...pets]);
         } else {
           setFamilyMembers(kidsWithChecklists);
         }
@@ -163,6 +175,7 @@ export default function UnifiedHomePage() {
   }
 
   const kidsOnly = familyMembers.filter((m) => m.role === "kid");
+  const adultsAndPets = familyMembers.filter((m) => m.role === "admin" || m.role === "adult" || m.role === "pet");
   const allKidsComplete = kidsOnly.length > 0 && kidsOnly.every((c) => c.stats?.isComplete);
 
   return (
@@ -242,10 +255,23 @@ export default function UnifiedHomePage() {
               No family members configured yet
             </Card>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {familyMembers.map((member) => (
-                <FamilyMemberCard key={member.id} member={member} />
-              ))}
+            <div className="space-y-4">
+              {/* Kids Row */}
+              {kidsOnly.length > 0 && (
+                <div className="grid grid-cols-3 gap-4">
+                  {kidsOnly.map((member) => (
+                    <FamilyMemberCard key={member.id} member={member} />
+                  ))}
+                </div>
+              )}
+              {/* Adults & Pet Row */}
+              {adultsAndPets.length > 0 && (
+                <div className="grid grid-cols-3 gap-4">
+                  {adultsAndPets.map((member) => (
+                    <FamilyMemberCard key={member.id} member={member} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

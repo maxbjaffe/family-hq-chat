@@ -72,7 +72,7 @@ export function FamilyMemberCard({ member, showProgress = true }: FamilyMemberCa
     <>
       <Card
         onClick={handleClick}
-        className={`p-6 cursor-pointer transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] ${
+        className={`p-8 cursor-pointer transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] ${
           isComplete
             ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 ring-2 ring-green-200"
             : "hover:bg-slate-50"
@@ -86,13 +86,13 @@ export function FamilyMemberCard({ member, showProgress = true }: FamilyMemberCa
               role: member.role,
               avatar_url: member.avatar_url,
             }}
-            size="xl"
-            className="shadow-xl border-4 border-white"
+            size="2xl"
+            className="shadow-2xl border-4 border-white ring-4 ring-white/40"
           />
 
           {/* Name */}
           <h3
-            className="mt-4 text-2xl font-bold text-slate-800 tracking-tight"
+            className="mt-5 text-3xl font-extrabold text-slate-800 tracking-tight"
           >
             {member.name}
           </h3>
