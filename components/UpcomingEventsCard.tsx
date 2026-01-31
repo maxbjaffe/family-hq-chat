@@ -15,17 +15,23 @@ interface CalendarEvent {
   location: string | null;
 }
 
-export function UpcomingEventsCard() {
+interface UpcomingEventsCardProps {
+  sidebar?: boolean;
+}
+
+export function UpcomingEventsCard({ sidebar = false }: UpcomingEventsCardProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchEvents() {
       try {
-        const res = await fetch('/api/calendar?days=3');
+        const res = await fetch('/api/calendar?days=7');
         if (res.ok) {
           const data = await res.json();
-          setEvents(data.events?.slice(0, 4) || []);
+          // Show more events in sidebar mode
+          const limit = sidebar ? 10 : 4;
+          setEvents(data.events?.slice(0, limit) || []);
         }
       } catch {
         // Silent fail
@@ -33,7 +39,7 @@ export function UpcomingEventsCard() {
       setLoading(false);
     }
     fetchEvents();
-  }, []);
+  }, [sidebar]);
 
   function formatTime(dateStr: string): string {
     const date = new Date(dateStr);
@@ -74,7 +80,7 @@ export function UpcomingEventsCard() {
   }
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-indigo-50 to-violet-50">
+    <Card className={`p-4 bg-gradient-to-br from-indigo-50 to-violet-50 ${sidebar ? 'h-full' : ''}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5 text-indigo-600" />

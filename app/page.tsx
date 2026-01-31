@@ -180,178 +180,176 @@ export default function UnifiedHomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 pb-24">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        {/* Header Section */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-6">
-            <img
-              src="/Images/JaffeFamilyHubLogo.PNG"
-              alt="Jaffe Family Hub"
-              className="w-20 h-20 md:w-28 md:h-28 rounded-3xl object-cover shadow-2xl border-4 border-white"
-            />
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {new Date().toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </h1>
-              <p className="text-slate-600 text-lg mt-1">
-                Good{" "}
-                {new Date().getHours() < 12
-                  ? "Morning"
-                  : new Date().getHours() < 17
-                  ? "Afternoon"
-                  : "Evening"}
-                , Jaffe Family!
-              </p>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="flex gap-6">
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            {/* Header Section */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-6">
+                <img
+                  src="/Images/JaffeFamilyHubLogo.PNG"
+                  alt="Jaffe Family Hub"
+                  className="w-20 h-20 md:w-28 md:h-28 rounded-3xl object-cover shadow-2xl border-4 border-white"
+                />
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                    {new Date().toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </h1>
+                  <p className="text-slate-600 text-lg mt-1">
+                    Good{" "}
+                    {new Date().getHours() < 12
+                      ? "Morning"
+                      : new Date().getHours() < 17
+                      ? "Afternoon"
+                      : "Evening"}
+                    , Jaffe Family!
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <Clock size="lg" className="hidden md:block" />
+                <div className="flex items-center gap-3">
+                  <SyncIndicator />
+                  <ParentsButton className="min-h-[48px]" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={refreshData}
+                    disabled={refreshing}
+                    className="min-h-[48px] min-w-[48px]"
+                  >
+                    {refreshing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <Clock size="lg" className="hidden md:block" />
-            <div className="flex items-center gap-3">
-              <SyncIndicator />
-              <ParentsButton className="min-h-[48px]" />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={refreshData}
-                disabled={refreshing}
-                className="min-h-[48px] min-w-[48px]"
-              >
-                {refreshing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+
+            {/* Content Cards Row: Weather, Quote, Joke, Fun Fact */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Weather - Compact */}
+              <WeatherForecast compact />
+
+              {/* Motivational Quote */}
+              <MotivationalQuote
+                quote={content?.quote || null}
+                nextRefresh={content?.quoteNextRefresh}
+              />
+
+              {/* Joke of the Hour */}
+              <Card className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">😄</span>
+                  <h3 className="font-bold text-slate-800">Joke</h3>
+                </div>
+
+                {content?.joke ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-700 font-medium line-clamp-2">
+                      {content.joke.setup}
+                    </p>
+
+                    {showPunchline ? (
+                      <p className="text-sm text-orange-600 font-bold">
+                        {content.joke.punchline}
+                      </p>
+                    ) : (
+                      <Button
+                        onClick={() => setShowPunchline(true)}
+                        size="sm"
+                        className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white font-bold min-h-[40px] w-full"
+                      >
+                        Tell me! 🤭
+                      </Button>
+                    )}
+                  </div>
                 ) : (
-                  <RefreshCw className="h-4 w-4" />
+                  <div className="text-slate-500 text-sm">Loading...</div>
                 )}
-              </Button>
-            </div>
-          </div>
-        </div>
+              </Card>
 
-        {/* Weather & Calendar Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <WeatherForecast />
-          <UpcomingEventsCard />
-        </div>
-
-        {/* Family Grid */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            {allKidsComplete ? (
-              <>
-                <Sparkles className="h-6 w-6 text-green-500" />
-                Everyone&apos;s Ready!
-              </>
-            ) : (
-              "Family"
-            )}
-          </h2>
-
-          {familyMembers.length === 0 ? (
-            <Card className="p-6 text-center text-slate-500">
-              No family members configured yet
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {/* Kids Row */}
-              {kidsOnly.length > 0 && (
-                <div className="grid grid-cols-3 gap-4">
-                  {kidsOnly.map((member) => (
-                    <FamilyMemberCard key={member.id} member={member} />
-                  ))}
+              {/* Fun Fact */}
+              <Card className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lightbulb className="h-6 w-6 text-emerald-500" />
+                  <h3 className="font-bold text-slate-800">Fun Fact</h3>
                 </div>
-              )}
-              {/* Adults & Pet Row */}
-              {adultsAndPets.length > 0 && (
-                <div className="grid grid-cols-3 gap-4">
-                  {adultsAndPets.map((member) => (
-                    <FamilyMemberCard key={member.id} member={member} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
 
-        {/* House Tasks */}
-        <div className="mb-6">
-          <HouseTasks />
-        </div>
-
-        {/* Bottom Section: Quote, Joke, Fun Fact */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Motivational Quote */}
-          <MotivationalQuote
-            quote={content?.quote || null}
-            nextRefresh={content?.quoteNextRefresh}
-          />
-
-          {/* Joke of the Hour */}
-          <Card className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl">😄</span>
-              <h3 className="text-lg font-bold text-slate-800">
-                Joke of the Hour
-              </h3>
-            </div>
-
-            {content?.joke ? (
-              <div className="space-y-4">
-                <p className="text-lg text-slate-700 font-medium">
-                  {content.joke.setup}
-                </p>
-
-                {showPunchline ? (
-                  <p className="text-lg text-orange-600 font-bold animate-fade-in">
-                    {content.joke.punchline}
+                {content?.funFact ? (
+                  <p className="text-sm text-slate-700 leading-relaxed line-clamp-4">
+                    {content.funFact.fact}
                   </p>
                 ) : (
-                  <Button
-                    onClick={() => setShowPunchline(true)}
-                    className="bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white font-bold min-h-[48px]"
-                  >
-                    Tell me! 🤭
-                  </Button>
+                  <div className="text-slate-500 text-sm">Loading...</div>
                 )}
+              </Card>
+            </div>
 
-                <p className="text-xs text-slate-400">
-                  {getTimeUntilRefresh(content.jokeNextRefresh)}
-                </p>
-              </div>
-            ) : (
-              <div className="text-slate-500">Loading joke...</div>
-            )}
-          </Card>
+            {/* Family Grid */}
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                {allKidsComplete ? (
+                  <>
+                    <Sparkles className="h-6 w-6 text-green-500" />
+                    Everyone&apos;s Ready!
+                  </>
+                ) : (
+                  "Family"
+                )}
+              </h2>
 
-          {/* Fun Fact */}
-          <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
-            <div className="flex items-center gap-2 mb-4">
-              <Lightbulb className="h-8 w-8 text-blue-500" />
-              <h3 className="text-lg font-bold text-slate-800">Fun Fact</h3>
-              {content?.funFact?.topic && (
-                <span className="ml-auto px-2 py-1 bg-blue-100 text-blue-600 text-xs font-medium rounded-full capitalize">
-                  {content.funFact.topic}
-                </span>
+              {familyMembers.length === 0 ? (
+                <Card className="p-6 text-center text-slate-500">
+                  No family members configured yet
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {/* Kids Row */}
+                  {kidsOnly.length > 0 && (
+                    <div className="grid grid-cols-3 gap-4">
+                      {kidsOnly.map((member) => (
+                        <FamilyMemberCard key={member.id} member={member} />
+                      ))}
+                    </div>
+                  )}
+                  {/* Adults & Pet Row */}
+                  {adultsAndPets.length > 0 && (
+                    <div className="grid grid-cols-3 gap-4">
+                      {adultsAndPets.map((member) => (
+                        <FamilyMemberCard key={member.id} member={member} />
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
-            {content?.funFact ? (
-              <div className="space-y-4">
-                <p className="text-lg text-slate-700 leading-relaxed">
-                  {content.funFact.fact}
-                </p>
+            {/* House Tasks */}
+            <div className="mb-6">
+              <HouseTasks />
+            </div>
+          </div>
 
-                <p className="text-xs text-slate-400">
-                  {getTimeUntilRefresh(content.factNextRefresh)}
-                </p>
-              </div>
-            ) : (
-              <div className="text-slate-500">Loading fun fact...</div>
-            )}
-          </Card>
+          {/* Sidebar - Upcoming Events */}
+          <div className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-6">
+              <UpcomingEventsCard sidebar />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile: Upcoming Events (shown below on small screens) */}
+        <div className="lg:hidden mt-6">
+          <UpcomingEventsCard />
         </div>
       </div>
 

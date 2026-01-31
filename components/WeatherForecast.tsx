@@ -21,7 +21,11 @@ interface WeatherData {
   forecast?: ForecastDay[];
 }
 
-export function WeatherForecast() {
+interface WeatherForecastProps {
+  compact?: boolean;
+}
+
+export function WeatherForecast({ compact = false }: WeatherForecastProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +58,29 @@ export function WeatherForecast() {
     return (
       <Card className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50">
         <div className="text-slate-500 text-center">Weather unavailable</div>
+      </Card>
+    );
+  }
+
+  if (compact) {
+    return (
+      <Card className="p-4 bg-gradient-to-br from-sky-50 to-blue-50 h-full">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-2xl">🌤️</span>
+          <h3 className="font-bold text-slate-800">Weather</h3>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-4xl">{weather.icon}</div>
+          <div>
+            <div className="text-2xl font-bold text-slate-900">
+              {weather.temperature}°F
+            </div>
+            <div className="text-sm text-slate-600">{weather.description}</div>
+            <div className="text-xs text-slate-500 mt-1">
+              H: {weather.high}° L: {weather.low}°
+            </div>
+          </div>
+        </div>
       </Card>
     );
   }

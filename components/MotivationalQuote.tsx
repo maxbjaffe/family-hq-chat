@@ -23,30 +23,24 @@ function getTimeUntilRefresh(isoString: string): string {
 
 export function MotivationalQuote({ quote, nextRefresh }: MotivationalQuoteProps) {
   return (
-    <Card className="p-6 bg-gradient-to-br from-pink-50 to-purple-50">
-      <div className="flex items-center gap-2 mb-4">
-        <Quote className="h-7 w-7 text-purple-500" />
-        <h3 className="text-lg font-bold text-slate-800">Daily Inspiration</h3>
+    <Card className="p-4 bg-gradient-to-br from-pink-50 to-purple-50 h-full">
+      <div className="flex items-center gap-2 mb-3">
+        <Quote className="h-6 w-6 text-purple-500" />
+        <h3 className="font-bold text-slate-800">Inspiration</h3>
       </div>
 
       {quote ? (
-        <div className="space-y-4">
-          <blockquote className="text-lg text-slate-700 leading-relaxed italic">
-            "{quote.quote}"
+        <div className="space-y-2">
+          <blockquote className="text-sm text-slate-700 leading-relaxed italic line-clamp-3">
+            &ldquo;{quote.quote}&rdquo;
           </blockquote>
 
-          <p className="text-sm text-purple-600 font-medium text-right">
+          <p className="text-xs text-purple-600 font-medium text-right">
             — {quote.author}
           </p>
-
-          {nextRefresh && (
-            <p className="text-xs text-slate-400">
-              {getTimeUntilRefresh(nextRefresh)}
-            </p>
-          )}
         </div>
       ) : (
-        <div className="text-slate-500">Loading inspiration...</div>
+        <div className="text-slate-500 text-sm">Loading...</div>
       )}
     </Card>
   );
