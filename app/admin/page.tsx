@@ -25,6 +25,7 @@ import {
   Shield,
   UserPlus,
   Eye,
+  Dog,
 } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "@/components/IconPicker";
@@ -82,7 +83,7 @@ interface AnalyticsSummary {
   top_queries: { query: string; count: number }[];
 }
 
-type Tab = "family" | "media" | "analytics";
+type Tab = "family" | "media" | "analytics" | "pet-content";
 type MediaCategory = "avatars" | "celebrations" | "icons" | "backgrounds" | "general";
 
 const MEDIA_CATEGORIES: { value: MediaCategory; label: string; icon: React.ElementType }[] = [
@@ -201,6 +202,11 @@ export default function AdminPage() {
   const [bulkSetupInProgress, setBulkSetupInProgress] = useState(false);
   const [showBulkSetupConfirm, setShowBulkSetupConfirm] = useState(false);
 
+  // Pet content state
+  const [petContentStats, setPetContentStats] = useState<{ facts: number; jokes: number } | null>(null);
+  const [generatingPetContent, setGeneratingPetContent] = useState(false);
+  const [showPetContentConfirm, setShowPetContentConfirm] = useState(false);
+
   // Standard checklist items for kids
   const STANDARD_CHECKLIST_ITEMS = [
     { title: "Make Bed", icon: "🛏️" },
@@ -217,6 +223,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     loadData();
+    loadPetContentStats();
   }, []);
 
   useEffect(() => {
@@ -406,6 +413,38 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error("Error loading icons:", error);
+    }
+  }
+
+  async function loadPetContentStats() {
+    try {
+      const res = await fetch('/api/admin/pet-content');
+      if (res.ok) {
+        const data = await res.json();
+        setPetContentStats(data);
+      }
+    } catch (error) {
+      console.error('Error loading pet content stats:', error);
+    }
+  }
+
+  async function generatePetContent() {
+    setGeneratingPetContent(true);
+    setShowPetContentConfirm(false);
+    try {
+      const res = await fetch('/api/admin/pet-content', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`Generated ${data.facts} facts and ${data.jokes} jokes!`);
+        loadPetContentStats();
+      } else {
+        toast.error('Failed to generate content');
+      }
+    } catch (error) {
+      console.error('Error generating pet content:', error);
+      toast.error('Failed to generate content');
+    } finally {
+      setGeneratingPetContent(false);
     }
   }
 
@@ -842,6 +881,13 @@ export default function AdminPage() {
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
+          </Button>
+          <Button
+            variant={tab === "pet-content" ? "default" : "outline"}
+            onClick={() => setTab("pet-content")}
+          >
+            <Dog className="h-4 w-4 mr-2" />
+            Pet Content
           </Button>
         </div>
 
@@ -1600,6 +1646,54 @@ export default function AdminPage() {
             )}
           </>
         )}
+
+        {/* Pet Content Tab */}
+        {tab === "pet-content" && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Dog className="h-5 w-5 text-amber-600" />
+                  <p className="text-sm text-slate-500">Dog Facts</p>
+                </div>
+                <p className="text-3xl font-bold text-amber-600">
+                  {petContentStats?.facts ?? 0}
+                </p>
+              </Card>
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                  <p className="text-sm text-slate-500">Animal Jokes</p>
+                </div>
+                <p className="text-3xl font-bold text-purple-600">
+                  {petContentStats?.jokes ?? 0}
+                </p>
+              </Card>
+            </div>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium">Regenerate Content</h3>
+                  <p className="text-sm text-slate-500">
+                    Generate fresh dog facts and animal jokes using Claude AI
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowPetContentConfirm(true)}
+                  disabled={generatingPetContent}
+                >
+                  {generatingPetContent ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  {generatingPetContent ? "Generating..." : "Regenerate Content"}
+                </Button>
+              </div>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* Confirmation Dialogs */}
@@ -1666,6 +1760,17 @@ export default function AdminPage() {
         isLoading={bulkSetupInProgress}
         onConfirm={bulkSetupChecklists}
         onCancel={() => setShowBulkSetupConfirm(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={showPetContentConfirm}
+        title="Regenerate Pet Content"
+        message="This will replace all existing dog facts and animal jokes with fresh content generated by Claude. This may take 10-15 seconds."
+        confirmLabel="Generate"
+        variant="default"
+        isLoading={generatingPetContent}
+        onConfirm={generatePetContent}
+        onCancel={() => setShowPetContentConfirm(false)}
       />
     </div>
   );
