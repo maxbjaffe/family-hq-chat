@@ -1,39 +1,38 @@
 import { NextResponse } from 'next/server';
 import { getFamilyDataClient } from '@/lib/supabase';
 
+function pickRandom<T>(arr: T[]): T | null {
+  if (!arr || arr.length === 0) return null;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 export async function GET() {
   try {
     const supabase = getFamilyDataClient();
 
-    // Fetch one random fact and one random joke in parallel
-    const [factResult, jokeResult] = await Promise.all([
+    // Fetch all facts and jokes in parallel
+    const [factsResult, jokesResult] = await Promise.all([
       supabase
         .from('pet_content')
         .select('content')
-        .eq('type', 'fact')
-        .order('random()')
-        .limit(1)
-        .single(),
+        .eq('type', 'fact'),
       supabase
         .from('pet_content')
         .select('content')
-        .eq('type', 'joke')
-        .order('random()')
-        .limit(1)
-        .single(),
+        .eq('type', 'joke'),
     ]);
 
-    // Extract content, allowing null if no records found
-    const fact = factResult.data?.content ?? null;
-    const joke = jokeResult.data?.content ?? null;
+    // Log errors if any
+    if (factsResult.error) {
+      console.error('Error fetching pet facts:', factsResult.error);
+    }
+    if (jokesResult.error) {
+      console.error('Error fetching pet jokes:', jokesResult.error);
+    }
 
-    // Log errors but don't fail - just return null for missing content
-    if (factResult.error && factResult.error.code !== 'PGRST116') {
-      console.error('Error fetching pet fact:', factResult.error);
-    }
-    if (jokeResult.error && jokeResult.error.code !== 'PGRST116') {
-      console.error('Error fetching pet joke:', jokeResult.error);
-    }
+    // Pick random fact and joke
+    const fact = pickRandom(factsResult.data || [])?.content ?? null;
+    const joke = pickRandom(jokesResult.data || [])?.content ?? null;
 
     return NextResponse.json({ fact, joke });
   } catch (error) {
