@@ -135,14 +135,14 @@ export function PetContentCards() {
               loop
               muted
               playsInline
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <Image
               src={selectedMedia.src}
               alt="Jaffe the dog"
               fill
-              className="object-cover"
+              className="object-contain"
               priority
             />
           )}
