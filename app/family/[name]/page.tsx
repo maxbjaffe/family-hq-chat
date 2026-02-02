@@ -27,6 +27,7 @@ import { KidGreetingHeader } from '@/components/kid-profile/KidGreetingHeader';
 import { PinModal } from '@/components/PinModal';
 import { getZodiacFromBirthday } from '@/lib/zodiac';
 import { getRandomFactFromBirthday, formatFact, type BirthdayFact } from '@/lib/birthday-facts';
+import { PetContentCards } from '@/components/PetContentCards';
 
 interface FamilyMember {
   id: string;
@@ -340,6 +341,11 @@ export default function FamilyProfilePage() {
               </div>
             </div>
           </Card>
+        )}
+
+        {/* Pet Content - Facts, Jokes, Media */}
+        {avatarInfo?.role === 'pet' && (
+          <PetContentCards />
         )}
 
         {/* Kid View: Dashboard with To-Dos, Checklist, School, Calendar */}
