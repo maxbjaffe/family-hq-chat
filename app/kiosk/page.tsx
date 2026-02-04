@@ -184,11 +184,18 @@ export default function KioskPage() {
 
     // API call
     try {
-      await fetch("/api/checklist", {
+      const response = await fetch("/api/checklist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId, itemId, isCompleted: isCurrentlyCompleted }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Checklist API error:", response.status, errorData);
+        throw new Error(`API error: ${response.status}`);
+      }
+
       endSync(true);
 
       // Celebrate when a member completes their checklist

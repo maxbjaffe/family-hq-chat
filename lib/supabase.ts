@@ -352,11 +352,13 @@ export async function getChecklistForMember(memberId: string): Promise<{
   });
 
   // Get today's completions for this member
-  const { data: completions } = await supabase
+  const { data: completions, error: completionsError } = await supabase
     .from("checklist_completions")
     .select("item_id")
     .eq("member_id", memberId)
     .eq("completion_date", today);
+
+  console.log("[getChecklistForMember] Fetched completions:", { memberId, today, count: completions?.length, error: completionsError });
 
   const completedItemIds = new Set(completions?.map((c) => c.item_id) || []);
 
@@ -383,24 +385,38 @@ export async function toggleMemberChecklistItem(
   const supabase = getFamilyDataClient();
   const today = getLocalDateString();
 
+  console.log("[toggleMemberChecklistItem] Called with:", { memberId, itemId, isCurrentlyCompleted, today });
+
   if (isCurrentlyCompleted) {
     // Remove completion
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from("checklist_completions")
       .delete()
       .eq("member_id", memberId)
       .eq("item_id", itemId)
       .eq("completion_date", today);
 
+    if (error) {
+      console.error("[toggleMemberChecklistItem] Delete error:", error);
+    } else {
+      console.log("[toggleMemberChecklistItem] Delete success, count:", count);
+    }
+
     return !error;
   } else {
     // Add completion
-    const { error } = await supabase.from("checklist_completions").insert({
+    const { error, data } = await supabase.from("checklist_completions").insert({
       member_id: memberId,
       item_id: itemId,
       completion_date: today,
       user_id: FAMILY_USER_ID,
-    });
+    }).select();
+
+    if (error) {
+      console.error("[toggleMemberChecklistItem] Insert error:", error);
+    } else {
+      console.log("[toggleMemberChecklistItem] Insert success:", data);
+    }
 
     return !error;
   }
