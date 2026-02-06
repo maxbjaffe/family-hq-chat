@@ -404,42 +404,39 @@ export async function toggleMemberChecklistItem(
 
     return !error;
   } else {
-    // Add completion - use upsert to handle potential duplicates gracefully
-    const { error, data } = await supabase.from("checklist_completions").upsert(
-      {
-        member_id: memberId,
-        item_id: itemId,
-        completion_date: today,
-        user_id: FAMILY_USER_ID,
-      },
-      {
-        onConflict: "member_id,item_id,completion_date",
-        ignoreDuplicates: true,
-      }
-    ).select();
-
-    if (error) {
-      console.error("[toggleMemberChecklistItem] Upsert error:", error);
-      return false;
-    }
-
-    console.log("[toggleMemberChecklistItem] Upsert success:", data);
-
-    // Verify the completion was saved
-    const { data: verification, error: verifyError } = await supabase
+    // Add completion - first check if it already exists
+    const { data: existing } = await supabase
       .from("checklist_completions")
       .select("id")
       .eq("member_id", memberId)
       .eq("item_id", itemId)
       .eq("completion_date", today)
-      .single();
+      .maybeSingle();
 
-    if (verifyError || !verification) {
-      console.error("[toggleMemberChecklistItem] Verification failed:", verifyError);
+    if (existing) {
+      console.log("[toggleMemberChecklistItem] Completion already exists:", existing.id);
+      return true;
+    }
+
+    // Insert new completion
+    const { error, data } = await supabase.from("checklist_completions").insert({
+      member_id: memberId,
+      item_id: itemId,
+      completion_date: today,
+      user_id: FAMILY_USER_ID,
+    }).select();
+
+    if (error) {
+      // Check if it's a duplicate key error (race condition) - that's actually OK
+      if (error.code === '23505') {
+        console.log("[toggleMemberChecklistItem] Duplicate key - completion already exists");
+        return true;
+      }
+      console.error("[toggleMemberChecklistItem] Insert error:", error);
       return false;
     }
 
-    console.log("[toggleMemberChecklistItem] Verified completion exists:", verification.id);
+    console.log("[toggleMemberChecklistItem] Insert success:", data);
     return true;
   }
 }
