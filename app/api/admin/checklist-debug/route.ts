@@ -37,6 +37,26 @@ export async function GET() {
     .select("*")
     .limit(5);
 
+  // Test insert to see exact error
+  const testMemberId = "3255d216-e6eb-4226-85d2-160564873857"; // Riley
+  const testItemId = "test-item-id";
+  const { error: insertError } = await supabase
+    .from("checklist_completions")
+    .insert({
+      member_id: testMemberId,
+      item_id: testItemId,
+      completion_date: today,
+      user_id: "00879c1b-a586-4d52-96be-8f4b7ddf7257",
+    });
+
+  // Clean up test insert if it succeeded
+  if (!insertError) {
+    await supabase
+      .from("checklist_completions")
+      .delete()
+      .eq("item_id", testItemId);
+  }
+
   // Get recent completions - try without ordering
   const { data: recentCompletions, error: completionsError } = await supabase
     .from("checklist_completions")
@@ -70,6 +90,12 @@ export async function GET() {
       calculatedDate: today,
       hourInEST: hour,
       todayRange: { start: `${today}T00:00:00`, end: `${today}T23:59:59` },
+    },
+    testInsert: {
+      error: insertError?.message,
+      code: insertError?.code,
+      details: insertError?.details,
+      hint: insertError?.hint,
     },
     rawCompletions: {
       count: rawCompletions?.length || 0,
