@@ -423,7 +423,6 @@ export async function toggleMemberChecklistItem(
       member_id: memberId,
       item_id: itemId,
       completion_date: today,
-      user_id: FAMILY_USER_ID,
     }).select();
 
     if (error) {

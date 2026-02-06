@@ -46,7 +46,6 @@ export async function GET() {
       member_id: testMemberId,
       item_id: testItemId,
       completion_date: today,
-      user_id: "00879c1b-a586-4d52-96be-8f4b7ddf7257",
     });
 
   // Clean up test insert if it succeeded
