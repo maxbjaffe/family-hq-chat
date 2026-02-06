@@ -174,6 +174,48 @@ Return ONLY valid JSON in this exact format, no other text:
   }
 }
 
+// POST to force refresh the cache
+export async function POST() {
+  const now = Date.now();
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "No API key configured" }, { status: 500 });
+  }
+
+  const client = new Anthropic({ apiKey });
+
+  try {
+    // Generate all new content
+    const [newJoke, newFact, newQuote] = await Promise.all([
+      generateJoke(client),
+      generateFunFact(client),
+      generateQuote(client),
+    ]);
+
+    // Update cache with new content
+    cache = {
+      joke: { ...newJoke, generatedAt: new Date().toISOString() },
+      funFact: { ...newFact, generatedAt: new Date().toISOString() },
+      quote: { ...newQuote, generatedAt: new Date().toISOString() },
+      jokeExpiresAt: now + HOUR_MS,
+      factExpiresAt: now + HOUR_MS,
+      quoteExpiresAt: now + HOUR_MS,
+    };
+
+    return NextResponse.json({
+      success: true,
+      joke: cache.joke,
+      funFact: cache.funFact,
+      quote: cache.quote,
+      message: "Content refreshed successfully",
+    });
+  } catch (error) {
+    console.error("Error refreshing content:", error);
+    return NextResponse.json({ error: "Failed to refresh content" }, { status: 500 });
+  }
+}
+
 export async function GET() {
   const now = Date.now();
 

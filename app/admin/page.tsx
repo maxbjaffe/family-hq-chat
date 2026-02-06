@@ -83,7 +83,7 @@ interface AnalyticsSummary {
   top_queries: { query: string; count: number }[];
 }
 
-type Tab = "family" | "media" | "analytics" | "pet-content";
+type Tab = "family" | "media" | "analytics" | "pet-content" | "main-content";
 type MediaCategory = "avatars" | "celebrations" | "icons" | "backgrounds" | "general";
 
 const MEDIA_CATEGORIES: { value: MediaCategory; label: string; icon: React.ElementType }[] = [
@@ -207,6 +207,15 @@ export default function AdminPage() {
   const [generatingPetContent, setGeneratingPetContent] = useState(false);
   const [showPetContentConfirm, setShowPetContentConfirm] = useState(false);
 
+  // Main content state
+  const [mainContent, setMainContent] = useState<{
+    joke?: { setup: string; punchline: string; generatedAt: string };
+    funFact?: { fact: string; topic: string; generatedAt: string };
+    quote?: { quote: string; author: string; generatedAt: string };
+  } | null>(null);
+  const [refreshingMainContent, setRefreshingMainContent] = useState(false);
+  const [showMainContentConfirm, setShowMainContentConfirm] = useState(false);
+
   // Standard checklist items for kids
   const STANDARD_CHECKLIST_ITEMS = [
     { title: "Make Bed", icon: "🛏️" },
@@ -224,6 +233,7 @@ export default function AdminPage() {
   useEffect(() => {
     loadData();
     loadPetContentStats();
+    loadMainContent();
   }, []);
 
   useEffect(() => {
@@ -445,6 +455,39 @@ export default function AdminPage() {
       toast.error('Failed to generate content');
     } finally {
       setGeneratingPetContent(false);
+    }
+  }
+
+  async function loadMainContent() {
+    try {
+      const res = await fetch('/api/content');
+      if (res.ok) {
+        const data = await res.json();
+        setMainContent(data);
+      }
+    } catch (error) {
+      console.error('Error loading main content:', error);
+    }
+  }
+
+  async function refreshMainContent() {
+    setRefreshingMainContent(true);
+    setShowMainContentConfirm(false);
+    try {
+      const res = await fetch('/api/content', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setMainContent(data);
+        toast.success('Homepage content refreshed!');
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to refresh content');
+      }
+    } catch (error) {
+      console.error('Error refreshing main content:', error);
+      toast.error('Failed to refresh content');
+    } finally {
+      setRefreshingMainContent(false);
     }
   }
 
@@ -888,6 +931,13 @@ export default function AdminPage() {
           >
             <Dog className="h-4 w-4 mr-2" />
             Pet Content
+          </Button>
+          <Button
+            variant={tab === "main-content" ? "default" : "outline"}
+            onClick={() => setTab("main-content")}
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Main Content
           </Button>
         </div>
 
@@ -1694,6 +1744,100 @@ export default function AdminPage() {
             </Card>
           </>
         )}
+
+        {/* Main Content Tab */}
+        {tab === "main-content" && (
+          <>
+            <Card className="p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-medium">Homepage Content</h3>
+                  <p className="text-sm text-slate-500">
+                    Jokes, fun facts, and motivational quotes shown on the homepage
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowMainContentConfirm(true)}
+                  disabled={refreshingMainContent}
+                >
+                  {refreshingMainContent ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  {refreshingMainContent ? "Refreshing..." : "Refresh All Content"}
+                </Button>
+              </div>
+            </Card>
+
+            {mainContent && (
+              <div className="grid grid-cols-1 gap-4">
+                {/* Current Joke */}
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-2xl">😄</span>
+                    <h4 className="font-medium">Current Joke</h4>
+                    {mainContent.joke?.generatedAt && (
+                      <span className="text-xs text-slate-400 ml-auto">
+                        Generated: {new Date(mainContent.joke.generatedAt).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  {mainContent.joke ? (
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <p className="font-medium text-slate-700">{mainContent.joke.setup}</p>
+                      <p className="text-purple-600 mt-2">{mainContent.joke.punchline}</p>
+                    </div>
+                  ) : (
+                    <p className="text-slate-500">No joke loaded</p>
+                  )}
+                </Card>
+
+                {/* Current Fun Fact */}
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-2xl">🧠</span>
+                    <h4 className="font-medium">Current Fun Fact</h4>
+                    {mainContent.funFact?.generatedAt && (
+                      <span className="text-xs text-slate-400 ml-auto">
+                        Generated: {new Date(mainContent.funFact.generatedAt).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  {mainContent.funFact ? (
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <p className="text-slate-700">{mainContent.funFact.fact}</p>
+                      <p className="text-xs text-slate-400 mt-2 capitalize">Topic: {mainContent.funFact.topic}</p>
+                    </div>
+                  ) : (
+                    <p className="text-slate-500">No fact loaded</p>
+                  )}
+                </Card>
+
+                {/* Current Quote */}
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-2xl">💡</span>
+                    <h4 className="font-medium">Current Motivational Quote</h4>
+                    {mainContent.quote?.generatedAt && (
+                      <span className="text-xs text-slate-400 ml-auto">
+                        Generated: {new Date(mainContent.quote.generatedAt).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  {mainContent.quote ? (
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <blockquote className="text-slate-700 italic">&ldquo;{mainContent.quote.quote}&rdquo;</blockquote>
+                      <p className="text-slate-500 mt-2">— {mainContent.quote.author}</p>
+                    </div>
+                  ) : (
+                    <p className="text-slate-500">No quote loaded</p>
+                  )}
+                </Card>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Confirmation Dialogs */}
@@ -1771,6 +1915,17 @@ export default function AdminPage() {
         isLoading={generatingPetContent}
         onConfirm={generatePetContent}
         onCancel={() => setShowPetContentConfirm(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={showMainContentConfirm}
+        title="Refresh Homepage Content"
+        message="This will generate fresh jokes, fun facts, and motivational quotes for the homepage using Claude AI. The new content will replace the current content immediately."
+        confirmLabel="Refresh"
+        variant="default"
+        isLoading={refreshingMainContent}
+        onConfirm={refreshMainContent}
+        onCancel={() => setShowMainContentConfirm(false)}
       />
     </div>
   );
