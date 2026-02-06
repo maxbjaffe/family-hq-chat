@@ -1,0 +1,86 @@
+import { NextResponse } from "next/server";
+import { getFamilyDataClient } from "@/lib/supabase";
+
+export async function GET() {
+  const supabase = getFamilyDataClient();
+
+  // Get today's date in EST (same logic as the main code)
+  const now = new Date();
+  const hourFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour: "numeric",
+    hour12: false,
+  });
+  const hour = parseInt(hourFormatter.format(now));
+
+  const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  let targetDate = now;
+  if (hour < 2) {
+    targetDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  }
+
+  const parts = dateFormatter.formatToParts(targetDate);
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+  const today = `${year}-${month}-${day}`;
+
+  // Get recent completions
+  const { data: recentCompletions, error: completionsError } = await supabase
+    .from("checklist_completions")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  // Get today's completions
+  const { data: todayCompletions, error: todayError } = await supabase
+    .from("checklist_completions")
+    .select("*")
+    .eq("completion_date", today);
+
+  // Get family members
+  const { data: members, error: membersError } = await supabase
+    .from("family_members")
+    .select("id, name, role, has_checklist")
+    .eq("has_checklist", true);
+
+  // Get checklist items count
+  const { data: items, error: itemsError } = await supabase
+    .from("checklist_items")
+    .select("id, member_id, title")
+    .eq("is_active", true);
+
+  return NextResponse.json({
+    debug: {
+      currentTimeUTC: now.toISOString(),
+      calculatedDate: today,
+      hourInEST: hour,
+    },
+    todayCompletions: {
+      count: todayCompletions?.length || 0,
+      data: todayCompletions,
+      error: todayError?.message,
+    },
+    recentCompletions: {
+      count: recentCompletions?.length || 0,
+      data: recentCompletions,
+      error: completionsError?.message,
+    },
+    members: {
+      count: members?.length || 0,
+      data: members,
+      error: membersError?.message,
+    },
+    items: {
+      count: items?.length || 0,
+      sample: items?.slice(0, 5),
+      error: itemsError?.message,
+    },
+  });
+}
