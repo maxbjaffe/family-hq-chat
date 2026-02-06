@@ -31,18 +31,26 @@ export async function GET() {
   const day = parts.find((p) => p.type === "day")?.value;
   const today = `${year}-${month}-${day}`;
 
-  // Get recent completions
+  // First, get raw completions to see table structure
+  const { data: rawCompletions, error: rawError } = await supabase
+    .from("checklist_completions")
+    .select("*")
+    .limit(5);
+
+  // Get recent completions - try without ordering
   const { data: recentCompletions, error: completionsError } = await supabase
     .from("checklist_completions")
     .select("*")
-    .order("created_at", { ascending: false })
     .limit(20);
 
-  // Get today's completions
+  // Get today's completions using completed_at instead of completion_date
+  const todayStart = `${today}T00:00:00`;
+  const todayEnd = `${today}T23:59:59`;
   const { data: todayCompletions, error: todayError } = await supabase
     .from("checklist_completions")
     .select("*")
-    .eq("completion_date", today);
+    .gte("completed_at", todayStart)
+    .lte("completed_at", todayEnd);
 
   // Get family members
   const { data: members, error: membersError } = await supabase
@@ -61,6 +69,13 @@ export async function GET() {
       currentTimeUTC: now.toISOString(),
       calculatedDate: today,
       hourInEST: hour,
+      todayRange: { start: `${today}T00:00:00`, end: `${today}T23:59:59` },
+    },
+    rawCompletions: {
+      count: rawCompletions?.length || 0,
+      data: rawCompletions,
+      columns: rawCompletions?.[0] ? Object.keys(rawCompletions[0]) : [],
+      error: rawError?.message,
     },
     todayCompletions: {
       count: todayCompletions?.length || 0,
