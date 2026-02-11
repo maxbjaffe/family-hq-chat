@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { getFamilyDataClient } from "./supabase";
+import { analyzeWeek, formatAnalysisForPrompt } from "./analysis/calendar-analyzer";
 
 const SYSTEM_PROMPT = `You are the Jaffe family's helpful assistant! You have access to tools to help manage tasks, check calendars, and look up family information.
 
@@ -57,7 +59,7 @@ function getClient() {
   return anthropicClient;
 }
 
-export function getSystemPrompt(): string {
+export async function getSystemPrompt(): Promise<string> {
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -65,10 +67,33 @@ export function getSystemPrompt(): string {
     day: 'numeric',
   });
 
+  let calendarSection = '';
+
+  try {
+    const supabase = getFamilyDataClient();
+    const now = new Date().toISOString();
+    const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: events } = await supabase
+      .from('cached_calendar_events')
+      .select('id, title, start_time, end_time, calendar_name, location')
+      .gte('start_time', now)
+      .lte('start_time', weekFromNow)
+      .order('start_time');
+
+    if (events && events.length > 0) {
+      const analysis = analyzeWeek(events);
+      const formatted = formatAnalysisForPrompt(analysis);
+      calendarSection = `\n\n## This Week\n${formatted}`;
+    }
+  } catch (error) {
+    console.error('Error fetching calendar for system prompt:', error);
+  }
+
   return `${SYSTEM_PROMPT}
 
 ## Today
-${today}`;
+${today}${calendarSection}`;
 }
 
 function buildMessages(
@@ -96,11 +121,12 @@ export async function generateResponse(
 ): Promise<string> {
   const anthropic = getClient();
   const messages = buildMessages(notionData, conversationHistory);
+  const systemPrompt = await getSystemPrompt();
 
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 1024,
-    system: getSystemPrompt(),
+    system: systemPrompt,
     messages,
   });
 
@@ -117,11 +143,12 @@ export async function* generateResponseStream(
 ): AsyncGenerator<string, void, unknown> {
   const anthropic = getClient();
   const messages = buildMessages(notionData, conversationHistory);
+  const systemPrompt = await getSystemPrompt();
 
   const stream = anthropic.messages.stream({
     model: "claude-sonnet-4-20250514",
     max_tokens: 1024,
-    system: getSystemPrompt(),
+    system: systemPrompt,
     messages,
   });
 

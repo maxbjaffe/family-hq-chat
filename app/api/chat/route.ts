@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     );
 
     const anthropic = getClient();
-    const systemPrompt = getSystemPrompt();
+    const systemPrompt = await getSystemPrompt();
 
     // Create SSE stream for agentic responses
     const encoder = new TextEncoder();
