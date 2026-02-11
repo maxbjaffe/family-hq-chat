@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getFamilyDataClient } from "./supabase";
 import { analyzeWeek, formatAnalysisForPrompt } from "./analysis/calendar-analyzer";
+import { analyzeEmailInsights, formatEmailInsightsForPrompt } from "./analysis/email-insights";
 
 const SYSTEM_PROMPT = `You are the Jaffe family's helpful assistant! You have access to tools to help manage tasks, check calendars, and look up family information.
 
@@ -68,32 +69,42 @@ export async function getSystemPrompt(): Promise<string> {
   });
 
   let calendarSection = '';
+  let emailSection = '';
 
   try {
     const supabase = getFamilyDataClient();
     const now = new Date().toISOString();
     const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: events } = await supabase
-      .from('cached_calendar_events')
-      .select('id, title, start_time, end_time, calendar_name, location')
-      .gte('start_time', now)
-      .lte('start_time', weekFromNow)
-      .order('start_time');
+    const [calendarResult, emailInsights] = await Promise.all([
+      supabase
+        .from('cached_calendar_events')
+        .select('id, title, start_time, end_time, calendar_name, location')
+        .gte('start_time', now)
+        .lte('start_time', weekFromNow)
+        .order('start_time'),
+      analyzeEmailInsights(supabase),
+    ]);
 
+    const events = calendarResult.data;
     if (events && events.length > 0) {
       const analysis = analyzeWeek(events);
       const formatted = formatAnalysisForPrompt(analysis);
       calendarSection = `\n\n## This Week\n${formatted}`;
     }
+
+    if (emailInsights.stats.totalItems > 0) {
+      const formatted = formatEmailInsightsForPrompt(emailInsights);
+      if (formatted) emailSection = `\n\n${formatted}`;
+    }
   } catch (error) {
-    console.error('Error fetching calendar for system prompt:', error);
+    console.error('Error fetching context for system prompt:', error);
   }
 
   return `${SYSTEM_PROMPT}
 
 ## Today
-${today}${calendarSection}`;
+${today}${calendarSection}${emailSection}`;
 }
 
 function buildMessages(
