@@ -3,6 +3,9 @@
 import { useRef, useEffect } from "react";
 import Image from "next/image";
 import Message, { MessageType } from "./Message";
+import { getPersona } from "@/lib/personas";
+
+const persona = getPersona();
 
 interface MessageListProps {
   messages: MessageType[];
@@ -44,8 +47,8 @@ export default function MessageList({ messages, isLoading, onQuickAction }: Mess
           {/* Greeting message bubble */}
           <div className="flex justify-start items-end gap-2.5">
             <Image
-              src="/IMG_3028.JPG"
-              alt="Assistant"
+              src={persona.avatarUrl}
+              alt={persona.name}
               width={32}
               height={32}
               className="rounded-full ring-2 ring-white shadow-sm flex-shrink-0"
@@ -79,8 +82,8 @@ export default function MessageList({ messages, isLoading, onQuickAction }: Mess
       {isLoading && (
         <div className="flex justify-start items-end gap-2.5">
           <Image
-            src="/IMG_3028.JPG"
-            alt="Assistant"
+            src={persona.avatarUrl}
+            alt={persona.name}
             width={32}
             height={32}
             className="rounded-full ring-2 ring-white shadow-sm"

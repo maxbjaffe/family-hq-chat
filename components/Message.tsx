@@ -1,6 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { getPersona } from "@/lib/personas";
+
+const persona = getPersona();
 
 export interface MessageType {
   id: string;
@@ -19,8 +22,8 @@ export default function Message({ message }: MessageProps) {
     <div className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
       {!isUser && (
         <Image
-          src="/IMG_3028.JPG"
-          alt="Assistant"
+          src={persona.avatarUrl}
+          alt={persona.name}
           width={32}
           height={32}
           className="rounded-full ring-2 ring-white shadow-sm flex-shrink-0"
