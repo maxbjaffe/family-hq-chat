@@ -19,6 +19,7 @@ import { FamilyMemberCard } from "@/components/FamilyMemberCard";
 import { QuickChatWidget } from "@/components/QuickChatWidget";
 import { MotivationalQuote } from "@/components/MotivationalQuote";
 import { ParentsButton } from "@/components/ParentsButton";
+import { FamilyCapabilityCard } from "@/components/FamilyCapabilityCard";
 
 interface FamilyMember {
   id: string;
@@ -331,6 +332,11 @@ export default function UnifiedHomePage() {
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Family Capability */}
+            <div className="mb-6">
+              <FamilyCapabilityCard />
             </div>
 
             {/* House Tasks */}
