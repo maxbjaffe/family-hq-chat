@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getFamilyDataClient } from "./supabase";
 import { analyzeWeek, formatAnalysisForPrompt } from "./analysis/calendar-analyzer";
 import { analyzeEmailInsights, formatEmailInsightsForPrompt } from "./analysis/email-insights";
+import { calculateFamilyCapability } from "./analysis/capability-calculator";
+import { generateGapQuestions, formatQuestionsForPrompt } from "./analysis/gap-questions";
 
 const SYSTEM_PROMPT = `You are the Jaffe family's helpful assistant! You have access to tools to help manage tasks, check calendars, and look up family information.
 
@@ -76,7 +78,7 @@ export async function getSystemPrompt(): Promise<string> {
     const now = new Date().toISOString();
     const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [calendarResult, emailInsights] = await Promise.all([
+    const [calendarResult, emailInsights, capabilityProfile] = await Promise.all([
       supabase
         .from('cached_calendar_events')
         .select('id, title, start_time, end_time, calendar_name, location')
@@ -84,6 +86,7 @@ export async function getSystemPrompt(): Promise<string> {
         .lte('start_time', weekFromNow)
         .order('start_time'),
       analyzeEmailInsights(supabase),
+      calculateFamilyCapability(supabase).catch(() => null),
     ]);
 
     const events = calendarResult.data;
@@ -96,6 +99,14 @@ export async function getSystemPrompt(): Promise<string> {
     if (emailInsights.stats.totalItems > 0) {
       const formatted = formatEmailInsightsForPrompt(emailInsights);
       if (formatted) emailSection = `\n\n${formatted}`;
+    }
+
+    // Gap-closing questions — pick from first member profile
+    if (capabilityProfile && capabilityProfile.members.length > 0) {
+      const firstMember = capabilityProfile.members[0];
+      const questions = generateGapQuestions(firstMember, 'max-poppins', 3);
+      const gapSection = formatQuestionsForPrompt(questions, 2);
+      if (gapSection) emailSection += `\n\n${gapSection}`;
     }
   } catch (error) {
     console.error('Error fetching context for system prompt:', error);
