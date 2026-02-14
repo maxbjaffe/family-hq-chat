@@ -6,6 +6,7 @@ import { Home, CheckSquare, Gamepad2, Maximize, MessageCircle } from "lucide-rea
 import { useCallback, useRef, useState, useEffect } from "react";
 import { SyncIndicator } from "./SyncIndicator";
 import { HeaderClock } from "./Clock";
+import { AppLauncher } from "./AppLauncher";
 
 // Detect if running in iframe
 function useIsEmbedded() {
@@ -106,9 +107,12 @@ export function Navigation() {
           })}
         </div>
 
-        {/* Footer with fullscreen button - hidden when embedded in iframe */}
-        {!isEmbedded && (
-          <div className="p-3 border-t border-slate-200 space-y-2">
+        {/* Footer with app launcher and fullscreen button */}
+        <div className="p-3 border-t border-slate-200 space-y-2">
+          <div className="flex items-center justify-center">
+            <AppLauncher />
+          </div>
+          {!isEmbedded && (
             <button
               onClick={enterFullscreen}
               className="w-full flex items-center justify-center gap-2 min-h-[48px] px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition-all"
@@ -117,8 +121,8 @@ export function Navigation() {
               <Maximize className="h-5 w-5" />
               <span className="hidden lg:block text-sm font-medium">Kiosk Mode</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </nav>
 
       {/* Mobile Bottom Nav - larger touch targets */}
@@ -164,6 +168,7 @@ export function Navigation() {
           />
         </button>
         <div className="flex items-center gap-3">
+          <AppLauncher />
           <HeaderClock />
           <SyncIndicator />
           {/* Hide fullscreen button when embedded in iframe */}
