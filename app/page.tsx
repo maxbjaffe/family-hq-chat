@@ -367,7 +367,7 @@ export default function UnifiedHomePage() {
                   No family members configured yet
                 </Card>
               ) : (
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {familyMembers.map((member) => (
                     <FamilyMemberCard key={member.id} member={member} />
                   ))}
