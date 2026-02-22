@@ -2,43 +2,50 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Calendar, Loader2 } from 'lucide-react';
+import { Calendar, Loader2, GraduationCap, AlertCircle } from 'lucide-react';
 import { getCalendarColor } from '@/lib/calendar-colors';
 import Link from 'next/link';
 
-interface CalendarEvent {
+interface UpcomingItem {
   id: string;
   title: string;
-  start_time: string;
-  end_time: string | null;
-  calendar_name: string | null;
-  location: string | null;
+  date: string;
+  type: 'calendar' | 'school-event' | 'action';
+  source: string;
+  children?: string[];
+  urgency?: string;
+  location?: string;
 }
 
 interface UpcomingEventsCardProps {
   sidebar?: boolean;
 }
 
+const TYPE_STYLES: Record<UpcomingItem['type'], { bg: string; border: string; text: string }> = {
+  'calendar': { bg: '', border: '', text: '' }, // uses calendar-colors
+  'school-event': { bg: 'bg-amber-50', border: 'border-amber-400', text: 'text-amber-700' },
+  'action': { bg: 'bg-rose-50', border: 'border-rose-400', text: 'text-rose-700' },
+};
+
 export function UpcomingEventsCard({ sidebar = false }: UpcomingEventsCardProps) {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [items, setItems] = useState<UpcomingItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchEvents() {
+    async function fetchItems() {
       try {
-        const res = await fetch('/api/calendar?days=7');
+        const res = await fetch('/api/upcoming?days=7');
         if (res.ok) {
           const data = await res.json();
-          // Show more events in sidebar mode
-          const limit = sidebar ? 10 : 4;
-          setEvents(data.events?.slice(0, limit) || []);
+          const limit = sidebar ? 15 : 6;
+          setItems((data.items || []).slice(0, limit));
         }
       } catch {
         // Silent fail
       }
       setLoading(false);
     }
-    fetchEvents();
+    fetchItems();
   }, [sidebar]);
 
   function formatTime(dateStr: string): string {
@@ -63,6 +70,24 @@ export function UpcomingEventsCard({ sidebar = false }: UpcomingEventsCardProps)
     if (eventDay.getTime() === today.getTime()) return 'Today';
     if (eventDay.getTime() === tomorrow.getTime()) return 'Tomorrow';
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function getItemStyles(item: UpcomingItem) {
+    if (item.type === 'calendar') {
+      return getCalendarColor(item.source);
+    }
+    return TYPE_STYLES[item.type];
+  }
+
+  function getTypeIcon(type: UpcomingItem['type']) {
+    switch (type) {
+      case 'school-event':
+        return <GraduationCap className="h-3 w-3" />;
+      case 'action':
+        return <AlertCircle className="h-3 w-3" />;
+      default:
+        return null;
+    }
   }
 
   if (loading) {
@@ -91,24 +116,38 @@ export function UpcomingEventsCard({ sidebar = false }: UpcomingEventsCardProps)
         </Link>
       </div>
 
-      {events.length === 0 ? (
+      {items.length === 0 ? (
         <p className="text-sm text-slate-500 py-2">No upcoming events</p>
       ) : (
         <div className="space-y-2">
-          {events.map(event => {
-            const colors = getCalendarColor(event.calendar_name);
+          {items.map(item => {
+            const styles = getItemStyles(item);
+            const icon = getTypeIcon(item.type);
             return (
               <div
-                key={event.id}
-                className={`p-2 rounded-lg border-l-4 ${colors.bg} ${colors.border}`}
+                key={item.id}
+                className={`p-2 rounded-lg border-l-4 ${styles.bg} ${styles.border}`}
               >
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-medium">{formatDate(event.start_time)}</span>
-                  <span className={colors.text}>{formatTime(event.start_time)}</span>
+                  <span className="font-medium">{formatDate(item.date)}</span>
+                  <span className={styles.text}>{formatTime(item.date)}</span>
+                  {icon && (
+                    <span className={`flex items-center gap-0.5 ${styles.text}`}>
+                      {icon}
+                      <span className="text-[10px]">
+                        {item.type === 'action' ? 'Action' : 'School'}
+                      </span>
+                    </span>
+                  )}
                 </div>
                 <p className="font-medium text-slate-800 text-sm truncate">
-                  {event.title}
+                  {item.title}
                 </p>
+                {item.children && item.children.length > 0 && (
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {item.children.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')}
+                  </p>
+                )}
               </div>
             );
           })}

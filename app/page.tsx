@@ -57,6 +57,13 @@ interface ContentData {
   quoteNextRefresh: string;
 }
 
+function getTimeOfDayGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Morning";
+  if (hour < 17) return "Afternoon";
+  return "Evening";
+}
+
 export default function UnifiedHomePage() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [content, setContent] = useState<ContentData | null>(null);
@@ -67,10 +74,11 @@ export default function UnifiedHomePage() {
   const loadAllData = useCallback(async () => {
     startSync();
     try {
-      // Fetch checklist data (includes kids with stats) and content
-      const [checklistRes, contentRes] = await Promise.all([
+      // Fetch checklist data (kids with stats), content, and all family members
+      const [checklistRes, contentRes, familyRes] = await Promise.all([
         fetch("/api/checklist"),
         fetch("/api/content"),
+        fetch("/api/admin/family"),
       ]);
 
       if (checklistRes.ok) {
@@ -85,24 +93,11 @@ export default function UnifiedHomePage() {
           stats: m.stats,
         }));
 
-        // Fetch all family members to get adults and pets
-        const familyRes = await fetch("/api/admin/family");
+        // Get pets from family members (kids + pets only on homepage)
+        let pets: FamilyMember[] = [];
         if (familyRes.ok) {
           const familyData = await familyRes.json();
-
-          // Get adults (admin/adult roles)
-          const adults = (familyData.members || [])
-            .filter((m: FamilyMember) => m.role === "admin" || m.role === "adult")
-            .map((m: FamilyMember) => ({
-              id: m.id,
-              name: m.name,
-              role: m.role,
-              avatar_url: m.avatar_url,
-              has_checklist: false,
-            }));
-
-          // Get pets
-          const pets = (familyData.members || [])
+          pets = (familyData.members || [])
             .filter((m: FamilyMember) => m.role === "pet")
             .map((m: FamilyMember) => ({
               id: m.id,
@@ -111,11 +106,9 @@ export default function UnifiedHomePage() {
               avatar_url: m.avatar_url,
               has_checklist: false,
             }));
-
-          setFamilyMembers([...kidsWithChecklists, ...adults, ...pets]);
-        } else {
-          setFamilyMembers(kidsWithChecklists);
         }
+
+        setFamilyMembers([...kidsWithChecklists, ...pets]);
       }
 
       if (contentRes.ok) {
@@ -177,7 +170,6 @@ export default function UnifiedHomePage() {
   }
 
   const kidsOnly = familyMembers.filter((m) => m.role === "kid");
-  const adultsAndPets = familyMembers.filter((m) => m.role === "admin" || m.role === "adult" || m.role === "pet");
   const allKidsComplete = kidsOnly.length > 0 && kidsOnly.every((c) => c.stats?.isComplete);
 
   return (
@@ -204,13 +196,7 @@ export default function UnifiedHomePage() {
                     })}
                   </h1>
                   <p className="text-slate-600 text-lg mt-1">
-                    Good{" "}
-                    {new Date().getHours() < 12
-                      ? "Morning"
-                      : new Date().getHours() < 17
-                      ? "Afternoon"
-                      : "Evening"}
-                    , Jaffe Family!
+                    Good {getTimeOfDayGreeting()}, Jaffe Family!
                   </p>
                 </div>
               </div>
@@ -314,23 +300,10 @@ export default function UnifiedHomePage() {
                   No family members configured yet
                 </Card>
               ) : (
-                <div className="space-y-4">
-                  {/* Kids Row */}
-                  {kidsOnly.length > 0 && (
-                    <div className="grid grid-cols-3 gap-4">
-                      {kidsOnly.map((member) => (
-                        <FamilyMemberCard key={member.id} member={member} />
-                      ))}
-                    </div>
-                  )}
-                  {/* Adults & Pet Row */}
-                  {adultsAndPets.length > 0 && (
-                    <div className="grid grid-cols-3 gap-4">
-                      {adultsAndPets.map((member) => (
-                        <FamilyMemberCard key={member.id} member={member} />
-                      ))}
-                    </div>
-                  )}
+                <div className="grid grid-cols-4 gap-4">
+                  {familyMembers.map((member) => (
+                    <FamilyMemberCard key={member.id} member={member} />
+                  ))}
                 </div>
               )}
             </div>

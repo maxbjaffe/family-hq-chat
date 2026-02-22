@@ -25,7 +25,7 @@ interface CachedContent {
 
 let cache: CachedContent | null = null;
 
-const HOUR_MS = 60 * 60 * 1000;
+const REFRESH_MS = 15 * 60 * 1000;
 
 // Fallback content if API fails
 const FALLBACK_JOKES = [
@@ -101,7 +101,7 @@ const FALLBACK_QUOTES = [
 
 async function generateJoke(client: Anthropic): Promise<{ setup: string; punchline: string }> {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 200,
     messages: [
       {
@@ -128,7 +128,7 @@ async function generateFunFact(client: Anthropic): Promise<{ fact: string; topic
   const topic = topics[Math.floor(Math.random() * topics.length)];
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 200,
     messages: [
       {
@@ -152,7 +152,7 @@ Return ONLY valid JSON in this exact format, no other text:
 
 async function generateQuote(client: Anthropic): Promise<{ quote: string; author: string }> {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 200,
     messages: [
       {
@@ -198,9 +198,9 @@ export async function POST() {
       joke: { ...newJoke, generatedAt: new Date().toISOString() },
       funFact: { ...newFact, generatedAt: new Date().toISOString() },
       quote: { ...newQuote, generatedAt: new Date().toISOString() },
-      jokeExpiresAt: now + HOUR_MS,
-      factExpiresAt: now + HOUR_MS,
-      quoteExpiresAt: now + HOUR_MS,
+      jokeExpiresAt: now + REFRESH_MS,
+      factExpiresAt: now + REFRESH_MS,
+      quoteExpiresAt: now + REFRESH_MS,
     };
 
     return NextResponse.json({
@@ -248,9 +248,9 @@ export async function GET() {
       joke: { ...fallbackJoke, generatedAt: new Date().toISOString() },
       funFact: { ...fallbackFact, generatedAt: new Date().toISOString() },
       quote: { ...fallbackQuote, generatedAt: new Date().toISOString() },
-      jokeNextRefresh: new Date(now + HOUR_MS).toISOString(),
-      factNextRefresh: new Date(now + HOUR_MS).toISOString(),
-      quoteNextRefresh: new Date(now + HOUR_MS).toISOString(),
+      jokeNextRefresh: new Date(now + REFRESH_MS).toISOString(),
+      factNextRefresh: new Date(now + REFRESH_MS).toISOString(),
+      quoteNextRefresh: new Date(now + REFRESH_MS).toISOString(),
     });
   }
 
@@ -264,7 +264,7 @@ export async function GET() {
     if (needNewJoke) {
       const newJoke = await generateJoke(client);
       joke = { ...newJoke, generatedAt: new Date().toISOString() };
-      jokeExpiresAt = now + HOUR_MS;
+      jokeExpiresAt = now + REFRESH_MS;
     }
 
     let funFact = cache?.funFact;
@@ -273,7 +273,7 @@ export async function GET() {
     if (needNewFact) {
       const newFact = await generateFunFact(client);
       funFact = { ...newFact, generatedAt: new Date().toISOString() };
-      factExpiresAt = now + HOUR_MS;
+      factExpiresAt = now + REFRESH_MS;
     }
 
     let quote = cache?.quote;
@@ -282,7 +282,7 @@ export async function GET() {
     if (needNewQuote) {
       const newQuote = await generateQuote(client);
       quote = { ...newQuote, generatedAt: new Date().toISOString() };
-      quoteExpiresAt = now + HOUR_MS;
+      quoteExpiresAt = now + REFRESH_MS;
     }
 
     // Update cache
@@ -315,9 +315,9 @@ export async function GET() {
       joke: { ...fallbackJoke, generatedAt: new Date().toISOString() },
       funFact: { ...fallbackFact, generatedAt: new Date().toISOString() },
       quote: { ...fallbackQuote, generatedAt: new Date().toISOString() },
-      jokeNextRefresh: new Date(now + HOUR_MS).toISOString(),
-      factNextRefresh: new Date(now + HOUR_MS).toISOString(),
-      quoteNextRefresh: new Date(now + HOUR_MS).toISOString(),
+      jokeNextRefresh: new Date(now + REFRESH_MS).toISOString(),
+      factNextRefresh: new Date(now + REFRESH_MS).toISOString(),
+      quoteNextRefresh: new Date(now + REFRESH_MS).toISOString(),
     });
   }
 }
