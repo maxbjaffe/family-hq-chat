@@ -101,7 +101,7 @@ const FALLBACK_QUOTES = [
 
 async function generateJoke(client: Anthropic): Promise<{ setup: string; punchline: string }> {
   const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-sonnet-4-6",
     max_tokens: 200,
     messages: [
       {
@@ -128,7 +128,7 @@ async function generateFunFact(client: Anthropic): Promise<{ fact: string; topic
   const topic = topics[Math.floor(Math.random() * topics.length)];
 
   const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-sonnet-4-6",
     max_tokens: 200,
     messages: [
       {
@@ -152,7 +152,7 @@ Return ONLY valid JSON in this exact format, no other text:
 
 async function generateQuote(client: Anthropic): Promise<{ quote: string; author: string }> {
   const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-sonnet-4-6",
     max_tokens: 200,
     messages: [
       {

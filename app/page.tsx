@@ -18,7 +18,6 @@ import { UpcomingEventsCard } from "@/components/UpcomingEventsCard";
 import { WeatherForecast } from "@/components/WeatherForecast";
 import { FamilyMemberCard } from "@/components/FamilyMemberCard";
 import { QuickChatWidget } from "@/components/QuickChatWidget";
-import { MotivationalQuote } from "@/components/MotivationalQuote";
 import { ParentsButton } from "@/components/ParentsButton";
 
 interface FamilyMember {
@@ -69,6 +68,7 @@ export default function UnifiedHomePage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showPunchline, setShowPunchline] = useState(false);
+  const [refreshingContent, setRefreshingContent] = useState(false);
 
   const loadAllData = useCallback(async () => {
     startSync();
@@ -152,11 +152,26 @@ export default function UnifiedHomePage() {
     setRefreshing(false);
   }
 
-  function getTimeUntilRefresh(isoString: string): string {
-    const diff = new Date(isoString).getTime() - Date.now();
-    if (diff <= 0) return "Refreshing...";
-    const minutes = Math.ceil(diff / 60000);
-    return `New in ${minutes} min`;
+  async function refreshContent() {
+    setRefreshingContent(true);
+    try {
+      const res = await fetch("/api/content", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setContent({
+          joke: data.joke,
+          funFact: data.funFact,
+          quote: data.quote,
+          jokeNextRefresh: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          factNextRefresh: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          quoteNextRefresh: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+        });
+        setShowPunchline(false);
+      }
+    } catch {
+      // Silent fail
+    }
+    setRefreshingContent(false);
   }
 
   if (loading) {
@@ -236,16 +251,50 @@ export default function UnifiedHomePage() {
               <WeatherForecast compact />
 
               {/* Motivational Quote */}
-              <MotivationalQuote
-                quote={content?.quote || null}
-                nextRefresh={content?.quoteNextRefresh}
-              />
+              <Card className="p-4 bg-gradient-to-br from-pink-50 to-purple-50 relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">💜</span>
+                    <h3 className="font-bold text-slate-800">Inspiration</h3>
+                  </div>
+                  <button
+                    onClick={refreshContent}
+                    disabled={refreshingContent}
+                    className="p-1 rounded-full hover:bg-purple-100 transition-colors"
+                    title="New content"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 text-purple-400 ${refreshingContent ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+                {content?.quote ? (
+                  <div className="space-y-2">
+                    <blockquote className="text-sm text-slate-700 leading-relaxed italic line-clamp-3">
+                      &ldquo;{content.quote.quote}&rdquo;
+                    </blockquote>
+                    <p className="text-xs text-purple-600 font-medium text-right">
+                      — {content.quote.author}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-sm">Loading...</div>
+                )}
+              </Card>
 
-              {/* Joke of the Hour */}
-              <Card className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">😄</span>
-                  <h3 className="font-bold text-slate-800">Joke</h3>
+              {/* Joke */}
+              <Card className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">😄</span>
+                    <h3 className="font-bold text-slate-800">Joke</h3>
+                  </div>
+                  <button
+                    onClick={refreshContent}
+                    disabled={refreshingContent}
+                    className="p-1 rounded-full hover:bg-orange-100 transition-colors"
+                    title="New content"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 text-orange-400 ${refreshingContent ? 'animate-spin' : ''}`} />
+                  </button>
                 </div>
 
                 {content?.joke ? (
@@ -274,10 +323,20 @@ export default function UnifiedHomePage() {
               </Card>
 
               {/* Fun Fact */}
-              <Card className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50">
-                <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="h-6 w-6 text-emerald-500" />
-                  <h3 className="font-bold text-slate-800">Fun Fact</h3>
+              <Card className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="h-6 w-6 text-emerald-500" />
+                    <h3 className="font-bold text-slate-800">Fun Fact</h3>
+                  </div>
+                  <button
+                    onClick={refreshContent}
+                    disabled={refreshingContent}
+                    className="p-1 rounded-full hover:bg-emerald-100 transition-colors"
+                    title="New content"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 text-emerald-400 ${refreshingContent ? 'animate-spin' : ''}`} />
+                  </button>
                 </div>
 
                 {content?.funFact ? (
