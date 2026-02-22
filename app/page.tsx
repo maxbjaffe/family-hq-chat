@@ -8,6 +8,7 @@ import {
   Loader2,
   Sparkles,
   Lightbulb,
+  RotateCcw,
 } from "lucide-react";
 import { Clock } from "@/components/Clock";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
@@ -19,8 +20,6 @@ import { FamilyMemberCard } from "@/components/FamilyMemberCard";
 import { QuickChatWidget } from "@/components/QuickChatWidget";
 import { MotivationalQuote } from "@/components/MotivationalQuote";
 import { ParentsButton } from "@/components/ParentsButton";
-import { FamilyCapabilityCard } from "@/components/FamilyCapabilityCard";
-import { SuggestedQuestions } from "@/components/SuggestedQuestions";
 
 interface FamilyMember {
   id: string;
@@ -218,6 +217,15 @@ export default function UnifiedHomePage() {
                       <RefreshCw className="h-4 w-4" />
                     )}
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.reload()}
+                    className="min-h-[48px] min-w-[48px]"
+                    title="Reload page"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -306,16 +314,6 @@ export default function UnifiedHomePage() {
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Family Capability */}
-            <div className="mb-6">
-              <FamilyCapabilityCard />
-            </div>
-
-            {/* Gap-closing suggestions */}
-            <div className="mb-6">
-              <SuggestedQuestions />
             </div>
 
             {/* House Tasks */}
