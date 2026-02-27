@@ -183,7 +183,7 @@ export class HouseTasksAgent extends BaseAgent {
 
     try {
       const allTasks = await getTasks();
-      return allTasks.filter(t => t.project_id === this.projectId && !t.is_completed);
+      return allTasks.filter(t => t.project_id === this.projectId && !t.checked);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
       return [];

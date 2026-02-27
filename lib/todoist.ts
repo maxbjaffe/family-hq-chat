@@ -1,4 +1,4 @@
-const TODOIST_API_URL = 'https://api.todoist.com/rest/v2';
+const TODOIST_API_URL = 'https://api.todoist.com/api/v1';
 
 export interface TodoistTask {
   id: string;
@@ -12,12 +12,17 @@ export interface TodoistTask {
   priority: number;
   project_id: string;
   labels: string[];
-  is_completed: boolean;
+  checked: boolean;
 }
 
 export interface TodoistProject {
   id: string;
   name: string;
+}
+
+interface TodoistListResponse<T> {
+  results: T[];
+  next_cursor: string | null;
 }
 
 async function getToken(userId?: string): Promise<string> {
@@ -39,7 +44,8 @@ export async function getTasks(userId?: string): Promise<TodoistTask[]> {
     throw new Error(`Todoist API error: ${response.status}`);
   }
 
-  return response.json();
+  const data: TodoistListResponse<TodoistTask> = await response.json();
+  return data.results;
 }
 
 export async function getProjects(userId?: string): Promise<TodoistProject[]> {
@@ -54,7 +60,8 @@ export async function getProjects(userId?: string): Promise<TodoistProject[]> {
     throw new Error(`Todoist API error: ${response.status}`);
   }
 
-  return response.json();
+  const data: TodoistListResponse<TodoistProject> = await response.json();
+  return data.results;
 }
 
 export async function createTask(
