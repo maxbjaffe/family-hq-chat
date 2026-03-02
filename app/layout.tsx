@@ -5,6 +5,7 @@ import { NavigationWrapper } from "@/components/Navigation";
 import { KioskProvider } from "@/components/KioskProvider";
 import { UserProvider } from "@/components/UserProvider";
 import { Toaster } from "sonner";
+import { RechargeTimerProvider, TimerOverlay } from "@/components/recharge";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -42,8 +43,11 @@ export default function RootLayout({
       <body className={geist.className}>
         <UserProvider>
           <KioskProvider>
-            <NavigationWrapper>{children}</NavigationWrapper>
-            <Toaster position="top-center" richColors />
+            <RechargeTimerProvider>
+              <NavigationWrapper>{children}</NavigationWrapper>
+              <TimerOverlay />
+              <Toaster position="top-center" richColors />
+            </RechargeTimerProvider>
           </KioskProvider>
         </UserProvider>
       </body>
