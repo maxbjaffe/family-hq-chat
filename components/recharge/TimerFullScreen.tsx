@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Minimize2, Pause, Play, Star } from "lucide-react";
 import confetti from "canvas-confetti";
+import { Avatar } from "@/components/Avatar";
 import { useRechargeTimers, type ActiveTimer } from "./RechargeTimerContext";
 import { ENCOURAGEMENT_MESSAGES, CELEBRATION_MESSAGES } from "./constants";
 
@@ -117,7 +118,14 @@ export function TimerFullScreen({ timer }: TimerFullScreenProps) {
         <p className="text-3xl font-black text-white text-center mb-2 animate-bounce">
           {celebrationMsg}
         </p>
-        <p className="text-white/70 text-lg mb-8">{timer.childName}</p>
+        <div className="flex items-center gap-2 mb-8">
+          <Avatar
+            member={{ name: timer.childName, role: "kid", avatar_url: timer.childAvatar }}
+            size="sm"
+            className="ring-2 ring-white/30"
+          />
+          <p className="text-white/70 text-lg">{timer.childName}</p>
+        </div>
 
         {/* Star rating */}
         <p className="text-white/60 text-sm mb-3">How was it?</p>
@@ -165,7 +173,14 @@ export function TimerFullScreen({ timer }: TimerFullScreenProps) {
       {/* Break emoji + name */}
       <div className="text-6xl mb-3">{timer.breakEmoji}</div>
       <h2 className="text-2xl font-bold text-white mb-1">{timer.breakName}</h2>
-      <p className="text-white/60 text-sm mb-8">{timer.childName}</p>
+      <div className="flex items-center gap-2 mb-8">
+        <Avatar
+          member={{ name: timer.childName, role: "kid", avatar_url: timer.childAvatar }}
+          size="xs"
+          className="ring-2 ring-white/20"
+        />
+        <p className="text-white/60 text-sm">{timer.childName}</p>
+      </div>
 
       {/* SVG progress ring + countdown */}
       <div className="relative mb-8">
