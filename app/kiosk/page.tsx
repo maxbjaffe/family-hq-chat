@@ -4,12 +4,13 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Sparkles, RefreshCw, X, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, RefreshCw, X, Loader2, Battery } from "lucide-react";
 import confetti from "canvas-confetti";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
 import { Clock } from "@/components/Clock";
 import { Avatar } from "@/components/Avatar";
+import { RechargeMenu } from "@/components/recharge";
 
 // Celebration video URL
 const CELEBRATION_VIDEO_URL =
@@ -69,6 +70,7 @@ export default function KioskPage() {
   const [showVideo, setShowVideo] = useState(false);
   const [hasShownVideo, setHasShownVideo] = useState(false);
   const [togglingItems, setTogglingItems] = useState<Set<string>>(new Set());
+  const [showRecharge, setShowRecharge] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const loadData = useCallback(async () => {
@@ -330,6 +332,18 @@ export default function KioskPage() {
                     <RefreshCw className="h-5 w-5" />
                   )}
                 </Button>
+                <Button
+                  onClick={() => setShowRecharge((v) => !v)}
+                  className={`min-h-[48px] ${
+                    showRecharge
+                      ? "bg-gradient-to-r from-purple-500 to-violet-500 text-white border-0 hover:from-purple-600 hover:to-violet-600"
+                      : ""
+                  }`}
+                  variant={showRecharge ? "default" : "outline"}
+                >
+                  <Battery className="h-5 w-5 mr-2" />
+                  Recharge
+                </Button>
               </div>
             </div>
           </div>
@@ -351,6 +365,13 @@ export default function KioskPage() {
             </Card>
           )}
         </div>
+
+        {/* Recharge Menu */}
+        {showRecharge && (
+          <Card className="p-6 mb-6 bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+            <RechargeMenu />
+          </Card>
+        )}
 
         {/* Members Grid - Horizontal layout with large avatars */}
         {members.length === 0 ? (
