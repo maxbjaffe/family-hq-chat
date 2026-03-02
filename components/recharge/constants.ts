@@ -46,20 +46,18 @@ export const CATEGORY_CONFIG = {
   },
 } as const;
 
-export const DURATIONS = [5, 10, 15, 30] as const;
+export const DURATIONS = [5, 10, 15] as const;
 
 export const DURATION_LABELS: Record<RechargeDuration, string> = {
   5: "5 min",
   10: "10 min",
   15: "15 min",
-  30: "30 min",
 };
 
 export const DURATION_DESCRIPTIONS: Record<RechargeDuration, string> = {
   5: "Quick Reset",
   10: "Real Reset",
   15: "Bigger Break",
-  30: "Full Reset",
 };
 
 export const ENCOURAGEMENT_MESSAGES = [

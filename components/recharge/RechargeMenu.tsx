@@ -18,6 +18,12 @@ interface KidMember {
   avatar_url?: string | null;
 }
 
+interface CooldownState {
+  active: boolean;
+  remainingMinutes: number;
+  cooldownEndsAt: string | null;
+}
+
 interface RechargeMenuProps {
   childId?: string;
   childName?: string;
@@ -39,6 +45,50 @@ export function RechargeMenu({ childId, childName }: RechargeMenuProps) {
   );
   const [loadingKids, setLoadingKids] = useState(!childId);
   const [loadingBreaks, setLoadingBreaks] = useState(false);
+  const [cooldown, setCooldown] = useState<CooldownState>({
+    active: false,
+    remainingMinutes: 0,
+    cooldownEndsAt: null,
+  });
+
+  // Check cooldown for a kid
+  const checkCooldown = useCallback(async (kidId: string) => {
+    try {
+      const res = await fetch(`/api/recharge/sessions?childId=${kidId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.onCooldown) {
+          setCooldown({
+            active: true,
+            remainingMinutes: data.remainingMinutes,
+            cooldownEndsAt: data.cooldownEndsAt,
+          });
+        } else {
+          setCooldown({ active: false, remainingMinutes: 0, cooldownEndsAt: null });
+        }
+      }
+    } catch (error) {
+      console.error("[RechargeMenu] Error checking cooldown:", error);
+    }
+  }, []);
+
+  // Tick down cooldown every minute
+  useEffect(() => {
+    if (!cooldown.active || !cooldown.cooldownEndsAt) return;
+
+    const interval = setInterval(() => {
+      const remaining = Math.ceil(
+        (new Date(cooldown.cooldownEndsAt!).getTime() - Date.now()) / (60 * 1000)
+      );
+      if (remaining <= 0) {
+        setCooldown({ active: false, remainingMinutes: 0, cooldownEndsAt: null });
+      } else {
+        setCooldown((prev) => ({ ...prev, remainingMinutes: remaining }));
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [cooldown.active, cooldown.cooldownEndsAt]);
 
   // Load kids list if no childId prop
   useEffect(() => {
@@ -80,17 +130,19 @@ export function RechargeMenu({ childId, childName }: RechargeMenuProps) {
     }
   }, []);
 
-  // Load breaks on mount if childId is provided
+  // Load breaks + check cooldown on mount if childId is provided
   useEffect(() => {
     if (childId) {
       loadBreaks(childId);
+      checkCooldown(childId);
     }
-  }, [childId, loadBreaks]);
+  }, [childId, loadBreaks, checkCooldown]);
 
   // Handlers
   const handleSelectKid = (kid: KidMember) => {
     setSelectedKid(kid);
     loadBreaks(kid.id);
+    checkCooldown(kid.id);
     setStep("duration");
   };
 
@@ -125,6 +177,20 @@ export function RechargeMenu({ childId, childName }: RechargeMenuProps) {
           context: "manual",
         }),
       });
+
+      if (res.status === 429) {
+        // Cooldown hit
+        const data = await res.json();
+        setCooldown({
+          active: true,
+          remainingMinutes: data.cooldown.remainingMinutes,
+          cooldownEndsAt: data.cooldown.cooldownEndsAt,
+        });
+        setStep("duration");
+        setSelectedDuration(null);
+        setSelectedBreak(null);
+        return;
+      }
 
       if (res.ok) {
         const data = await res.json();
@@ -167,6 +233,7 @@ export function RechargeMenu({ childId, childName }: RechargeMenuProps) {
         if (childId) return; // Can't go back if childId is fixed
         setStep("avatar");
         setSelectedKid(null);
+        setCooldown({ active: false, remainingMinutes: 0, cooldownEndsAt: null });
         break;
       case "grid":
         setStep("duration");
@@ -202,13 +269,25 @@ export function RechargeMenu({ childId, childName }: RechargeMenuProps) {
 
     case "duration":
       return (
-        <DurationPicker
-          breaks={breaks}
-          onSelect={handleSelectDuration}
-          onSurprise={handleSurprise}
-          onBack={handleBack}
-          kidName={selectedKid?.name || ""}
-        />
+        <div>
+          {cooldown.active && (
+            <div className="mx-auto max-w-md mb-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-center">
+              <p className="text-amber-800 font-semibold text-sm">
+                {selectedKid?.name || "This kid"} just recharged! Try again in{" "}
+                {cooldown.remainingMinutes} minute
+                {cooldown.remainingMinutes !== 1 ? "s" : ""}.
+              </p>
+            </div>
+          )}
+          <DurationPicker
+            breaks={breaks}
+            onSelect={handleSelectDuration}
+            onSurprise={handleSurprise}
+            onBack={handleBack}
+            kidName={selectedKid?.name || ""}
+            disabled={cooldown.active}
+          />
+        </div>
       );
 
     case "grid":

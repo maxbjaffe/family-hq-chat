@@ -16,6 +16,7 @@ interface DurationPickerProps {
   onSurprise: () => void;
   onBack: () => void;
   kidName: string;
+  disabled?: boolean;
 }
 
 export function DurationPicker({
@@ -24,6 +25,7 @@ export function DurationPicker({
   onSurprise,
   onBack,
   kidName,
+  disabled,
 }: DurationPickerProps) {
   // Count breaks per duration
   const countByDuration = (d: RechargeDuration) =>
@@ -37,8 +39,8 @@ export function DurationPicker({
         </h2>
       </div>
 
-      {/* 2x2 grid of duration buttons */}
-      <div className="grid grid-cols-2 gap-4 w-full max-w-md mt-4">
+      {/* Duration grid */}
+      <div className={`grid grid-cols-3 gap-4 w-full max-w-md mt-4${disabled ? " opacity-50 pointer-events-none" : ""}`}>
         {DURATIONS.map((d) => {
           const count = countByDuration(d);
           return (
@@ -64,7 +66,8 @@ export function DurationPicker({
       {/* Surprise Me button */}
       <button
         onClick={onSurprise}
-        className="min-h-[60px] w-full max-w-md rounded-2xl bg-gradient-to-r from-purple-500 to-violet-500 text-white font-bold text-lg flex items-center justify-center gap-2 hover:from-purple-600 hover:to-violet-600 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400"
+        disabled={disabled}
+        className={`min-h-[60px] w-full max-w-md rounded-2xl bg-gradient-to-r from-purple-500 to-violet-500 text-white font-bold text-lg flex items-center justify-center gap-2 hover:from-purple-600 hover:to-violet-600 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400${disabled ? " opacity-50 pointer-events-none" : ""}`}
       >
         <Shuffle className="h-5 w-5" />
         Surprise Me!

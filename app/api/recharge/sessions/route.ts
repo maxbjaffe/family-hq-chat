@@ -1,5 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRechargeSession, completeRechargeSession } from "@/lib/supabase";
+import {
+  createRechargeSession,
+  completeRechargeSession,
+  getRecentRechargeSession,
+} from "@/lib/supabase";
+
+const COOLDOWN_MINUTES = 30;
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const childId = searchParams.get("childId");
+
+    if (!childId) {
+      return NextResponse.json(
+        { error: "Missing required parameter: childId" },
+        { status: 400 }
+      );
+    }
+
+    const recentSession = await getRecentRechargeSession(childId, COOLDOWN_MINUTES);
+
+    if (recentSession) {
+      const sessionStart = new Date(recentSession.started_at).getTime();
+      const cooldownEndsAt = new Date(sessionStart + COOLDOWN_MINUTES * 60 * 1000);
+      const remainingMinutes = Math.ceil(
+        (cooldownEndsAt.getTime() - Date.now()) / (60 * 1000)
+      );
+
+      if (remainingMinutes > 0) {
+        return NextResponse.json({
+          onCooldown: true,
+          remainingMinutes,
+          cooldownEndsAt: cooldownEndsAt.toISOString(),
+        });
+      }
+    }
+
+    return NextResponse.json({ onCooldown: false });
+  } catch (error) {
+    console.error("[Recharge API] Error checking cooldown:", error);
+    return NextResponse.json(
+      { error: "Failed to check cooldown" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +65,29 @@ export async function POST(request: NextRequest) {
         { error: `Invalid context. Must be one of: ${validContexts.join(", ")}` },
         { status: 400 }
       );
+    }
+
+    // Cooldown check
+    const recentSession = await getRecentRechargeSession(child_id, COOLDOWN_MINUTES);
+    if (recentSession) {
+      const sessionStart = new Date(recentSession.started_at).getTime();
+      const cooldownEndsAt = new Date(sessionStart + COOLDOWN_MINUTES * 60 * 1000);
+      const remainingMinutes = Math.ceil(
+        (cooldownEndsAt.getTime() - Date.now()) / (60 * 1000)
+      );
+
+      if (remainingMinutes > 0) {
+        return NextResponse.json(
+          {
+            error: "Cooldown active — too soon for another recharge",
+            cooldown: {
+              remainingMinutes,
+              cooldownEndsAt: cooldownEndsAt.toISOString(),
+            },
+          },
+          { status: 429 }
+        );
+      }
     }
 
     const session = await createRechargeSession({

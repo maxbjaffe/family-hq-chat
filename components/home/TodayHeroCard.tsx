@@ -3,7 +3,6 @@
 import { Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { getCalendarColor } from '@/lib/calendar-colors';
-import { WeatherPill } from '@/components/home/WeatherPill';
 import Link from 'next/link';
 
 interface UpcomingItem {
@@ -108,7 +107,6 @@ export function TodayHeroCard({ items }: TodayHeroCardProps) {
             </span>
           )}
         </div>
-        <WeatherPill />
       </div>
 
       {/* Today's events */}

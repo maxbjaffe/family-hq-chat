@@ -19,6 +19,7 @@ import { RestOfWeekCard } from "@/components/home/RestOfWeekCard";
 import { RechargeQuickLaunch } from "@/components/home/RechargeQuickLaunch";
 import { FunStuffCarousel } from "@/components/home/FunStuffCarousel";
 import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
+import { WeatherForecast } from "@/components/WeatherForecast";
 
 interface FamilyMember {
   id: string;
@@ -256,9 +257,15 @@ export default function UnifiedHomePage() {
           </div>
         </div>
 
-        {/* ── Today at a Glance (Hero Card) ──────────────────────── */}
+        {/* ── Weather Forecast (full width) ────────────────────── */}
         <div className="mb-6">
+          <WeatherForecast />
+        </div>
+
+        {/* ── Today + Rest of Week (side by side) ─────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <TodayHeroCard items={upcomingItems} />
+          <RestOfWeekCard items={upcomingItems} />
         </div>
 
         {/* ── Family Avatar Row ──────────────────────────────────── */}
@@ -269,28 +276,20 @@ export default function UnifiedHomePage() {
           />
         </div>
 
-        {/* ── Section Cards Grid ─────────────────────────────────── */}
+        {/* ── Daily Fun + Recharge (side by side) ─────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Rest of the Week */}
-          <RestOfWeekCard items={upcomingItems} />
-
-          {/* Recharge Quick Launch */}
-          <RechargeQuickLaunch />
-
-          {/* Fun Stuff Carousel */}
           <FunStuffCarousel
             content={content}
             onRefresh={refreshContent}
             refreshing={refreshingContent}
           />
+          <RechargeQuickLaunch />
+        </div>
 
-          {/* House Tasks */}
+        {/* ── Family Board + House Tasks (side by side) ────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <FamilyBoardCard />
           <HouseTasks />
-
-          {/* Family Board — full width placeholder */}
-          <div className="md:col-span-2">
-            <FamilyBoardCard />
-          </div>
         </div>
       </div>
 

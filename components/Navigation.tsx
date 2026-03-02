@@ -71,7 +71,7 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-56 bg-white border-r border-slate-200 flex-col z-50">
+      <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-20 lg:w-56 bg-white border-r border-slate-200 flex-col z-[100]">
         {/* Logo - much larger, tappable for secret exit */}
         <div className="p-4 lg:p-5 border-b border-slate-200">
           <button
@@ -127,7 +127,7 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Bottom Nav - larger touch targets */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-[100] safe-area-bottom">
         <div className="flex justify-around items-center py-1">
           {navItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
@@ -157,7 +157,7 @@ export function Navigation() {
       </nav>
 
       {/* Top bar for mobile - shows clock and sync status */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200 z-40 flex items-center justify-between px-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200 z-[100] flex items-center justify-between px-4">
         <button
           onClick={handleLogoTap}
           className="min-h-[48px] min-w-[48px] flex items-center justify-center -ml-2"

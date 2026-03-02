@@ -788,6 +788,30 @@ export async function completeRechargeSession(
   return data as RechargeSession;
 }
 
+export async function getRecentRechargeSession(
+  childId: string,
+  minutesBack: number = 30
+): Promise<RechargeSession | null> {
+  const supabase = getFamilyDataClient();
+  const cutoff = new Date(Date.now() - minutesBack * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("recharge_sessions")
+    .select("*")
+    .eq("child_id", childId)
+    .gte("started_at", cutoff)
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[Recharge] Error checking recent session:", error);
+    return null;
+  }
+
+  return data as RechargeSession | null;
+}
+
 export async function getKidMembers(): Promise<FamilyMember[]> {
   const supabase = getFamilyDataClient();
 

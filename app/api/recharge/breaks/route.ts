@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validDurations = [5, 10, 15, 30];
+    const validDurations = [5, 10, 15];
     if (!validDurations.includes(duration)) {
       return NextResponse.json(
         { error: `Invalid duration. Must be one of: ${validDurations.join(", ")}` },
