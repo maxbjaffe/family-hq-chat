@@ -7,6 +7,9 @@ import { ChecklistCard } from './ChecklistCard';
 import { SchoolCard } from './SchoolCard';
 import { ComingUpCard } from './ComingUpCard';
 import { KidSchoolTab } from '@/components/KidSchoolTab';
+import { RechargeMenu } from '@/components/recharge';
+import { Battery, ChevronDown, ChevronUp } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 interface KidProfileDashboardProps {
   memberId: string;
@@ -24,6 +27,7 @@ export function KidProfileDashboard({
   teachers,
 }: KidProfileDashboardProps) {
   const [schoolEventTitles, setSchoolEventTitles] = useState<string[]>([]);
+  const [showRecharge, setShowRecharge] = useState(false);
 
   // Get first name for matching
   const firstName = memberName.split(' ')[0];
@@ -45,6 +49,32 @@ export function KidProfileDashboard({
           excludeEventTitles={schoolEventTitles}
         />
       </div>
+
+      {/* Recharge Menu */}
+      <Card className="overflow-hidden">
+        <button
+          onClick={() => setShowRecharge(!showRecharge)}
+          className="w-full flex items-center gap-3 p-4 min-h-[56px] cursor-pointer hover:bg-purple-50/50 transition-colors"
+        >
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-violet-500 flex-shrink-0">
+            <Battery className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-bold text-slate-800 text-base">Recharge Menu</h3>
+            <p className="text-sm text-slate-500">Take a brain break</p>
+          </div>
+          {showRecharge ? (
+            <ChevronUp className="h-5 w-5 text-slate-400" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-slate-400" />
+          )}
+        </button>
+        {showRecharge && (
+          <div className="border-t border-slate-200 p-4">
+            <RechargeMenu childId={memberId} childName={firstName} />
+          </div>
+        )}
+      </Card>
 
       {/* My To-Dos */}
       <KidTodosCard childName={firstName} />
