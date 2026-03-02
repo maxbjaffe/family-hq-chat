@@ -367,11 +367,12 @@ export async function getChecklistForMember(memberId: string): Promise<{
     isCompleted: completedItemIds.has(item.id),
   }));
 
+  const completed = enrichedItems.filter((item) => item.isCompleted).length;
   const stats = {
     total: enrichedItems.length,
-    completed: enrichedItems.filter((item) => item.isCompleted).length,
-    remaining: enrichedItems.filter((item) => !item.isCompleted).length,
-    isComplete: enrichedItems.length > 0 && enrichedItems.every((item) => item.isCompleted),
+    completed,
+    remaining: enrichedItems.length - completed,
+    isComplete: enrichedItems.length > 0 && completed === enrichedItems.length,
   };
 
   return { items: enrichedItems, stats };
@@ -635,4 +636,171 @@ export async function logAgentAnalytics(input: AgentAnalyticsInput): Promise<voi
     // Fire and forget - don't let analytics failures affect the user
     console.error("Failed to log agent analytics:", error);
   }
+}
+
+// ============================================================
+// Recharge Menu types and functions
+// ============================================================
+
+export interface RechargeBreak {
+  id: string;
+  child_id: string | null;
+  category: 'energy' | 'calm' | 'creative' | 'fun';
+  duration: number;
+  name: string;
+  emoji: string;
+  description: string | null;
+  is_foundation: boolean;
+  is_active: boolean;
+  source: 'foundation' | 'survey' | 'parent_added';
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RechargeProfile {
+  id: string;
+  child_id: string;
+  hype_song: string | null;
+  calm_strategy: string | null;
+  movement_preference: string | null;
+  creative_preference: string | null;
+  free_time_choice: string | null;
+  favorite_snack: string | null;
+  break_style: 'solo' | 'sibling' | 'pet' | 'any' | null;
+  never_suggest: string[];
+  victory_move: string | null;
+  custom_break_idea: string | null;
+  hidden_breaks: string[];
+  survey_completed: boolean;
+  survey_completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RechargeSession {
+  id: string;
+  child_id: string;
+  break_id: string;
+  started_at: string;
+  completed_at: string | null;
+  completed: boolean;
+  paused_duration: number;
+  duration_planned: number;
+  duration_actual: number | null;
+  context: 'homework' | 'frustrated' | 'celebration' | 'low_energy' | 'transition' | 'manual' | null;
+  rating: number | null;
+  created_at: string;
+}
+
+export async function getRechargeBreaks(childId: string): Promise<RechargeBreak[]> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("recharge_breaks")
+    .select("*")
+    .or(`child_id.is.null,child_id.eq.${childId}`)
+    .eq("is_active", true)
+    .order("duration", { ascending: true })
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[Recharge] Error fetching breaks:", error);
+    return [];
+  }
+
+  return (data || []) as RechargeBreak[];
+}
+
+export async function getRechargeProfile(childId: string): Promise<RechargeProfile | null> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("recharge_profiles")
+    .select("*")
+    .eq("child_id", childId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[Recharge] Error fetching profile:", error);
+    return null;
+  }
+
+  return data as RechargeProfile | null;
+}
+
+export async function createRechargeSession(session: {
+  child_id: string;
+  break_id: string;
+  duration_planned: number;
+  context?: string;
+}): Promise<RechargeSession | null> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("recharge_sessions")
+    .insert({
+      child_id: session.child_id,
+      break_id: session.break_id,
+      duration_planned: session.duration_planned,
+      context: session.context || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[Recharge] Error creating session:", error);
+    return null;
+  }
+
+  return data as RechargeSession;
+}
+
+export async function completeRechargeSession(
+  sessionId: string,
+  updates: {
+    completed: boolean;
+    duration_actual: number;
+    paused_duration?: number;
+    rating?: number;
+  }
+): Promise<RechargeSession | null> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("recharge_sessions")
+    .update({
+      completed: updates.completed,
+      duration_actual: updates.duration_actual,
+      paused_duration: updates.paused_duration ?? 0,
+      rating: updates.rating || null,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", sessionId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[Recharge] Error completing session:", error);
+    return null;
+  }
+
+  return data as RechargeSession;
+}
+
+export async function getKidMembers(): Promise<FamilyMember[]> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("family_members")
+    .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
+    .eq("role", "kid")
+    .order("name");
+
+  if (error) {
+    console.error("[Recharge] Error fetching kid members:", error);
+    return [];
+  }
+
+  return (data || []) as FamilyMember[];
 }
