@@ -24,20 +24,9 @@ function getTodayStr(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 }
 
-function getTomorrowStr(): string {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return tomorrow.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-}
-
 function isToday(dateStr: string): boolean {
   const eventDay = new Date(dateStr).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
   return eventDay === getTodayStr();
-}
-
-function isTomorrow(dateStr: string): boolean {
-  const eventDay = new Date(dateStr).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-  return eventDay === getTomorrowStr();
 }
 
 function formatTime(dateStr: string): string {
@@ -90,13 +79,11 @@ function EventRow({ item, dimmed = false }: { item: UpcomingItem; dimmed?: boole
 
 export function TodayHeroCard({ items }: TodayHeroCardProps) {
   const todayItems = items.filter((item) => isToday(item.date));
-  const tomorrowItems = items.filter((item) => isTomorrow(item.date));
   const visibleToday = todayItems.slice(0, 8);
   const extraCount = todayItems.length - 8;
-  const visibleTomorrow = tomorrowItems.slice(0, 3);
 
   return (
-    <Card className="bg-gradient-to-br from-indigo-50 to-violet-50 p-5">
+    <Card className="bg-gradient-to-br from-indigo-50 to-violet-50 p-5 h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -130,27 +117,6 @@ export function TodayHeroCard({ items }: TodayHeroCardProps) {
           )}
         </div>
       )}
-
-      {/* Tomorrow preview */}
-      <div className="border-t border-indigo-200/60 mt-4 pt-3">
-        <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-xs font-bold uppercase text-indigo-600 tracking-wide">
-            Tomorrow
-          </h3>
-          {tomorrowItems.length > 0 && (
-            <span className="text-[10px] text-indigo-400">{tomorrowItems.length}</span>
-          )}
-        </div>
-        {tomorrowItems.length === 0 ? (
-          <p className="text-sm text-slate-400">Nothing scheduled tomorrow &#10003;</p>
-        ) : (
-          <div className="space-y-0.5">
-            {visibleTomorrow.map((item) => (
-              <EventRow key={item.id} item={item} dimmed />
-            ))}
-          </div>
-        )}
-      </div>
     </Card>
   );
 }
