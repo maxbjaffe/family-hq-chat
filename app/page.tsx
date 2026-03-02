@@ -19,7 +19,6 @@ import { RestOfWeekCard } from "@/components/home/RestOfWeekCard";
 import { RechargeQuickLaunch } from "@/components/home/RechargeQuickLaunch";
 import { FunStuffCarousel } from "@/components/home/FunStuffCarousel";
 import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
-import { WeatherForecast } from "@/components/WeatherForecast";
 
 interface FamilyMember {
   id: string;
@@ -257,15 +256,9 @@ export default function UnifiedHomePage() {
           </div>
         </div>
 
-        {/* ── Weather Forecast (full width) ────────────────────── */}
+        {/* ── Weather + Next Up (combined hero) ─────────────── */}
         <div className="mb-6">
-          <WeatherForecast />
-        </div>
-
-        {/* ── Today + Rest of Week (side by side) ─────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <TodayHeroCard items={upcomingItems} />
-          <RestOfWeekCard items={upcomingItems} />
         </div>
 
         {/* ── Family Avatar Row ──────────────────────────────────── */}
@@ -284,6 +277,11 @@ export default function UnifiedHomePage() {
             refreshing={refreshingContent}
           />
           <RechargeQuickLaunch />
+        </div>
+
+        {/* ── Rest of the Week (collapsible) ──────────────────── */}
+        <div className="mb-6">
+          <RestOfWeekCard items={upcomingItems} />
         </div>
 
         {/* ── Family Board + House Tasks (side by side) ────────── */}
