@@ -93,7 +93,7 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="mx-auto px-4 py-6 max-w-4xl xl:max-w-5xl 2xl:max-w-6xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>

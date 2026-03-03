@@ -108,7 +108,7 @@ export default function GamesPage() {
   if (activeGame === "menu") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="mx-auto px-4 py-6 max-w-4xl xl:max-w-5xl 2xl:max-w-6xl">
           {/* Header */}
           <div className="mb-8 text-center">
             <div className="flex items-center justify-center gap-3 mb-2">
@@ -199,7 +199,7 @@ export default function GamesPage() {
     <div
       className={`min-h-screen bg-gradient-to-br ${selectedGame?.bgColor || "from-slate-50 to-slate-100"}`}
     >
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="mx-auto px-4 py-6 max-w-4xl xl:max-w-5xl 2xl:max-w-6xl">
         {/* Back Button */}
         <Button
           variant="ghost"

@@ -6,6 +6,7 @@ import {
   Loader2,
   RotateCcw,
 } from "lucide-react";
+import { useKiosk } from "@/components/KioskProvider";
 import { Button } from "@/components/ui/button";
 import { Clock } from "@/components/Clock";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
@@ -196,13 +197,16 @@ export default function UnifiedHomePage() {
     );
   }
 
+  const { isKioskMode, isEmbedded } = useKiosk();
+  const isWideMode = isKioskMode || isEmbedded;
+
   const kidsOnly = familyMembers.filter((m) => m.role === "kid");
   const allKidsComplete =
     kidsOnly.length > 0 && kidsOnly.every((c) => c.stats?.isComplete);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 pb-24">
-      <div className="container mx-auto px-4 py-4 max-w-4xl">
+      <div className={`mx-auto px-4 py-4 ${isWideMode ? "max-w-full px-6" : "max-w-4xl xl:max-w-5xl 2xl:max-w-6xl"}`}>
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
