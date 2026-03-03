@@ -18,9 +18,10 @@ interface KidGreetingHeaderProps {
     role?: string;
   };
   age?: string | null;
+  compact?: boolean;
 }
 
-export function KidGreetingHeader({ name, avatarInfo, age }: KidGreetingHeaderProps) {
+export function KidGreetingHeader({ name, avatarInfo, age, compact }: KidGreetingHeaderProps) {
   const [palette, setPalette] = useState<ColorPalette | null>(null);
   const [quote, setQuote] = useState<string>('');
   const [greeting, setGreeting] = useState<string>('');
@@ -34,10 +35,51 @@ export function KidGreetingHeader({ name, avatarInfo, age }: KidGreetingHeaderPr
 
   // Don't render until client-side initialization
   if (!palette) {
+    if (compact) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4">
+          <div className="w-52 h-52 rounded-2xl bg-slate-200 animate-pulse" />
+          <div className="h-8 w-40 bg-slate-200 rounded animate-pulse" />
+        </div>
+      );
+    }
     return (
       <div className="relative mb-6 pt-12">
         <div className="absolute -top-4 left-4 z-20 w-52 h-52 rounded-2xl bg-slate-200 animate-pulse" />
         <Card className="pt-32 pb-6 px-6 min-h-[160px] animate-pulse bg-slate-100" />
+      </div>
+    );
+  }
+
+  // Compact mode: vertical centered column for kiosk left panel
+  if (compact) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center h-full px-4 py-6 rounded-2xl"
+        style={{ backgroundColor: palette.background }}
+      >
+        <Avatar
+          member={{
+            name: name,
+            role: avatarInfo?.role || 'kid',
+            avatar_url: avatarInfo?.avatar_url,
+          }}
+          size="5xl"
+          shape="rounded"
+          className="shadow-2xl border-4 border-white ring-4 ring-white/40"
+        />
+        <h1
+          className="text-3xl font-bold mt-5 text-center"
+          style={{ color: palette.accent }}
+        >
+          {greeting}
+        </h1>
+        <p className="text-lg text-slate-700 font-medium leading-relaxed text-center mt-2 px-2">
+          &ldquo;{quote}&rdquo;
+        </p>
+        {age && (
+          <p className="text-sm text-slate-500 mt-2">{age}</p>
+        )}
       </div>
     );
   }

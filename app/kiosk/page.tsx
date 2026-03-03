@@ -8,9 +8,10 @@ import { CheckCircle2, Circle, Sparkles, RefreshCw, X, Loader2, Battery } from "
 import confetti from "canvas-confetti";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
-import { Clock } from "@/components/Clock";
+import { Clock, HeaderClock } from "@/components/Clock";
 import { Avatar } from "@/components/Avatar";
 import { RechargeMenu } from "@/components/recharge";
+import { useKiosk } from "@/components/KioskProvider";
 
 // Celebration video URL
 const CELEBRATION_VIDEO_URL =
@@ -227,6 +228,9 @@ export default function KioskPage() {
     }
   }
 
+  const { isKioskMode, isEmbedded } = useKiosk();
+  const isWideMode = isKioskMode || isEmbedded;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col items-center justify-center gap-4">
@@ -236,8 +240,9 @@ export default function KioskPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden">
+  // Shared overlays for both layouts
+  const overlays = (
+    <>
       {/* Celebration Video Overlay */}
       {showVideo && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
@@ -283,6 +288,207 @@ export default function KioskPage() {
           </div>
         </div>
       )}
+    </>
+  );
+
+  // ── Kiosk layout: 3-column side-by-side ──
+  if (isWideMode) {
+    return (
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-green-50 to-blue-50 grid grid-rows-[auto_1fr] relative">
+        {overlays}
+
+        {/* Row 1: Compact header */}
+        <div className="px-6 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/Images/JaffeFamilyHubLogo.PNG"
+              alt="Jaffe Family Hub"
+              className="w-12 h-12 rounded-xl object-cover shadow-lg"
+            />
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                Morning Checklist
+              </h1>
+              <p className="text-slate-500 text-xs">
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+            {allComplete && members.length > 0 && (
+              <span className="ml-3 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-bold">
+                Everyone&apos;s Ready!
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <HeaderClock />
+            <SyncIndicator />
+            {allComplete && (
+              <Button
+                onClick={() => setShowVideo(true)}
+                size="sm"
+                className="min-h-[40px] bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0"
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                Celebrate
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshData}
+              disabled={refreshing}
+              className="min-h-[40px] min-w-[40px]"
+            >
+              {refreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              onClick={() => setShowRecharge((v) => !v)}
+              size="sm"
+              className={`min-h-[40px] ${
+                showRecharge
+                  ? "bg-gradient-to-r from-purple-500 to-violet-500 text-white border-0"
+                  : ""
+              }`}
+              variant={showRecharge ? "default" : "outline"}
+            >
+              <Battery className="h-4 w-4 mr-1" />
+              Recharge
+            </Button>
+          </div>
+        </div>
+
+        {/* Row 2: Columns */}
+        <div className="px-6 pb-4 min-h-0 flex flex-col">
+          {/* Recharge Menu (inline above columns) */}
+          {showRecharge && (
+            <Card className="p-4 mb-3 bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200 flex-shrink-0">
+              <RechargeMenu />
+            </Card>
+          )}
+
+          {members.length === 0 ? (
+            <Card className="p-12 text-center">
+              <p className="text-slate-600">No members configured yet</p>
+            </Card>
+          ) : (
+            <div
+              className="grid gap-4 min-h-0 flex-1"
+              style={{ gridTemplateColumns: `repeat(${members.length}, 1fr)` }}
+            >
+              {members.map((member) => {
+                const percentage =
+                  member.stats.total > 0
+                    ? Math.round((member.stats.completed / member.stats.total) * 100)
+                    : 0;
+
+                return (
+                  <Card
+                    key={member.id}
+                    className={`h-full flex flex-col overflow-hidden ${
+                      member.stats.isComplete
+                        ? "bg-gradient-to-br from-green-50 to-blue-50 border-green-300"
+                        : "bg-white"
+                    }`}
+                  >
+                    {/* Header: Avatar + Name + Badge */}
+                    <div className="flex items-center gap-3 p-3 flex-shrink-0">
+                      <Avatar
+                        member={{ name: member.name, role: member.role, avatar_url: member.avatar_url }}
+                        size="xl"
+                        className="shadow-md"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-bold text-slate-900 truncate">{member.name}</h3>
+                        {member.stats.isComplete && member.stats.total > 0 && (
+                          <div className="flex items-center gap-1">
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <span className="text-green-600 font-bold text-sm">All done!</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    {member.stats.total > 0 && (
+                      <div className="px-3 pb-2 flex-shrink-0">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-slate-500">{percentage}%</span>
+                          <span className="font-bold text-slate-700">
+                            {member.stats.completed}/{member.stats.total}
+                          </span>
+                        </div>
+                        <Progress value={percentage} className="h-2" />
+                      </div>
+                    )}
+
+                    {/* Checklist Items — scrollable */}
+                    <div className="flex-1 overflow-auto min-h-0 px-3 pb-3">
+                      {member.checklist.length === 0 ? (
+                        <p className="text-center py-4 text-slate-400 text-sm">No items yet</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {member.checklist.map((item) => {
+                            const itemKey = `${member.id}-${item.id}`;
+                            const isToggling = togglingItems.has(itemKey);
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={() => toggleItem(member.id, item.id, item.isCompleted)}
+                                disabled={isToggling}
+                                className={`w-full flex items-center gap-2 p-3 min-h-[48px] rounded-xl transition-all cursor-pointer hover:shadow-md active:scale-[0.98] ${
+                                  item.isCompleted
+                                    ? "bg-green-100 border-2 border-green-300"
+                                    : "bg-slate-50 border-2 border-slate-200 hover:bg-slate-100"
+                                } ${isToggling ? "opacity-60" : ""}`}
+                              >
+                                <div className="flex-shrink-0">
+                                  {isToggling ? (
+                                    <Loader2 className="h-6 w-6 text-purple-500 animate-spin" />
+                                  ) : item.isCompleted ? (
+                                    <CheckCircle2 className="h-6 w-6 text-green-600" />
+                                  ) : (
+                                    <Circle className="h-6 w-6 text-slate-400" />
+                                  )}
+                                </div>
+                                {item.icon && (
+                                  <div className="text-xl flex-shrink-0">{item.icon}</div>
+                                )}
+                                <p
+                                  className={`font-semibold text-sm text-left ${
+                                    item.isCompleted
+                                      ? "text-green-900 line-through"
+                                      : "text-slate-900"
+                                  }`}
+                                >
+                                  {item.title}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden">
+      {overlays}
 
       <div className="container mx-auto px-4 py-6 max-w-6xl relative z-10">
         {/* Header */}

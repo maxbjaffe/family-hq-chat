@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
+  Battery,
   Cake,
   Droplets,
   AlertTriangle,
@@ -28,6 +29,8 @@ import { PinModal } from '@/components/PinModal';
 import { getZodiacFromBirthday } from '@/lib/zodiac';
 import { getRandomFactFromBirthday, formatFact, type BirthdayFact } from '@/lib/birthday-facts';
 import { PetContentCards } from '@/components/PetContentCards';
+import { useKiosk } from '@/components/KioskProvider';
+import { HeaderClock } from '@/components/Clock';
 
 interface FamilyMember {
   id: string;
@@ -170,6 +173,9 @@ export default function FamilyProfilePage() {
   const [isAdult, setIsAdult] = useState(false);
   const [memberId, setMemberId] = useState<string | null>(null);
 
+  const { isKioskMode, isEmbedded } = useKiosk();
+  const isWideMode = isKioskMode || isEmbedded;
+
   const isVisible = (field: string) => visibility[field] !== false;
   const isKid = avatarInfo?.role === 'kid';
 
@@ -294,6 +300,112 @@ export default function FamilyProfilePage() {
   }
 
   const hasAllergies = member.allergies && member.allergies.toLowerCase() !== 'none';
+  const firstName = member.name.split(' ')[0];
+
+  // ── Kiosk layout for kid profiles ──
+  if (isWideMode && isKid && memberId) {
+    return (
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 grid grid-rows-[auto_1fr]">
+        {/* Row 1: Compact header bar */}
+        <div className="flex items-center justify-between px-6 py-2">
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/')}
+            className="min-h-[44px] min-w-[44px] text-sm"
+          >
+            <ArrowLeft className="h-5 w-5 mr-1" />
+            Back
+          </Button>
+          <HeaderClock />
+        </div>
+
+        {/* Row 2: Two-column layout */}
+        <div className="grid grid-cols-[35%_1fr] gap-4 px-6 pb-4 min-h-0">
+          {/* Left column: Giant avatar + greeting + recharge buttons */}
+          <div className="flex flex-col min-h-0">
+            <div className="flex-1 min-h-0">
+              <KidGreetingHeader
+                name={firstName}
+                avatarInfo={{
+                  avatar_url: avatarInfo?.avatar_url,
+                  role: avatarInfo?.role,
+                }}
+                age={member.age}
+                compact
+              />
+            </div>
+            {/* Recharge quick buttons */}
+            <div className="flex-shrink-0 mt-3 flex gap-2 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/recharge?kid=${encodeURIComponent(firstName)}&id=${memberId}`)}
+                className="min-h-[48px] text-base gap-2"
+              >
+                <Battery className="h-5 w-5" />
+                Recharge
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/games')}
+                className="min-h-[48px] text-base gap-2"
+              >
+                <Sparkles className="h-5 w-5" />
+                Games
+              </Button>
+            </div>
+          </div>
+
+          {/* Right column: Cards + todos */}
+          <div className="min-h-0">
+            <KidProfileDashboard
+              memberId={memberId}
+              memberName={member.name}
+              birthday={member.birthday}
+              school={member.school}
+              teachers={member.teachers}
+              kioskMode
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Kiosk layout for pet profiles ──
+  if (isWideMode && avatarInfo?.role === 'pet') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30">
+        <div className="max-w-full px-6 py-6">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="mb-6 min-h-[48px] min-w-[48px] text-base font-medium"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Back to Home
+          </Button>
+          <Card className="p-6 mb-6">
+            <div className="flex items-center gap-4">
+              <Avatar
+                member={{
+                  name: member.name,
+                  role: avatarInfo?.role || member.role || 'default',
+                  avatar_url: avatarInfo?.avatar_url,
+                }}
+                size="2xl"
+                className="shadow-lg"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800">{member.name}</h1>
+                {member.role && <p className="text-slate-500">{member.role}</p>}
+              </div>
+            </div>
+          </Card>
+          <PetContentCards />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30">

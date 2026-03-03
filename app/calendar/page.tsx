@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, RefreshCw, MapPin } from "lucide-react";
 import { getCalendarColor } from "@/lib/calendar-colors";
+import { useKiosk } from "@/components/KioskProvider";
 
 interface CalendarEvent {
   id: string;
@@ -20,6 +21,8 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
+  const { isKioskMode, isEmbedded } = useKiosk();
+  const isWideMode = isKioskMode || isEmbedded;
 
   useEffect(() => {
     loadEvents();
@@ -91,6 +94,148 @@ export default function CalendarPage() {
     return acc;
   }, {} as Record<string, CalendarEvent[]>);
 
+  // Shared: filter pills
+  const filterPills = calendarNames.length > 0 && (
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={() => setSelectedCalendar(null)}
+        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+          !selectedCalendar
+            ? "bg-purple-600 text-white"
+            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+        }`}
+      >
+        All ({events.length})
+      </button>
+      {calendarNames.map(name => {
+        const colors = getCalendarColor(name);
+        const count = events.filter(e => e.calendar_name === name).length;
+        return (
+          <button
+            key={name}
+            onClick={() => setSelectedCalendar(name === selectedCalendar ? null : name)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              selectedCalendar === name
+                ? `${colors.bg} ${colors.text} ring-2 ring-offset-1 ${colors.border}`
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${colors.dot}`} />
+            {name} ({count})
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // Shared: event card renderer
+  const renderEventCard = (event: CalendarEvent) => {
+    const colors = getCalendarColor(event.calendar_name);
+    return (
+      <Card
+        key={event.id}
+        className={`p-4 hover:shadow-md transition-shadow border-l-4 ${colors.border} ${colors.bg}`}
+      >
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 w-16 text-center">
+            <div className={`text-sm font-medium ${colors.text}`}>
+              {formatEventTime(event.start_time, event.all_day)}
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-slate-900">{event.title}</h3>
+            {event.location && (
+              <div className="flex items-center gap-1 mt-1 text-sm text-slate-500">
+                <MapPin className="h-3 w-3" />
+                <span className="truncate">{event.location}</span>
+              </div>
+            )}
+            {event.calendar_name && (
+              <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${colors.bg} ${colors.text} border ${colors.border}`}>
+                {event.calendar_name}
+              </span>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
+  // Shared: events content
+  const renderEvents = (twoCol?: boolean) => {
+    if (loading) {
+      return (
+        <Card className="p-8 text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-slate-400" />
+          <p className="mt-2 text-slate-500">Loading events...</p>
+        </Card>
+      );
+    }
+    if (filteredEvents.length === 0) {
+      return (
+        <Card className="p-8 text-center">
+          <CalendarIcon className="h-16 w-16 mx-auto text-slate-300 mb-4" />
+          <p className="text-lg text-slate-500">
+            {selectedCalendar ? `No events in ${selectedCalendar}` : "No upcoming events"}
+          </p>
+          <p className="text-sm text-slate-400 mt-1">
+            {selectedCalendar
+              ? "Try selecting a different calendar or show all"
+              : "Events will appear here once calendar sync is configured"
+            }
+          </p>
+        </Card>
+      );
+    }
+    return (
+      <div className="space-y-6">
+        {Object.entries(groupedEvents).map(([date, dateEvents]) => (
+          <div key={date}>
+            <h2 className="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" />
+              {date}
+            </h2>
+            <div className={twoCol ? "grid grid-cols-2 gap-3" : "space-y-2"}>
+              {dateEvents.map(renderEventCard)}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // ── Kiosk layout ──
+  if (isWideMode) {
+    return (
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 grid grid-rows-[auto_auto_1fr]">
+        {/* Row 1: Header */}
+        <div className="px-6 pt-4 pb-2 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-3">
+              <CalendarIcon className="h-7 w-7 text-blue-600" />
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Calendar
+              </span>
+            </h1>
+            <p className="text-slate-500 text-sm">Upcoming family events</p>
+          </div>
+          <Button variant="outline" onClick={loadEvents} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
+
+        {/* Row 2: Filter pills */}
+        <div className="px-6 pb-2">{filterPills}</div>
+
+        {/* Row 3: Events — scrollable, 2-column */}
+        <div className="px-6 pb-4 overflow-auto min-h-0">
+          {renderEvents(true)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
       <div className="mx-auto px-4 py-6 max-w-4xl xl:max-w-5xl 2xl:max-w-6xl">
@@ -112,105 +257,10 @@ export default function CalendarPage() {
         </div>
 
         {/* Calendar Filter */}
-        {calendarNames.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            <button
-              onClick={() => setSelectedCalendar(null)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                !selectedCalendar
-                  ? "bg-purple-600 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              All ({events.length})
-            </button>
-            {calendarNames.map(name => {
-              const colors = getCalendarColor(name);
-              const count = events.filter(e => e.calendar_name === name).length;
-              return (
-                <button
-                  key={name}
-                  onClick={() => setSelectedCalendar(name === selectedCalendar ? null : name)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    selectedCalendar === name
-                      ? `${colors.bg} ${colors.text} ring-2 ring-offset-1 ${colors.border}`
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${colors.dot}`} />
-                  {name} ({count})
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <div className="mb-6">{filterPills}</div>
 
         {/* Events List */}
-        {loading ? (
-          <Card className="p-8 text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto text-slate-400" />
-            <p className="mt-2 text-slate-500">Loading events...</p>
-          </Card>
-        ) : filteredEvents.length === 0 ? (
-          <Card className="p-8 text-center">
-            <CalendarIcon className="h-16 w-16 mx-auto text-slate-300 mb-4" />
-            <p className="text-lg text-slate-500">
-              {selectedCalendar ? `No events in ${selectedCalendar}` : "No upcoming events"}
-            </p>
-            <p className="text-sm text-slate-400 mt-1">
-              {selectedCalendar
-                ? "Try selecting a different calendar or show all"
-                : "Events will appear here once calendar sync is configured"
-              }
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(groupedEvents).map(([date, dateEvents]) => (
-              <div key={date}>
-                <h2 className="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5" />
-                  {date}
-                </h2>
-                <div className="space-y-2">
-                  {dateEvents.map((event) => {
-                    const colors = getCalendarColor(event.calendar_name);
-                    return (
-                      <Card
-                        key={event.id}
-                        className={`p-4 hover:shadow-md transition-shadow border-l-4 ${colors.border} ${colors.bg}`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0 w-16 text-center">
-                            <div className={`text-sm font-medium ${colors.text}`}>
-                              {formatEventTime(event.start_time, event.all_day)}
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-slate-900">
-                              {event.title}
-                            </h3>
-                            {event.location && (
-                              <div className="flex items-center gap-1 mt-1 text-sm text-slate-500">
-                                <MapPin className="h-3 w-3" />
-                                <span className="truncate">{event.location}</span>
-                              </div>
-                            )}
-                            {event.calendar_name && (
-                              <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${colors.bg} ${colors.text} border ${colors.border}`}>
-                                {event.calendar_name}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {renderEvents()}
       </div>
     </div>
   );

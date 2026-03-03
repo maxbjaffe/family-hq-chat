@@ -15,6 +15,7 @@ import {
   GitBranch,
   Layers,
 } from "lucide-react";
+import { useKiosk } from "@/components/KioskProvider";
 import { WordleGame } from "@/components/games/WordleGame";
 import { HangmanGame } from "@/components/games/HangmanGame";
 import { TicTacToeGame } from "@/components/games/TicTacToeGame";
@@ -104,7 +105,197 @@ export default function GamesPage() {
   const [wordLadderDifficulty, setWordLadderDifficulty] = useState<Difficulty | null>(null);
   const [memoryMatchDifficulty, setMemoryMatchDifficulty] = useState<Difficulty | null>(null);
 
-  // Show game menu
+  const { isKioskMode, isEmbedded } = useKiosk();
+  const isWideMode = isKioskMode || isEmbedded;
+
+  const resetDifficulty = () => {
+    if (activeGame === "wordle") setWordleDifficulty(null);
+    if (activeGame === "hangman") setHangmanDifficulty(null);
+    if (activeGame === "wordsearch") setWordSearchDifficulty(null);
+    if (activeGame === "anagrams") setAnagramsDifficulty(null);
+    if (activeGame === "wordladder") setWordLadderDifficulty(null);
+    if (activeGame === "memorymatch") setMemoryMatchDifficulty(null);
+  };
+
+  // Shared game rendering
+  const renderGame = () => (
+    <>
+      {activeGame === "wordle" && (
+        wordleDifficulty === null ? (
+          <DifficultySelect
+            gameName="Word Guess"
+            onSelect={(difficulty) => setWordleDifficulty(difficulty)}
+          />
+        ) : (
+          <WordleGame
+            difficulty={wordleDifficulty}
+            onChangeDifficulty={() => setWordleDifficulty(null)}
+          />
+        )
+      )}
+      {activeGame === "hangman" && (
+        hangmanDifficulty === null ? (
+          <DifficultySelect
+            gameName="Hangman"
+            onSelect={(difficulty) => setHangmanDifficulty(difficulty)}
+          />
+        ) : (
+          <HangmanGame
+            difficulty={hangmanDifficulty}
+            onChangeDifficulty={() => setHangmanDifficulty(null)}
+          />
+        )
+      )}
+      {activeGame === "tictactoe" && <TicTacToeGame />}
+      {activeGame === "wordsearch" && (
+        wordSearchDifficulty === null ? (
+          <DifficultySelect
+            gameName="Word Search"
+            onSelect={(difficulty) => setWordSearchDifficulty(difficulty)}
+          />
+        ) : (
+          <WordSearchGame
+            difficulty={wordSearchDifficulty}
+            onChangeDifficulty={() => setWordSearchDifficulty(null)}
+          />
+        )
+      )}
+      {activeGame === "anagrams" && (
+        anagramsDifficulty === null ? (
+          <DifficultySelect
+            gameName="Anagrams"
+            onSelect={(difficulty) => setAnagramsDifficulty(difficulty)}
+          />
+        ) : (
+          <AnagramsGame
+            difficulty={anagramsDifficulty}
+            onChangeDifficulty={() => setAnagramsDifficulty(null)}
+          />
+        )
+      )}
+      {activeGame === "wordladder" && (
+        wordLadderDifficulty === null ? (
+          <DifficultySelect
+            gameName="Word Ladder"
+            onSelect={(difficulty) => setWordLadderDifficulty(difficulty)}
+          />
+        ) : (
+          <WordLadderGame
+            difficulty={wordLadderDifficulty}
+            onChangeDifficulty={() => setWordLadderDifficulty(null)}
+          />
+        )
+      )}
+      {activeGame === "memorymatch" && (
+        memoryMatchDifficulty === null ? (
+          <DifficultySelect
+            gameName="Memory Match"
+            onSelect={(difficulty) => setMemoryMatchDifficulty(difficulty)}
+          />
+        ) : (
+          <MemoryMatchGame difficulty={memoryMatchDifficulty} />
+        )
+      )}
+    </>
+  );
+
+  // Shared game card renderer
+  const renderGameCard = (game: typeof games[number], compact?: boolean) => {
+    const Icon = game.icon;
+    const cardContent = (
+      <Card
+        className={`${compact ? "p-4" : "p-6"} h-full bg-gradient-to-br ${game.bgColor} border-2 border-white hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer`}
+      >
+        <div
+          className={`${compact ? "w-12 h-12 rounded-xl" : "w-16 h-16 rounded-2xl"} bg-gradient-to-br ${game.color} flex items-center justify-center ${compact ? "mb-2" : "mb-4"} shadow-lg`}
+        >
+          <Icon className={`${compact ? "h-6 w-6" : "h-8 w-8"} text-white`} />
+        </div>
+        <h2
+          className={`${compact ? "text-lg" : "text-2xl"} font-black text-slate-800 mb-1`}
+          style={{
+            fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', cursive",
+          }}
+        >
+          {game.name}
+        </h2>
+        <p className={`text-slate-600 ${compact ? "text-sm" : ""}`}>{game.description}</p>
+      </Card>
+    );
+
+    if (game.id === "doodle") {
+      return (
+        <Link
+          key={game.id}
+          href="/doodle"
+          className="text-left focus:outline-none focus:ring-4 focus:ring-purple-300 rounded-3xl"
+        >
+          {cardContent}
+        </Link>
+      );
+    }
+
+    return (
+      <button
+        key={game.id}
+        onClick={() => setActiveGame(game.id)}
+        className="text-left focus:outline-none focus:ring-4 focus:ring-purple-300 rounded-3xl"
+      >
+        {cardContent}
+      </button>
+    );
+  };
+
+  // ── Kiosk: Menu ──
+  if (isWideMode && activeGame === "menu") {
+    return (
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 grid grid-rows-[auto_1fr]">
+        {/* Row 1: Compact header */}
+        <div className="px-6 py-3 text-center">
+          <div className="flex items-center justify-center gap-3">
+            <Gamepad2 className="h-8 w-8 text-purple-600" />
+            <h1 className="text-3xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Break Time!
+            </h1>
+          </div>
+          <p className="text-slate-600 text-sm">Pick a game and have fun!</p>
+        </div>
+
+        {/* Row 2: 4x2 grid */}
+        <div className="px-6 pb-4 min-h-0">
+          <div className="grid grid-cols-4 grid-rows-2 gap-4 h-full">
+            {games.map((game) => renderGameCard(game, true))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Kiosk: Active game ──
+  if (isWideMode && activeGame !== "menu") {
+    const selectedGame = games.find((g) => g.id === activeGame);
+    return (
+      <div
+        className={`h-screen overflow-hidden flex flex-col bg-gradient-to-br ${selectedGame?.bgColor || "from-slate-50 to-slate-100"}`}
+      >
+        <div className="px-6 py-2 flex-shrink-0">
+          <Button
+            variant="ghost"
+            onClick={() => { setActiveGame("menu"); resetDifficulty(); }}
+            className="min-h-[44px]"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Back to Games
+          </Button>
+        </div>
+        <div className="flex-1 min-h-0 overflow-auto px-6 pb-4">
+          {renderGame()}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal: Menu ──
   if (activeGame === "menu") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
@@ -124,75 +315,14 @@ export default function GamesPage() {
 
           {/* Game Grid */}
           <div className="grid grid-cols-2 gap-6">
-            {games.map((game) => {
-              const Icon = game.icon;
-
-              // Doodle links to separate page
-              if (game.id === "doodle") {
-                return (
-                  <Link
-                    key={game.id}
-                    href="/doodle"
-                    className="text-left focus:outline-none focus:ring-4 focus:ring-purple-300 rounded-3xl"
-                  >
-                    <Card
-                      className={`p-6 h-full bg-gradient-to-br ${game.bgColor} border-2 border-white hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer`}
-                    >
-                      <div
-                        className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center mb-4 shadow-lg`}
-                      >
-                        <Icon className="h-8 w-8 text-white" />
-                      </div>
-                      <h2
-                        className="text-2xl font-black text-slate-800 mb-1"
-                        style={{
-                          fontFamily:
-                            "'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', cursive",
-                        }}
-                      >
-                        {game.name}
-                      </h2>
-                      <p className="text-slate-600">{game.description}</p>
-                    </Card>
-                  </Link>
-                );
-              }
-
-              return (
-                <button
-                  key={game.id}
-                  onClick={() => setActiveGame(game.id)}
-                  className="text-left focus:outline-none focus:ring-4 focus:ring-purple-300 rounded-3xl"
-                >
-                  <Card
-                    className={`p-6 h-full bg-gradient-to-br ${game.bgColor} border-2 border-white hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer`}
-                  >
-                    <div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${game.color} flex items-center justify-center mb-4 shadow-lg`}
-                    >
-                      <Icon className="h-8 w-8 text-white" />
-                    </div>
-                    <h2
-                      className="text-2xl font-black text-slate-800 mb-1"
-                      style={{
-                        fontFamily:
-                          "'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', cursive",
-                      }}
-                    >
-                      {game.name}
-                    </h2>
-                    <p className="text-slate-600">{game.description}</p>
-                  </Card>
-                </button>
-              );
-            })}
+            {games.map((game) => renderGameCard(game))}
           </div>
         </div>
       </div>
     );
   }
 
-  // Show selected game
+  // ── Normal: Active game ──
   const selectedGame = games.find((g) => g.id === activeGame);
 
   return (
@@ -203,16 +333,7 @@ export default function GamesPage() {
         {/* Back Button */}
         <Button
           variant="ghost"
-          onClick={() => {
-            setActiveGame("menu");
-            // Reset difficulty when going back to menu
-            if (activeGame === "wordle") setWordleDifficulty(null);
-            if (activeGame === "hangman") setHangmanDifficulty(null);
-            if (activeGame === "wordsearch") setWordSearchDifficulty(null);
-            if (activeGame === "anagrams") setAnagramsDifficulty(null);
-            if (activeGame === "wordladder") setWordLadderDifficulty(null);
-            if (activeGame === "memorymatch") setMemoryMatchDifficulty(null);
-          }}
+          onClick={() => { setActiveGame("menu"); resetDifficulty(); }}
           className="mb-4 min-h-[48px]"
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
@@ -220,82 +341,7 @@ export default function GamesPage() {
         </Button>
 
         {/* Game Component */}
-        {activeGame === "wordle" && (
-          wordleDifficulty === null ? (
-            <DifficultySelect
-              gameName="Word Guess"
-              onSelect={(difficulty) => setWordleDifficulty(difficulty)}
-            />
-          ) : (
-            <WordleGame
-              difficulty={wordleDifficulty}
-              onChangeDifficulty={() => setWordleDifficulty(null)}
-            />
-          )
-        )}
-        {activeGame === "hangman" && (
-          hangmanDifficulty === null ? (
-            <DifficultySelect
-              gameName="Hangman"
-              onSelect={(difficulty) => setHangmanDifficulty(difficulty)}
-            />
-          ) : (
-            <HangmanGame
-              difficulty={hangmanDifficulty}
-              onChangeDifficulty={() => setHangmanDifficulty(null)}
-            />
-          )
-        )}
-        {activeGame === "tictactoe" && <TicTacToeGame />}
-        {activeGame === "wordsearch" && (
-          wordSearchDifficulty === null ? (
-            <DifficultySelect
-              gameName="Word Search"
-              onSelect={(difficulty) => setWordSearchDifficulty(difficulty)}
-            />
-          ) : (
-            <WordSearchGame
-              difficulty={wordSearchDifficulty}
-              onChangeDifficulty={() => setWordSearchDifficulty(null)}
-            />
-          )
-        )}
-        {activeGame === "anagrams" && (
-          anagramsDifficulty === null ? (
-            <DifficultySelect
-              gameName="Anagrams"
-              onSelect={(difficulty) => setAnagramsDifficulty(difficulty)}
-            />
-          ) : (
-            <AnagramsGame
-              difficulty={anagramsDifficulty}
-              onChangeDifficulty={() => setAnagramsDifficulty(null)}
-            />
-          )
-        )}
-        {activeGame === "wordladder" && (
-          wordLadderDifficulty === null ? (
-            <DifficultySelect
-              gameName="Word Ladder"
-              onSelect={(difficulty) => setWordLadderDifficulty(difficulty)}
-            />
-          ) : (
-            <WordLadderGame
-              difficulty={wordLadderDifficulty}
-              onChangeDifficulty={() => setWordLadderDifficulty(null)}
-            />
-          )
-        )}
-        {activeGame === "memorymatch" && (
-          memoryMatchDifficulty === null ? (
-            <DifficultySelect
-              gameName="Memory Match"
-              onSelect={(difficulty) => setMemoryMatchDifficulty(difficulty)}
-            />
-          ) : (
-            <MemoryMatchGame difficulty={memoryMatchDifficulty} />
-          )
-        )}
+        {renderGame()}
       </div>
     </div>
   );

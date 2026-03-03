@@ -17,6 +17,7 @@ interface KidProfileDashboardProps {
   birthday: string | null;
   school: string | null;
   teachers: string | null;
+  kioskMode?: boolean;
 }
 
 export function KidProfileDashboard({
@@ -25,6 +26,7 @@ export function KidProfileDashboard({
   birthday,
   school,
   teachers,
+  kioskMode,
 }: KidProfileDashboardProps) {
   const [schoolEventTitles, setSchoolEventTitles] = useState<string[]>([]);
   const [showRecharge, setShowRecharge] = useState(false);
@@ -36,6 +38,36 @@ export function KidProfileDashboard({
   const handleSchoolEventsLoaded = useCallback((titles: string[]) => {
     setSchoolEventTitles(titles);
   }, []);
+
+  if (kioskMode) {
+    return (
+      <div className="h-full flex flex-col min-h-0">
+        {/* 2x2 Grid of Cards */}
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+          <BirthdayCard birthday={birthday} />
+          <ChecklistCard memberId={memberId} />
+          <SchoolCard school={school} teachers={teachers} />
+          <ComingUpCard
+            memberName={firstName}
+            excludeEventTitles={schoolEventTitles}
+          />
+        </div>
+
+        {/* My To-Dos — scrollable */}
+        <div className="flex-1 overflow-auto min-h-0 mt-3">
+          <KidTodosCard childName={firstName} />
+        </div>
+
+        {/* Hidden: still load school events for dedup */}
+        <div className="hidden">
+          <KidSchoolTab
+            childName={firstName.toLowerCase()}
+            onEventsLoaded={handleSchoolEventsLoaded}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
