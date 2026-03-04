@@ -88,7 +88,9 @@ export function KioskProvider({ children }: KioskProviderProps) {
   // Handle fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      if (!document.fullscreenElement) {
+      if (document.fullscreenElement) {
+        setIsKioskMode(true);
+      } else {
         setIsKioskMode(false);
       }
     };
