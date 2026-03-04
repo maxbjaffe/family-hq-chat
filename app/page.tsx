@@ -267,14 +267,14 @@ export default function UnifiedHomePage() {
             <FamilyBoardCard className="h-full overflow-auto" />
           </div>
 
-          {/* Middle: Today's Schedule | Rest of Week */}
-          <div className="grid grid-cols-2 gap-3 min-h-0">
+          {/* Middle: Today's Schedule (1col) | Rest of Week (2col) */}
+          <div className="grid grid-cols-3 gap-3 min-h-0">
             <TodayHeroCard items={upcomingItems} kioskMode hideWeather className="h-full overflow-auto" />
-            <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded />
+            <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded className="col-span-2" />
           </div>
 
           {/* Content: Quote | Joke | Fun Fact */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 min-h-[120px]">
             <QuoteCard quote={content?.quote ?? null} className="h-full" />
             <JokeCard joke={content?.joke ?? null} className="h-full" />
             <FunFactCard funFact={content?.funFact ?? null} className="h-full" />

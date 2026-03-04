@@ -20,6 +20,7 @@ interface RestOfWeekCardProps {
   items: UpcomingItem[];
   defaultExpanded?: boolean;
   horizontal?: boolean;
+  className?: string;
 }
 
 const TZ = 'America/New_York';
@@ -71,7 +72,7 @@ function formatTime(dateStr: string): string {
   });
 }
 
-export function RestOfWeekCard({ items, defaultExpanded = false, horizontal = false }: RestOfWeekCardProps) {
+export function RestOfWeekCard({ items, defaultExpanded = false, horizontal = false, className }: RestOfWeekCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const today = getEasternToday();
   const tomorrow = getEasternTomorrow();
@@ -128,7 +129,7 @@ export function RestOfWeekCard({ items, defaultExpanded = false, horizontal = fa
   // Horizontal mode: always expanded, days as columns
   if (horizontal) {
     return (
-      <Card className="bg-gradient-to-br from-indigo-50 to-violet-50 p-4">
+      <Card className={`bg-gradient-to-br from-indigo-50 to-violet-50 p-4 ${className ?? ''}`}>
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="h-5 w-5 text-indigo-600" />
           <h3 className="font-bold text-slate-800">Rest of the Week</h3>
