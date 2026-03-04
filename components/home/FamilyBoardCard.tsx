@@ -3,9 +3,9 @@
 import { Pin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
-export function FamilyBoardCard() {
+export function FamilyBoardCard({ className }: { className?: string }) {
   return (
-    <Card className="bg-gradient-to-br from-slate-50 to-stone-50 p-5 border-2 border-dashed border-slate-200">
+    <Card className={`bg-gradient-to-br from-slate-50 to-stone-50 p-5 border-2 border-dashed border-slate-200 flex flex-col ${className ?? ''}`}>
       {/* Header */}
       <h3 className="font-bold text-slate-800 mb-3">📌 Family Board</h3>
 

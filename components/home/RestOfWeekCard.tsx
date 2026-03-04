@@ -18,6 +18,8 @@ export interface UpcomingItem {
 
 interface RestOfWeekCardProps {
   items: UpcomingItem[];
+  defaultExpanded?: boolean;
+  horizontal?: boolean;
 }
 
 const TZ = 'America/New_York';
@@ -69,13 +71,13 @@ function formatTime(dateStr: string): string {
   });
 }
 
-export function RestOfWeekCard({ items }: RestOfWeekCardProps) {
-  const [expanded, setExpanded] = useState(false);
+export function RestOfWeekCard({ items, defaultExpanded = false, horizontal = false }: RestOfWeekCardProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const today = getEasternToday();
   const tomorrow = getEasternTomorrow();
   const endOfWeek = getEndOfWeek();
 
-  const { tomorrowItems, remainingDays, totalCount } = useMemo(() => {
+  const { tomorrowItems, remainingDays, allDays, totalCount } = useMemo(() => {
     const afterToday = items.filter((item) => {
       const itemDate = toEasternDateString(new Date(item.date));
       return itemDate > today && itemDate <= endOfWeek;
@@ -102,10 +104,81 @@ export function RestOfWeekCard({ items }: RestOfWeekCardProps) {
         dateStr,
         dayName: getDayName(dateStr),
         count: dayItems.length,
+        items: dayItems,
       }));
 
-    return { tomorrowItems, remainingDays, totalCount: afterToday.length };
+    // Build unified day columns for horizontal mode
+    const allDayMap = new Map<string, UpcomingItem[]>();
+    for (const item of afterToday) {
+      const key = toEasternDateString(new Date(item.date));
+      if (!allDayMap.has(key)) allDayMap.set(key, []);
+      allDayMap.get(key)!.push(item);
+    }
+    const allDays = Array.from(allDayMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([dateStr, dayItems]) => ({
+        dateStr,
+        dayName: getDayName(dateStr),
+        items: dayItems,
+      }));
+
+    return { tomorrowItems, remainingDays, allDays, totalCount: afterToday.length };
   }, [items, today, tomorrow, endOfWeek]);
+
+  // Horizontal mode: always expanded, days as columns
+  if (horizontal) {
+    return (
+      <Card className="bg-gradient-to-br from-indigo-50 to-violet-50 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Calendar className="h-5 w-5 text-indigo-600" />
+          <h3 className="font-bold text-slate-800">Rest of the Week</h3>
+          {totalCount > 0 && (
+            <span className="bg-indigo-100 text-indigo-700 rounded-full px-2 text-xs font-bold">
+              {totalCount}
+            </span>
+          )}
+          <div className="flex-1" />
+          <Link
+            href="/calendar"
+            className="text-xs text-indigo-600 hover:underline"
+          >
+            Full calendar →
+          </Link>
+        </div>
+
+        {totalCount === 0 ? (
+          <p className="text-center text-sm text-slate-500 py-2">
+            Nothing else scheduled this week
+          </p>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto">
+            {allDays.map((day) => (
+              <div key={day.dateStr} className="flex-1 min-w-[140px]">
+                <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wide mb-2">
+                  {day.dayName}
+                </h4>
+                <div className="space-y-1">
+                  {day.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`flex items-start gap-1.5 py-1 border-l-[3px] pl-2 ${getLeftBorderColor(item)}`}
+                    >
+                      <span className="text-[10px] font-medium text-slate-500 w-12 shrink-0 pt-0.5">
+                        {formatTime(item.date)}
+                      </span>
+                      <span className="text-xs font-medium text-slate-800 leading-tight">
+                        {item.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-gradient-to-br from-indigo-50 to-violet-50 overflow-hidden">

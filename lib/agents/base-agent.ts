@@ -142,16 +142,10 @@ export abstract class BaseAgent {
     message: string,
     context: AgentContext
   ): string {
-    const isKid = context.familyMember?.role === 'kid';
-    
-    if (isKid) {
-      // Simpler language, more encouraging
-      return message
-        .replace(/utilize/gi, 'use')
-        .replace(/accomplish/gi, 'do')
-        .replace(/\./g, '! ');
-    }
-    
-    return message;
+    if (context.familyMember?.role !== 'kid') return message;
+
+    return message
+      .replace(/utilize/gi, 'use')
+      .replace(/accomplish/gi, 'do');
   }
 }

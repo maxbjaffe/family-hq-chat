@@ -254,6 +254,13 @@ function extractUpcomingDeadlines(items: FeedRow[]): Deadline[] {
 
 // --- Date helpers ---
 
+function formatDaysUntilLabel(daysUntil: number | null): string {
+  if (daysUntil === null) return '';
+  if (daysUntil <= 0) return ' (overdue)';
+  if (daysUntil === 1) return ' (tomorrow)';
+  return ` (in ${daysUntil} days)`;
+}
+
 function getDaysUntil(dateStr: string | null): number | null {
   if (!dateStr) return null;
   const target = new Date(dateStr);
@@ -293,9 +300,7 @@ export function formatEmailInsightsForPrompt(insights: EmailInsights): string {
   if (insights.priorityItems.length > 0) {
     const lines = insights.priorityItems.map(item => {
       const children = item.children.length > 0 ? ` [${item.children.join(', ')}]` : '';
-      const timing = item.daysUntil !== null
-        ? item.daysUntil <= 0 ? ' (overdue)' : item.daysUntil === 1 ? ' (tomorrow)' : ` (in ${item.daysUntil} days)`
-        : '';
+      const timing = formatDaysUntilLabel(item.daysUntil);
       return `• ${item.title}${timing}${children}`;
     });
     sections.push(`**High Priority:**\n${lines.join('\n')}`);
@@ -326,9 +331,7 @@ export function formatEmailInsightsForStandup(insights: EmailInsights): string {
     for (const item of insights.priorityItems) {
       const icon = item.itemType === 'action' ? '✅' : item.itemType === 'event' ? '📅' : '📢';
       const children = item.children.length > 0 ? ` — ${item.children.join(', ')}` : '';
-      const timing = item.daysUntil !== null
-        ? item.daysUntil <= 0 ? ' (overdue)' : item.daysUntil === 1 ? ' tomorrow' : ` in ${item.daysUntil} days`
-        : '';
+      const timing = formatDaysUntilLabel(item.daysUntil);
       lines.push(`${icon} ${item.title}${timing}${children}`);
     }
   }
@@ -362,7 +365,7 @@ export function formatEmailInsightsForStandup(insights: EmailInsights): string {
     lines.push('**Upcoming Deadlines (Next 7 Days):**');
     for (const d of insights.upcomingDeadlines) {
       const children = d.children.length > 0 ? ` [${d.children.join(', ')}]` : '';
-      const timing = d.daysUntil <= 0 ? '(overdue)' : d.daysUntil === 1 ? '(tomorrow)' : `(in ${d.daysUntil} days)`;
+      const timing = formatDaysUntilLabel(d.daysUntil).trim();
       lines.push(`• ${d.title} ${timing}${children}`);
     }
   }

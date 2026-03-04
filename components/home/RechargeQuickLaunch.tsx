@@ -35,11 +35,11 @@ const CATEGORIES = [
   },
 ] as const;
 
-export function RechargeQuickLaunch() {
+export function RechargeQuickLaunch({ className }: { className?: string }) {
   const router = useRouter();
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-violet-50 p-5">
+    <Card className={`bg-gradient-to-br from-purple-50 to-violet-50 p-5 flex flex-col ${className ?? ''}`}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
         <Battery className="h-5 w-5 text-purple-600" />

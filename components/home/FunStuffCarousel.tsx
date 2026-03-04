@@ -15,6 +15,7 @@ interface FunStuffCarouselProps {
   content: ContentData | null;
   onRefresh: () => void;
   refreshing: boolean;
+  className?: string;
 }
 
 const SLIDE_COUNT = 3;
@@ -25,6 +26,7 @@ export function FunStuffCarousel({
   content,
   onRefresh,
   refreshing,
+  className,
 }: FunStuffCarouselProps) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [showPunchline, setShowPunchline] = useState(false);
@@ -54,14 +56,14 @@ export function FunStuffCarousel({
 
   if (!content) {
     return (
-      <Card className="bg-gradient-to-br from-yellow-50 to-pink-50 p-5">
+      <Card className={`bg-gradient-to-br from-yellow-50 to-pink-50 p-5 ${className ?? ''}`}>
         <p className="text-center text-sm text-slate-500 py-4">Loading...</p>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-gradient-to-br from-yellow-50 to-pink-50 p-5">
+    <Card className={`bg-gradient-to-br from-yellow-50 to-pink-50 p-5 flex flex-col ${className ?? ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-slate-800">✨ Daily Fun</h3>

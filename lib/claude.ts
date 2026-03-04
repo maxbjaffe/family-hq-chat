@@ -51,7 +51,7 @@ export interface ChatMessage {
 
 let anthropicClient: Anthropic | null = null;
 
-function getClient() {
+function getClient(): Anthropic {
   if (!anthropicClient) {
     const apiKey = process.env.CLAUDE_API_KEY;
     if (!apiKey) {
@@ -116,72 +116,6 @@ export async function getSystemPrompt(): Promise<string> {
 
 ## Today
 ${today}${calendarSection}${emailSection}`;
-}
-
-function buildMessages(
-  notionData: string,
-  conversationHistory: ChatMessage[]
-): Anthropic.MessageParam[] {
-  return conversationHistory.map((msg, index) => {
-    if (index === 0 && msg.role === "user") {
-      return {
-        role: "user" as const,
-        content: `FAMILY DATA:\n${notionData}\n\n---\n\nQUESTION: ${msg.content}`,
-      };
-    }
-    return {
-      role: msg.role as "user" | "assistant",
-      content: msg.content,
-    };
-  });
-}
-
-// Legacy non-tool version for backward compatibility
-export async function generateResponse(
-  notionData: string,
-  conversationHistory: ChatMessage[]
-): Promise<string> {
-  const anthropic = getClient();
-  const messages = buildMessages(notionData, conversationHistory);
-  const systemPrompt = await getSystemPrompt();
-
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages,
-  });
-
-  const textBlock = response.content.find((block) => block.type === "text");
-  return textBlock && "text" in textBlock
-    ? textBlock.text
-    : "Sorry, I couldn't generate a response.";
-}
-
-// Legacy streaming version for backward compatibility
-export async function* generateResponseStream(
-  notionData: string,
-  conversationHistory: ChatMessage[]
-): AsyncGenerator<string, void, unknown> {
-  const anthropic = getClient();
-  const messages = buildMessages(notionData, conversationHistory);
-  const systemPrompt = await getSystemPrompt();
-
-  const stream = anthropic.messages.stream({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages,
-  });
-
-  for await (const event of stream) {
-    if (
-      event.type === "content_block_delta" &&
-      event.delta.type === "text_delta"
-    ) {
-      yield event.delta.text;
-    }
-  }
 }
 
 export { getClient };

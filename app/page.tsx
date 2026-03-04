@@ -20,6 +20,7 @@ import { RestOfWeekCard } from "@/components/home/RestOfWeekCard";
 import { RechargeQuickLaunch } from "@/components/home/RechargeQuickLaunch";
 import { FunStuffCarousel } from "@/components/home/FunStuffCarousel";
 import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
+import { WeatherCard } from "@/components/home/WeatherCard";
 
 interface FamilyMember {
   id: string;
@@ -204,9 +205,92 @@ export default function UnifiedHomePage() {
   const allKidsComplete =
     kidsOnly.length > 0 && kidsOnly.every((c) => c.stats?.isComplete);
 
+  if (isWideMode) {
+    // ── Kiosk layout: fits 1920x1080 with no scrolling ──
+    // Sidebar is rendered by NavigationWrapper; this is just page content
+    return (
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 grid grid-rows-[auto_1fr_auto]">
+        {/* Row 1: Header */}
+        <div className="px-6 pt-3 pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </h1>
+              <p className="text-slate-600 text-sm mt-0.5">
+                Good {getTimeOfDayGreeting()}, Jaffe Family!
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5">
+              <Clock size="lg" />
+              <div className="flex items-center gap-2">
+                <SyncIndicator />
+                <ParentsButton className="min-h-[48px]" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refreshData}
+                  disabled={refreshing}
+                  className="min-h-[48px] min-w-[48px]"
+                >
+                  {refreshing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                  className="min-h-[48px] min-w-[48px]"
+                  title="Reload page"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: 3x2 card grid */}
+        <div className="px-6 min-h-0 grid grid-rows-2 gap-3 pb-3">
+          {/* Top row: Schedule | Weather | Family Board */}
+          <div className="grid grid-cols-3 gap-3 min-h-0">
+            <TodayHeroCard items={upcomingItems} kioskMode hideWeather className="h-full overflow-auto" />
+            <WeatherCard className="h-full overflow-auto" />
+            <FamilyBoardCard className="h-full overflow-auto" />
+          </div>
+          {/* Bottom row: Daily Fun | Recharge | House Tasks */}
+          <div className="grid grid-cols-3 gap-3 min-h-0">
+            <FunStuffCarousel
+              content={content}
+              onRefresh={refreshContent}
+              refreshing={refreshingContent}
+              className="h-full overflow-auto"
+            />
+            <RechargeQuickLaunch className="h-full overflow-auto" />
+            <HouseTasks className="h-full overflow-auto" />
+          </div>
+        </div>
+
+        {/* Row 3: Rest of Week (horizontal, always expanded) */}
+        <div className="px-6 pb-2">
+          <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal (scrollable) layout ──
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 pb-24">
-      <div className={`mx-auto px-4 py-4 ${isWideMode ? "max-w-full px-6" : "max-w-4xl xl:max-w-5xl 2xl:max-w-6xl"}`}>
+      <div className="mx-auto px-4 py-4 max-w-4xl xl:max-w-5xl 2xl:max-w-6xl">
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">

@@ -7,6 +7,8 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { SyncIndicator } from "./SyncIndicator";
 import { HeaderClock } from "./Clock";
 import { AppLauncher } from "./AppLauncher";
+import { useKiosk } from "./KioskProvider";
+import { KioskSidebar } from "./KioskSidebar";
 
 // Detect if running in iframe
 function useIsEmbedded() {
@@ -192,6 +194,18 @@ export function Navigation() {
 }
 
 export function NavigationWrapper({ children }: { children: React.ReactNode }) {
+  const { isKioskMode, isEmbedded } = useKiosk();
+  const isWideMode = isKioskMode || isEmbedded;
+
+  if (isWideMode) {
+    return (
+      <div className="flex min-h-screen">
+        <KioskSidebar />
+        <main className="flex-1">{children}</main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen">
       <Navigation />

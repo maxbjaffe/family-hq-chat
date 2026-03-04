@@ -734,6 +734,14 @@ function buildProfile(id: string, name: string, areas: CapabilityArea[]): Person
   return { personId: id, personName: name, areas, overallCapability, strengths, opportunities, nextHighValueAction };
 }
 
+function getDataQualityLevel(avg: number): 'excellent' | 'good' | 'partial' | 'limited' | 'sparse' {
+  if (avg >= 80) return 'excellent';
+  if (avg >= 60) return 'good';
+  if (avg >= 40) return 'partial';
+  if (avg >= 20) return 'limited';
+  return 'sparse';
+}
+
 function buildDataQualitySummary(profiles: PersonCapabilityProfile[]): FamilyCapabilityProfile['dataQuality'] {
   // Aggregate across all profiles to rate data quality by area type
   const areaScores = new Map<string, number[]>();
@@ -747,12 +755,7 @@ function buildDataQualitySummary(profiles: PersonCapabilityProfile[]): FamilyCap
 
   return Array.from(areaScores.entries()).map(([area, scores]) => {
     const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
-    const level: 'excellent' | 'good' | 'partial' | 'limited' | 'sparse' =
-      avg >= 80 ? 'excellent' :
-      avg >= 60 ? 'good' :
-      avg >= 40 ? 'partial' :
-      avg >= 20 ? 'limited' : 'sparse';
-    return { area, level, coverage: Math.round(avg) };
+    return { area, level: getDataQualityLevel(avg), coverage: Math.round(avg) };
   });
 }
 

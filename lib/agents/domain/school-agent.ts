@@ -12,6 +12,25 @@ import { BaseAgent } from '../base-agent';
 import { AgentContext, AgentResult, AgentCapability, UserInput, RadarFeedItem } from '../types';
 import { createClient } from '@supabase/supabase-js';
 
+// Raw row shape from radar_family_feed table
+interface FeedRow {
+  id: string;
+  email_id: string;
+  source_type: string;
+  source_name: string | null;
+  item_type: string;
+  title: string;
+  description: string | null;
+  event_date: string | null;
+  deadline: string | null;
+  expires_at: string | null;
+  scope: string;
+  children: string[];
+  urgency: number;
+  dismissed: boolean;
+  created_at: string;
+}
+
 // Get Supabase client
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL;
@@ -19,6 +38,8 @@ function getSupabaseClient() {
   if (!url || !key) throw new Error('Supabase not configured');
   return createClient(url, key);
 }
+
+const SCHOOL_SOURCES = ['district', 'pta', 'teacher', 'athletics', 'extracurricular', 'theater', 'chorus', 'scouts', 'general', 'unknown'];
 
 export class SchoolAgent extends BaseAgent {
   name = 'SchoolAgent';
@@ -120,12 +141,11 @@ export class SchoolAgent extends BaseAgent {
       twoWeeksOut.setDate(twoWeeksOut.getDate() + 14);
 
       // Query radar_family_feed for school events (all school-related source types)
-      const schoolSources = ['district', 'pta', 'teacher', 'athletics', 'extracurricular', 'theater', 'chorus', 'scouts', 'general', 'unknown'];
       const { data: events, error } = await supabase
         .from('radar_family_feed')
         .select('*')
         .eq('item_type', 'event')
-        .in('source_type', schoolSources)
+        .in('source_type', SCHOOL_SOURCES)
         .gte('event_date', now.toISOString())
         .lte('event_date', twoWeeksOut.toISOString())
         .eq('dismissed', false)
@@ -174,11 +194,10 @@ export class SchoolAgent extends BaseAgent {
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
       // Query radar_family_feed for recent school communications (all school-related source types)
-      const schoolSources = ['district', 'pta', 'teacher', 'athletics', 'extracurricular', 'theater', 'chorus', 'scouts', 'general', 'unknown'];
       const { data: updates, error } = await supabase
         .from('radar_family_feed')
         .select('*')
-        .in('source_type', schoolSources)
+        .in('source_type', SCHOOL_SOURCES)
         .gte('created_at', threeDaysAgo.toISOString())
         .eq('dismissed', false)
         .order('created_at', { ascending: false })
@@ -236,11 +255,10 @@ export class SchoolAgent extends BaseAgent {
       oneWeekOut.setDate(oneWeekOut.getDate() + 7);
 
       // Get action items (things that need attention)
-      const schoolSources = ['district', 'pta', 'teacher', 'athletics', 'extracurricular', 'theater', 'chorus', 'scouts', 'general', 'unknown'];
       const { data: actions } = await supabase
         .from('radar_family_feed')
         .select('*')
-        .in('source_type', schoolSources)
+        .in('source_type', SCHOOL_SOURCES)
         .eq('item_type', 'action')
         .eq('dismissed', false)
         .order('urgency', { ascending: false })
@@ -251,7 +269,7 @@ export class SchoolAgent extends BaseAgent {
         .from('radar_family_feed')
         .select('*')
         .eq('item_type', 'event')
-        .in('source_type', schoolSources)
+        .in('source_type', SCHOOL_SOURCES)
         .gte('event_date', now.toISOString())
         .lte('event_date', oneWeekOut.toISOString())
         .eq('dismissed', false)
@@ -328,21 +346,21 @@ export class SchoolAgent extends BaseAgent {
     return null;
   }
 
-  private convertToRadarFeedItem(item: any): RadarFeedItem {
+  private convertToRadarFeedItem(item: FeedRow): RadarFeedItem {
     return {
       id: item.id,
       emailId: item.email_id,
-      sourceType: item.source_type,
-      sourceName: item.source_name,
-      itemType: item.item_type,
+      sourceType: item.source_type as RadarFeedItem['sourceType'],
+      sourceName: item.source_name ?? undefined,
+      itemType: item.item_type as RadarFeedItem['itemType'],
       title: item.title,
-      description: item.description,
+      description: item.description ?? undefined,
       eventDate: item.event_date ? new Date(item.event_date) : undefined,
       deadline: item.deadline ? new Date(item.deadline) : undefined,
       expiresAt: item.expires_at ? new Date(item.expires_at) : undefined,
-      scope: item.scope,
+      scope: item.scope as RadarFeedItem['scope'],
       children: item.children || [],
-      urgency: item.urgency,
+      urgency: item.urgency as RadarFeedItem['urgency'],
       dismissed: item.dismissed,
       createdAt: new Date(item.created_at),
     };

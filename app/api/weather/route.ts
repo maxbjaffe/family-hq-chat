@@ -37,7 +37,7 @@ export async function GET() {
 
     // Use Open-Meteo (free, no API key needed)
     const response = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${DEFAULT_LAT}&longitude=${DEFAULT_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=3&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York`
+      `https://api.open-meteo.com/v1/forecast?latitude=${DEFAULT_LAT}&longitude=${DEFAULT_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=6&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York`
     );
 
     if (!response.ok) {
@@ -82,8 +82,8 @@ export async function GET() {
       icon: "🌡️",
     };
 
-    // Build 3-day forecast
-    const forecast: ForecastDay[] = data.daily.time.slice(0, 3).map((date: string, index: number) => {
+    // Build 6-day forecast (today + 5 more)
+    const forecast: ForecastDay[] = data.daily.time.slice(0, 6).map((date: string, index: number) => {
       const dayDate = new Date(date + 'T12:00:00');
       let dayName: string;
       if (index === 0) {

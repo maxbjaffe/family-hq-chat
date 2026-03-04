@@ -12,7 +12,7 @@ interface HouseTask {
   due: string | null;
 }
 
-export function HouseTasks() {
+export function HouseTasks({ className }: { className?: string }) {
   const [tasks, setTasks] = useState<HouseTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export function HouseTasks() {
 
   if (loading) {
     return (
-      <Card className="p-6 bg-gradient-to-br from-emerald-50 to-teal-50">
+      <Card className={`p-6 bg-gradient-to-br from-emerald-50 to-teal-50 flex flex-col ${className ?? ''}`}>
         <div className="flex items-center gap-2 mb-4">
           <Home className="h-6 w-6 text-emerald-600" />
           <h3 className="text-lg font-bold text-slate-800">House Tasks</h3>
@@ -78,7 +78,7 @@ export function HouseTasks() {
 
   if (tasks.length === 0) {
     return (
-      <Card className="p-6 bg-gradient-to-br from-emerald-50 to-teal-50">
+      <Card className={`p-6 bg-gradient-to-br from-emerald-50 to-teal-50 flex flex-col ${className ?? ''}`}>
         <div className="flex items-center gap-2 mb-4">
           <Home className="h-6 w-6 text-emerald-600" />
           <h3 className="text-lg font-bold text-slate-800">House Tasks</h3>
@@ -93,7 +93,7 @@ export function HouseTasks() {
   }
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-emerald-50 to-teal-50">
+    <Card className={`p-6 bg-gradient-to-br from-emerald-50 to-teal-50 flex flex-col ${className ?? ''}`}>
       <div className="flex items-center gap-2 mb-4">
         <Home className="h-6 w-6 text-emerald-600" />
         <h3 className="text-lg font-bold text-slate-800">House Tasks</h3>

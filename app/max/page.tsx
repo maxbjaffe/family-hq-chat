@@ -75,19 +75,19 @@ function MaxSpaceContent() {
     router.push('/dashboard');
   };
 
-  const priorityColor = (priority: number) => {
+  function priorityColor(priority: number): string {
     if (priority === 4) return 'border-l-red-500 bg-red-50';
     if (priority === 3) return 'border-l-orange-500 bg-orange-50';
     if (priority === 2) return 'border-l-blue-500 bg-blue-50';
     return 'border-l-gray-300';
-  };
+  }
 
-  const priorityIcon = (priority: number) => {
+  function priorityIcon(priority: number): string {
     if (priority === 4) return 'text-red-500';
     if (priority === 3) return 'text-orange-500';
     if (priority === 2) return 'text-blue-500';
     return 'text-gray-400';
-  };
+  }
 
   // Group tasks by project
   const tasksByProject = tasks.reduce((acc, task) => {
