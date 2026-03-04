@@ -3,7 +3,8 @@ import { getFamilyDataClient } from '@/lib/supabase';
 import { cleanupImage } from '@/lib/image-cleanup';
 
 const BUCKET_NAME = 'family-media';
-const BOARD_FOLDER = 'board';
+const FAMILY_USER_ID = '00879c1b-a586-4d52-96be-8f4b7ddf7257';
+const BOARD_FOLDER = `${FAMILY_USER_ID}/board`;
 
 const ALLOWED_TYPES = [
   'image/png',
@@ -46,9 +47,13 @@ export async function POST(request: Request) {
     let contentType = file.type;
 
     if (file.type.startsWith('image/')) {
-      const cleaned = await cleanupImage(buffer, file.type);
-      buffer = Buffer.from(cleaned.buffer);
-      contentType = cleaned.contentType;
+      try {
+        const cleaned = await cleanupImage(buffer, file.type);
+        buffer = Buffer.from(cleaned.buffer);
+        contentType = cleaned.contentType;
+      } catch (cleanupErr) {
+        console.warn('[Board Shortcut] Image cleanup failed, uploading original:', cleanupErr);
+      }
     }
 
     // Build filename
