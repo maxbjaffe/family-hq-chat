@@ -21,6 +21,7 @@ import { RechargeQuickLaunch } from "@/components/home/RechargeQuickLaunch";
 import { FunStuffCarousel } from "@/components/home/FunStuffCarousel";
 import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
 import { WeatherCard } from "@/components/home/WeatherCard";
+import { QuoteCard, JokeCard, FunFactCard } from "@/components/home/ContentCards";
 
 interface FamilyMember {
   id: string;
@@ -258,30 +259,32 @@ export default function UnifiedHomePage() {
           </div>
         </div>
 
-        {/* Row 2: 3x2 card grid */}
-        <div className="px-6 min-h-0 grid grid-rows-2 gap-3 pb-3">
-          {/* Top row: Schedule | Weather | Family Board */}
-          <div className="grid grid-cols-3 gap-3 min-h-0">
-            <TodayHeroCard items={upcomingItems} kioskMode hideWeather className="h-full overflow-auto" />
+        {/* Row 2: Main content grid */}
+        <div className="px-6 min-h-0 grid grid-rows-[auto_1fr_auto_auto] gap-3 pb-3">
+          {/* Top: Weather | Family Board */}
+          <div className="grid grid-cols-2 gap-3">
             <WeatherCard className="h-full overflow-auto" />
             <FamilyBoardCard className="h-full overflow-auto" />
           </div>
-          {/* Bottom row: Daily Fun | Recharge | House Tasks */}
-          <div className="grid grid-cols-3 gap-3 min-h-0">
-            <FunStuffCarousel
-              content={content}
-              onRefresh={refreshContent}
-              refreshing={refreshingContent}
-              className="h-full overflow-auto"
-            />
+
+          {/* Middle: Today's Schedule | Rest of Week */}
+          <div className="grid grid-cols-2 gap-3 min-h-0">
+            <TodayHeroCard items={upcomingItems} kioskMode hideWeather className="h-full overflow-auto" />
+            <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded />
+          </div>
+
+          {/* Content: Quote | Joke | Fun Fact */}
+          <div className="grid grid-cols-3 gap-3">
+            <QuoteCard quote={content?.quote ?? null} className="h-full" />
+            <JokeCard joke={content?.joke ?? null} className="h-full" />
+            <FunFactCard funFact={content?.funFact ?? null} className="h-full" />
+          </div>
+
+          {/* Bottom: Recharge | House Tasks */}
+          <div className="grid grid-cols-2 gap-3">
             <RechargeQuickLaunch className="h-full overflow-auto" />
             <HouseTasks className="h-full overflow-auto" />
           </div>
-        </div>
-
-        {/* Row 3: Rest of Week (horizontal, always expanded) */}
-        <div className="px-6 pb-2">
-          <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded />
         </div>
       </div>
     );
