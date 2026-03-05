@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       .upload(storagePath, buffer, { contentType, upsert: false });
 
     if (uploadError) {
-      console.error('[Board] Upload error:', uploadError);
+      console.error('[Board] Upload error:', JSON.stringify(uploadError), 'path:', storagePath, 'type:', contentType, 'size:', buffer.length);
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
-    console.error('[Board] Unexpected error:', error);
+    console.error('[Board] Unexpected POST error:', error instanceof Error ? error.message : String(error), error instanceof Error ? error.stack : '');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

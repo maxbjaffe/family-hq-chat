@@ -1,5 +1,3 @@
-import sharp from 'sharp';
-
 const MAX_DIMENSION = 2048;
 const JPEG_QUALITY = 80;
 
@@ -10,6 +8,7 @@ const JPEG_QUALITY = 80;
  * - Resize if larger than MAX_DIMENSION
  * - Compress to JPEG quality 80
  * Returns processed buffer and the output content type.
+ * Falls back to original if sharp is unavailable.
  */
 export async function cleanupImage(
   buffer: Buffer,
@@ -18,6 +17,16 @@ export async function cleanupImage(
   // Only process raster images (not PDFs, not GIFs with animation)
   const processable = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
   if (!processable.includes(mimeType)) {
+    return { buffer, contentType: mimeType };
+  }
+
+  // Dynamic import so the module loads even if sharp isn't available
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let sharp: any;
+  try {
+    sharp = (await import('sharp')).default;
+  } catch {
+    console.warn('[image-cleanup] sharp not available, skipping cleanup');
     return { buffer, contentType: mimeType };
   }
 
