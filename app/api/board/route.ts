@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFamilyDataClient } from '@/lib/supabase';
-import { cleanupImage } from '@/lib/image-cleanup';
 
 const BUCKET_NAME = 'family-media';
 const FAMILY_USER_ID = '00879c1b-a586-4d52-96be-8f4b7ddf7257';
@@ -38,6 +37,7 @@ export async function GET() {
 }
 
 // POST — upload file + create board item
+// Mirrors the proven pattern from app/api/admin/media/route.ts
 export async function POST(request: NextRequest) {
   try {
     const supabase = getFamilyDataClient();
@@ -57,28 +57,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read file into buffer
-    const arrayBuffer = await file.arrayBuffer();
-    let buffer: Buffer = Buffer.from(arrayBuffer);
-    let contentType = file.type;
-
-    // Clean up images (auto-rotate, strip EXIF, compress, resize)
-    if (file.type.startsWith('image/')) {
-      try {
-        const cleaned = await cleanupImage(buffer, file.type);
-        buffer = Buffer.from(cleaned.buffer);
-        contentType = cleaned.contentType;
-      } catch (cleanupErr) {
-        console.warn('[Board] Image cleanup failed, uploading original:', cleanupErr);
-      }
-    }
-
-    // Build filename
-    const ext = contentType === 'image/webp'
-      ? 'webp'
-      : contentType === 'image/jpeg'
-        ? 'jpg'
-        : file.name.split('.').pop() || 'bin';
+    // Generate safe filename
+    const ext = file.name.split('.').pop() || 'bin';
     const safeName = file.name
       .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9-_]/g, '_')
@@ -86,13 +66,17 @@ export async function POST(request: NextRequest) {
     const filename = `${safeName}-${Date.now()}.${ext}`;
     const storagePath = `${BOARD_FOLDER}/${filename}`;
 
-    // Upload to storage
+    // Upload to storage — use arrayBuffer directly (same as admin media route)
+    const arrayBuffer = await file.arrayBuffer();
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
-      .upload(storagePath, buffer, { contentType, upsert: false });
+      .upload(storagePath, arrayBuffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
     if (uploadError) {
-      console.error('[Board] Upload error:', JSON.stringify(uploadError), 'path:', storagePath, 'type:', contentType, 'size:', buffer.length);
+      console.error('[Board] Upload error:', JSON.stringify(uploadError), 'path:', storagePath);
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
@@ -106,20 +90,19 @@ export async function POST(request: NextRequest) {
     // Insert DB row
     const { data: item, error: insertError } = await supabase
       .from('family_board_items')
-      .insert({ title, file_url: fileUrl, file_type: contentType, storage_path: storagePath })
+      .insert({ title, file_url: fileUrl, file_type: file.type, storage_path: storagePath })
       .select()
       .single();
 
     if (insertError) {
       console.error('[Board] Insert error:', insertError);
-      // Try to clean up the uploaded file
       await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
-    console.error('[Board] Unexpected POST error:', error instanceof Error ? error.message : String(error), error instanceof Error ? error.stack : '');
+    console.error('[Board] POST error:', error instanceof Error ? `${error.message}\n${error.stack}` : String(error));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -165,7 +148,6 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    // Fetch the item to get storage path
     const { data: item, error: fetchError } = await supabase
       .from('family_board_items')
       .select('storage_path')
@@ -176,10 +158,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    // Delete from storage
     await supabase.storage.from(BUCKET_NAME).remove([item.storage_path]);
 
-    // Delete DB row
     const { error: deleteError } = await supabase
       .from('family_board_items')
       .delete()

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getFamilyDataClient } from '@/lib/supabase';
-import { cleanupImage } from '@/lib/image-cleanup';
 
 const BUCKET_NAME = 'family-media';
 const FAMILY_USER_ID = '00879c1b-a586-4d52-96be-8f4b7ddf7257';
@@ -18,7 +17,6 @@ const ALLOWED_TYPES = [
 
 export async function POST(request: Request) {
   try {
-    // Auth via shortcut key
     const secretKey = request.headers.get('X-Shortcut-Key');
     if (secretKey !== process.env.SHORTCUTS_SECRET_KEY) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -41,27 +39,7 @@ export async function POST(request: Request) {
 
     const supabase = getFamilyDataClient();
 
-    // Read and clean up image
-    const arrayBuffer = await file.arrayBuffer();
-    let buffer: Buffer = Buffer.from(arrayBuffer);
-    let contentType = file.type;
-
-    if (file.type.startsWith('image/')) {
-      try {
-        const cleaned = await cleanupImage(buffer, file.type);
-        buffer = Buffer.from(cleaned.buffer);
-        contentType = cleaned.contentType;
-      } catch (cleanupErr) {
-        console.warn('[Board Shortcut] Image cleanup failed, uploading original:', cleanupErr);
-      }
-    }
-
-    // Build filename
-    const ext = contentType === 'image/webp'
-      ? 'webp'
-      : contentType === 'image/jpeg'
-        ? 'jpg'
-        : file.name.split('.').pop() || 'bin';
+    const ext = file.name.split('.').pop() || 'bin';
     const safeName = file.name
       .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9-_]/g, '_')
@@ -69,27 +47,26 @@ export async function POST(request: Request) {
     const filename = `${safeName}-${Date.now()}.${ext}`;
     const storagePath = `${BOARD_FOLDER}/${filename}`;
 
-    // Upload
+    const arrayBuffer = await file.arrayBuffer();
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
-      .upload(storagePath, buffer, { contentType, upsert: false });
+      .upload(storagePath, arrayBuffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
     if (uploadError) {
       console.error('[Board Shortcut] Upload error:', uploadError);
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
-    // Get public URL
     const { data: urlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(storagePath);
 
-    const fileUrl = urlData.publicUrl;
-
-    // Insert DB row
     const { data: item, error: insertError } = await supabase
       .from('family_board_items')
-      .insert({ title, file_url: fileUrl, file_type: contentType, storage_path: storagePath })
+      .insert({ title, file_url: urlData.publicUrl, file_type: file.type, storage_path: storagePath })
       .select()
       .single();
 

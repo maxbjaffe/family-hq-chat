@@ -59,11 +59,14 @@ export function FamilyBoardCard({ className }: { className?: string }) {
     return () => window.removeEventListener('keydown', handler);
   }, [lightboxItem]);
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
+    setError(null);
     try {
       const form = new FormData();
       form.append('file', file);
@@ -71,12 +74,15 @@ export function FamilyBoardCard({ className }: { className?: string }) {
       if (res.ok) {
         const data = await res.json();
         setItems(prev => [data.item, ...prev]);
+      } else {
+        const errData = await res.json().catch(() => ({ error: res.statusText }));
+        setError(errData.error || `Upload failed (${res.status})`);
       }
     } catch (err) {
       console.error('[Board] Upload error:', err);
+      setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
-      // Reset input so the same file can be re-selected
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -156,6 +162,13 @@ export function FamilyBoardCard({ className }: { className?: string }) {
             className="hidden"
           />
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mb-2 text-xs text-red-600 bg-red-50 rounded px-2 py-1">
+            {error}
+          </div>
+        )}
 
         {/* Content */}
         {loading ? (
