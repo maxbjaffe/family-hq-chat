@@ -21,7 +21,13 @@ interface WeatherData {
   forecast?: ForecastDay[];
 }
 
-export function WeatherCard({ className }: { className?: string }) {
+interface WeatherCardProps {
+  className?: string;
+  /** Compact inline mode for kiosk header — horizontal strip, no card wrapper */
+  inline?: boolean;
+}
+
+export function WeatherCard({ className, inline }: WeatherCardProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,6 +45,43 @@ export function WeatherCard({ className }: { className?: string }) {
     fetchWeather();
   }, []);
 
+  // Inline mode: compact horizontal strip for kiosk header
+  if (inline) {
+    if (loading) {
+      return <Loader2 className="h-4 w-4 animate-spin text-blue-400" />;
+    }
+    if (!weather) return null;
+
+    return (
+      <div className={`flex items-center gap-4 ${className ?? ''}`}>
+        {/* Current */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-2xl">{weather.icon}</span>
+          <span className="text-xl font-bold text-slate-800">{weather.temperature}°F</span>
+          <span className="text-xs text-slate-500">
+            H:{weather.high}° L:{weather.low}°
+          </span>
+        </div>
+        {/* Compact forecast */}
+        {weather.forecast && weather.forecast.length > 0 && (
+          <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
+            {weather.forecast
+              .filter((d) => d.day !== 'Today')
+              .slice(0, 4)
+              .map((day) => (
+                <div key={day.day} className="text-center">
+                  <div className="text-[10px] font-medium text-slate-500">{day.day}</div>
+                  <div className="text-sm">{day.icon}</div>
+                  <div className="text-[10px] text-slate-600">{day.high}°/{day.low}°</div>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Standard card mode
   return (
     <Card className={`bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-5 flex flex-col ${className ?? ''}`}>
       <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">

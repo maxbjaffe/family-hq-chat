@@ -211,7 +211,7 @@ export default function UnifiedHomePage() {
     // Sidebar is rendered by NavigationWrapper; this is just page content
     return (
       <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 grid grid-rows-[auto_1fr_auto]">
-        {/* Row 1: Header */}
+        {/* Row 1: Header — Date | Weather | Clock */}
         <div className="px-6 pt-3 pb-2">
           <div className="flex items-center justify-between">
             <div>
@@ -227,6 +227,7 @@ export default function UnifiedHomePage() {
                 Good {getTimeOfDayGreeting()}, Jaffe Family!
               </p>
             </div>
+            <WeatherCard inline />
             <div className="flex flex-col items-end gap-1.5">
               <Clock size="lg" />
               <div className="flex items-center gap-2">
@@ -261,11 +262,8 @@ export default function UnifiedHomePage() {
 
         {/* Row 2: Main content grid */}
         <div className="px-6 min-h-0 grid grid-rows-[auto_1fr_auto_auto] gap-3 pb-3">
-          {/* Top: Weather | Family Board */}
-          <div className="grid grid-cols-2 gap-3">
-            <WeatherCard className="h-full overflow-auto" />
-            <FamilyBoardCard className="h-full overflow-auto" />
-          </div>
+          {/* Top: Family Board — full width */}
+          <FamilyBoardCard className="overflow-auto" />
 
           {/* Middle: Today's Schedule (1col) | Rest of Week (2col) */}
           <div className="grid grid-cols-3 gap-3 min-h-0">

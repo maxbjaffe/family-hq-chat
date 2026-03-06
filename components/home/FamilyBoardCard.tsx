@@ -211,7 +211,7 @@ export function FamilyBoardCard({ className }: { className?: string }) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
             {items.map(item => (
               <div key={item.id} className="group relative">
                 {/* Thumbnail */}
