@@ -211,13 +211,13 @@ export function FamilyBoardCard({ className }: { className?: string }) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {items.map(item => (
               <div key={item.id} className="group relative">
                 {/* Thumbnail */}
                 <button
                   onClick={() => handleClick(item)}
-                  className="w-full aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full aspect-square rounded-md overflow-hidden bg-slate-100 border border-slate-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   {isImage(item.file_type) ? (
                     <img
@@ -226,9 +226,9 @@ export function FamilyBoardCard({ className }: { className?: string }) {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-2">
-                      <FileText className="h-8 w-8 text-slate-400" />
-                      <span className="text-xs text-slate-500 text-center line-clamp-2 break-all">
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-1">
+                      <FileText className="h-6 w-6 text-slate-400" />
+                      <span className="text-[10px] text-slate-500 text-center line-clamp-2 break-all leading-tight">
                         {item.title || item.storage_path.split('/').pop()}
                       </span>
                     </div>
@@ -238,9 +238,9 @@ export function FamilyBoardCard({ className }: { className?: string }) {
                 {/* Delete button — visible on hover/tap */}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </button>
 
                 {/* Caption */}
@@ -254,16 +254,15 @@ export function FamilyBoardCard({ className }: { className?: string }) {
                       if (e.key === 'Enter') handleEditSave(item.id);
                       if (e.key === 'Escape') setEditingId(null);
                     }}
-                    className="mt-1 w-full text-xs px-1 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="mt-0.5 w-full text-[10px] px-1 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   />
                 ) : (
                   <button
                     onClick={() => startEdit(item)}
-                    className="mt-1 w-full text-left text-xs text-slate-600 truncate hover:text-blue-600 flex items-center gap-0.5 min-h-[20px]"
+                    className="mt-0.5 w-full text-left text-[10px] text-slate-500 truncate hover:text-blue-600 flex items-center gap-0.5 min-h-[16px] leading-tight"
                     title="Click to edit caption"
                   >
-                    <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-50 shrink-0" />
-                    <span className="truncate">{item.title || 'Add caption...'}</span>
+                    <span className="truncate">{item.title || 'Caption...'}</span>
                   </button>
                 )}
               </div>
