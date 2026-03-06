@@ -36,73 +36,91 @@ export async function GET() {
   }
 }
 
-// POST — upload file + create board item
-// Mirrors the proven pattern from app/api/admin/media/route.ts
+// POST — two-step upload to bypass Vercel body size limit
+// Step 1: client sends JSON { filename, contentType, title } → gets signed URL back
+// Step 2: client uploads directly to Supabase Storage using signed URL
+// Step 3: client calls PUT { storagePath, fileUrl, fileType, title } to create DB row
 export async function POST(request: NextRequest) {
   try {
     const supabase = getFamilyDataClient();
-    const formData = await request.formData();
+    const body = await request.json();
+    const { filename, contentType, title = '' } = body;
 
-    const file = formData.get('file') as File;
-    const title = (formData.get('title') as string) || '';
-
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (!filename || !contentType) {
+      return NextResponse.json({ error: 'filename and contentType required' }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: `File type ${file.type} not allowed` },
-        { status: 400 }
-      );
+    if (!ALLOWED_TYPES.includes(contentType)) {
+      return NextResponse.json({ error: `File type ${contentType} not allowed` }, { status: 400 });
     }
 
     // Generate safe filename
-    const ext = file.name.split('.').pop() || 'bin';
-    const safeName = file.name
+    const ext = filename.split('.').pop() || 'bin';
+    const safeName = filename
       .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9-_]/g, '_')
       .substring(0, 60);
-    const filename = `${safeName}-${Date.now()}.${ext}`;
-    const storagePath = `${BOARD_FOLDER}/${filename}`;
+    const finalFilename = `${safeName}-${Date.now()}.${ext}`;
+    const storagePath = `${BOARD_FOLDER}/${finalFilename}`;
 
-    // Upload to storage — use arrayBuffer directly (same as admin media route)
-    const arrayBuffer = await file.arrayBuffer();
-    const { error: uploadError } = await supabase.storage
+    // Create signed upload URL (valid for 120 seconds)
+    const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
-      .upload(storagePath, arrayBuffer, {
-        contentType: file.type,
-        upsert: false,
-      });
+      .createSignedUploadUrl(storagePath);
 
-    if (uploadError) {
-      console.error('[Board] Upload error:', JSON.stringify(uploadError), 'path:', storagePath);
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    if (error) {
+      console.error('[Board] Signed URL error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Get public URL for after upload
+    const { data: publicUrlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(storagePath);
 
-    const fileUrl = urlData.publicUrl;
+    return NextResponse.json({
+      signedUrl: data.signedUrl,
+      token: data.token,
+      storagePath,
+      publicUrl: publicUrlData.publicUrl,
+      fileType: contentType,
+      title,
+    });
+  } catch (error) {
+    console.error('[Board] POST error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
-    // Insert DB row
+// PUT — confirm upload: create DB row after client uploads to storage
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = getFamilyDataClient();
+    const { storagePath, publicUrl, fileType, title = '' } = await request.json();
+
+    if (!storagePath || !publicUrl || !fileType) {
+      return NextResponse.json({ error: 'storagePath, publicUrl, fileType required' }, { status: 400 });
+    }
+
     const { data: item, error: insertError } = await supabase
       .from('family_board_items')
-      .insert({ title, file_url: fileUrl, file_type: file.type, storage_path: storagePath })
+      .insert({
+        title,
+        file_url: publicUrl,
+        file_type: fileType,
+        storage_path: storagePath,
+      })
       .select()
       .single();
 
     if (insertError) {
       console.error('[Board] Insert error:', insertError);
-      await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
-    console.error('[Board] POST error:', error instanceof Error ? `${error.message}\n${error.stack}` : String(error));
+    console.error('[Board] PUT error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

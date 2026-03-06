@@ -68,15 +68,42 @@ export function FamilyBoardCard({ className }: { className?: string }) {
     setUploading(true);
     setError(null);
     try {
-      const form = new FormData();
-      form.append('file', file);
-      const res = await fetch('/api/board', { method: 'POST', body: form });
-      if (res.ok) {
-        const data = await res.json();
+      // Step 1: Get signed upload URL from our API
+      const initRes = await fetch('/api/board', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type, title: '' }),
+      });
+      if (!initRes.ok) {
+        const errData = await initRes.json().catch(() => ({ error: initRes.statusText }));
+        setError(errData.error || `Init failed (${initRes.status})`);
+        return;
+      }
+      const { signedUrl, storagePath, publicUrl, fileType, title } = await initRes.json();
+
+      // Step 2: Upload directly to Supabase Storage (bypasses Vercel size limit)
+      const uploadRes = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      if (!uploadRes.ok) {
+        setError(`Storage upload failed (${uploadRes.status})`);
+        return;
+      }
+
+      // Step 3: Confirm upload — create DB row
+      const confirmRes = await fetch('/api/board', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storagePath, publicUrl, fileType, title }),
+      });
+      if (confirmRes.ok) {
+        const data = await confirmRes.json();
         setItems(prev => [data.item, ...prev]);
       } else {
-        const errData = await res.json().catch(() => ({ error: res.statusText }));
-        setError(errData.error || `Upload failed (${res.status})`);
+        const errData = await confirmRes.json().catch(() => ({ error: confirmRes.statusText }));
+        setError(errData.error || `Confirm failed (${confirmRes.status})`);
       }
     } catch (err) {
       console.error('[Board] Upload error:', err);
