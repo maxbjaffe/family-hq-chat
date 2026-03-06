@@ -215,7 +215,7 @@ export default function UnifiedHomePage() {
         <div className="px-6 pt-3 pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 {new Date().toLocaleDateString("en-US", {
                   weekday: "long",
                   month: "long",
@@ -223,13 +223,13 @@ export default function UnifiedHomePage() {
                   year: "numeric",
                 })}
               </h1>
-              <p className="text-slate-600 text-sm mt-0.5">
+              <p className="text-slate-500 text-sm mt-0.5">
                 Good {getTimeOfDayGreeting()}, Jaffe Family!
               </p>
             </div>
             <WeatherCard inline />
             <div className="flex flex-col items-end gap-1.5">
-              <Clock size="lg" />
+              <Clock size="md" />
               <div className="flex items-center gap-2">
                 <SyncIndicator />
                 <ParentsButton className="min-h-[48px]" />

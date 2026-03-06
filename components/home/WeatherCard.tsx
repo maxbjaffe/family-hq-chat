@@ -55,10 +55,10 @@ export function WeatherCard({ className, inline }: WeatherCardProps) {
     return (
       <div className={`flex items-center gap-4 ${className ?? ''}`}>
         {/* Current */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-2xl">{weather.icon}</span>
-          <span className="text-xl font-bold text-slate-800">{weather.temperature}°F</span>
-          <span className="text-xs text-slate-500">
+        <div className="flex items-center gap-2">
+          <span className="text-3xl">{weather.icon}</span>
+          <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{weather.temperature}°F</span>
+          <span className="text-xs text-slate-500 ml-1">
             H:{weather.high}° L:{weather.low}°
           </span>
         </div>
