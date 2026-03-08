@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getFamilyDataClient();
     const body = await request.json();
-    const { filename, contentType, title = '' } = body;
+    const { filename, contentType, title = '', icon_type = 'general-doc' } = body;
 
     if (!filename || !contentType) {
       return NextResponse.json({ error: 'filename and contentType required' }, { status: 400 });
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
       publicUrl: publicUrlData.publicUrl,
       fileType: contentType,
       title,
+      icon_type,
     });
   } catch (error) {
     console.error('[Board] POST error:', error);
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const supabase = getFamilyDataClient();
-    const { storagePath, publicUrl, fileType, title = '' } = await request.json();
+    const { storagePath, publicUrl, fileType, title = '', icon_type = 'general-doc' } = await request.json();
 
     if (!storagePath || !publicUrl || !fileType) {
       return NextResponse.json({ error: 'storagePath, publicUrl, fileType required' }, { status: 400 });
@@ -109,6 +110,7 @@ export async function PUT(request: NextRequest) {
         file_url: publicUrl,
         file_type: fileType,
         storage_path: storagePath,
+        icon_type,
       })
       .select()
       .single();
@@ -130,15 +132,19 @@ export async function PATCH(request: NextRequest) {
   try {
     const supabase = getFamilyDataClient();
     const body = await request.json();
-    const { id, title } = body;
+    const { id, title, icon_type } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
+    const updates: Record<string, string> = {};
+    if (title !== undefined) updates.title = title ?? '';
+    if (icon_type !== undefined) updates.icon_type = icon_type;
+
     const { data, error } = await supabase
       .from('family_board_items')
-      .update({ title: title ?? '' })
+      .update(Object.keys(updates).length > 0 ? updates : { title: title ?? '' })
       .eq('id', id)
       .select()
       .single();

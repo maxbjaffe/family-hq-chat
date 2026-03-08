@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const title = (formData.get('title') as string) || '';
+    const icon_type = (formData.get('icon_type') as string) || 'general-doc';
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
 
     const { data: item, error: insertError } = await supabase
       .from('family_board_items')
-      .insert({ title, file_url: urlData.publicUrl, file_type: file.type, storage_path: storagePath })
+      .insert({ title, file_url: urlData.publicUrl, file_type: file.type, storage_path: storagePath, icon_type })
       .select()
       .single();
 
