@@ -279,8 +279,9 @@ export default function UnifiedHomePage() {
             <FunFactCard funFact={content?.funFact ?? null} className="h-full" />
           </div>
 
-          {/* Bottom: Recharge | House Tasks */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Bottom: School | Recharge | House Tasks */}
+          <div className="grid grid-cols-3 gap-3">
+            <SchoolThisWeekCard className="h-full overflow-auto" />
             <RechargeQuickLaunch className="h-full overflow-auto" />
             <HouseTasks className="h-full overflow-auto" />
           </div>
