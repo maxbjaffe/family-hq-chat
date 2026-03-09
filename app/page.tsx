@@ -263,8 +263,11 @@ export default function UnifiedHomePage() {
 
         {/* Row 2: Main content grid */}
         <div className="px-6 min-h-0 grid grid-rows-[auto_1fr_auto_auto] gap-3 pb-3">
-          {/* Top: Family Board — full width */}
-          <FamilyBoardCard className="overflow-auto" />
+          {/* Top: School This Week + Family Board (side by side) */}
+          <div className="grid grid-cols-2 gap-3">
+            <SchoolThisWeekCard className="overflow-auto" />
+            <FamilyBoardCard className="overflow-auto" />
+          </div>
 
           {/* Middle: Today's Schedule (1col) | Rest of Week (2col) */}
           <div className="grid grid-cols-3 gap-3 min-h-0">
@@ -279,9 +282,8 @@ export default function UnifiedHomePage() {
             <FunFactCard funFact={content?.funFact ?? null} className="h-full" />
           </div>
 
-          {/* Bottom: School | Recharge | House Tasks */}
-          <div className="grid grid-cols-3 gap-3">
-            <SchoolThisWeekCard className="h-full overflow-auto" />
+          {/* Bottom: Recharge | House Tasks */}
+          <div className="grid grid-cols-2 gap-3">
             <RechargeQuickLaunch className="h-full overflow-auto" />
             <HouseTasks className="h-full overflow-auto" />
           </div>
