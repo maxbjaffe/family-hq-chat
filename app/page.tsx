@@ -20,6 +20,7 @@ import { RestOfWeekCard } from "@/components/home/RestOfWeekCard";
 import { RechargeQuickLaunch } from "@/components/home/RechargeQuickLaunch";
 import { FunStuffCarousel } from "@/components/home/FunStuffCarousel";
 import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
+import { SchoolThisWeekCard } from "@/components/home/SchoolThisWeekCard";
 import { WeatherCard } from "@/components/home/WeatherCard";
 import { QuoteCard, JokeCard, FunFactCard } from "@/components/home/ContentCards";
 
@@ -373,8 +374,9 @@ export default function UnifiedHomePage() {
           <RestOfWeekCard items={upcomingItems} />
         </div>
 
-        {/* ── Family Board + House Tasks (side by side) ────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* ── School + Family Board + House Tasks ────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <SchoolThisWeekCard />
           <FamilyBoardCard />
           <HouseTasks />
         </div>
