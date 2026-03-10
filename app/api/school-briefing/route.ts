@@ -10,6 +10,19 @@ function getSupabaseClient() {
 
 const CHILDREN = ['riley', 'parker', 'devin'];
 
+/** Case-insensitive check if a children array includes a child name */
+function hasChild(children: unknown, childName: string): boolean {
+  if (!Array.isArray(children)) return false;
+  return children.some(
+    (c: unknown) => typeof c === 'string' && c.toLowerCase() === childName
+  );
+}
+
+/** Check if all 3 kids are in the children array */
+function isFamily(children: unknown): boolean {
+  return CHILDREN.every(c => hasChild(children, c));
+}
+
 export async function GET() {
   const supabase = getSupabaseClient();
 
@@ -21,7 +34,7 @@ export async function GET() {
   const [eventsRes, actionsRes] = await Promise.all([
     supabase
       .from('radar_family_feed')
-      .select('id, title, event_date, children, source, scope, item_type')
+      .select('id, title, event_date, children, scope, item_type, source_type')
       .eq('item_type', 'event')
       .eq('dismissed', false)
       .gte('event_date', now.toISOString())
@@ -30,7 +43,7 @@ export async function GET() {
       .limit(30),
     supabase
       .from('radar_family_feed')
-      .select('id, title, deadline, urgency, children, source, item_type')
+      .select('id, title, deadline, urgency, children, item_type, source_type')
       .eq('item_type', 'action')
       .eq('dismissed', false)
       .neq('lifecycle', 'past')
@@ -40,26 +53,28 @@ export async function GET() {
   ]);
 
   const allEvents = eventsRes.data || [];
-  const allActions = actionsRes.data || [];
+  // Only include actions that have at least one child associated (skip personal items)
+  const allActions = (actionsRes.data || []).filter(
+    a => Array.isArray(a.children) && a.children.length > 0
+  );
 
   // Group by child
   const byChild: Record<string, {
-    events: Array<{ id: string; title: string; date: string; source: string }>;
+    events: Array<{ id: string; title: string; date: string }>;
     actions: Array<{ id: string; title: string; deadline: string | null; urgency: number }>;
   }> = {};
 
   for (const child of CHILDREN) {
     const childEvents = allEvents
-      .filter(e => (e.children as string[] || []).includes(child))
+      .filter(e => hasChild(e.children, child))
       .map(e => ({
         id: e.id,
         title: e.title || 'Untitled',
         date: e.event_date || '',
-        source: e.source || '',
       }));
 
     const childActions = allActions
-      .filter(a => (a.children as string[] || []).includes(child))
+      .filter(a => hasChild(a.children, child))
       .map(a => ({
         id: a.id,
         title: a.title || 'Untitled',
@@ -74,15 +89,11 @@ export async function GET() {
 
   // Family-wide events (relevant to all 3 kids)
   const familyEvents = allEvents
-    .filter(e => {
-      const children = (e.children as string[]) || [];
-      return CHILDREN.every(c => children.includes(c));
-    })
+    .filter(e => isFamily(e.children))
     .map(e => ({
       id: e.id,
       title: e.title || 'Untitled',
       date: e.event_date || '',
-      source: e.source || '',
     }));
 
   return NextResponse.json({
