@@ -278,21 +278,21 @@ export default function UnifiedHomePage() {
 
           {/* Right column */}
           <div className="min-h-0 flex flex-col gap-3">
-            {/* Today + Rest of Week */}
-            <div className="grid grid-cols-2 gap-3 min-h-0 flex-1">
+            {/* Today + Rest of Week — compact, content-sized */}
+            <div className="grid grid-cols-2 gap-3 shrink-0 max-h-[35%] min-h-0">
               <TodayHeroCard items={upcomingItems} kioskMode hideWeather className="h-full overflow-auto" />
               <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded className="h-full overflow-auto" />
             </div>
 
             {/* Quote | Joke | Fun Fact */}
-            <div className="grid grid-cols-3 gap-3 shrink-0">
+            <div className="grid grid-cols-3 gap-3 flex-1 min-h-0">
               <QuoteCard quote={content?.quote ?? null} className="h-full" />
               <JokeCard joke={content?.joke ?? null} className="h-full" />
               <FunFactCard funFact={content?.funFact ?? null} className="h-full" />
             </div>
 
             {/* Recharge | House Tasks */}
-            <div className="grid grid-cols-2 gap-3 shrink-0">
+            <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
               <RechargeQuickLaunch className="h-full overflow-auto" />
               <HouseTasks className="h-full overflow-auto" />
             </div>
