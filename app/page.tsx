@@ -261,31 +261,41 @@ export default function UnifiedHomePage() {
           </div>
         </div>
 
-        {/* Row 2: Main content grid */}
-        <div className="px-6 min-h-0 grid grid-rows-[auto_1fr_auto_auto_auto] gap-3 pb-3">
-          {/* Row 1: Family Board (compact, auto height) */}
-          <FamilyBoardCard className="overflow-auto" />
+        {/* Row 2: Main content — two columns */}
+        <div className="px-6 min-h-0 grid grid-cols-[1fr_1fr] gap-3 pb-3">
+          {/* Left column */}
+          <div className="min-h-0 flex flex-col gap-3">
+            {/* Family Board — capped height, horizontal scroll */}
+            <div className="max-h-[120px] overflow-hidden shrink-0">
+              <FamilyBoardCard />
+            </div>
 
-          {/* Row 2: Cottle School Brief (flexible, scrollable) */}
-          <CottleSchoolBriefCard className="overflow-y-auto" />
-
-          {/* Row 3: Today's Schedule (1col) | Rest of Week (2col) */}
-          <div className="grid grid-cols-3 gap-3 min-h-0">
-            <TodayHeroCard items={upcomingItems} kioskMode hideWeather className="h-full overflow-auto" />
-            <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded className="col-span-2" />
+            {/* Cottle School Brief — fills remaining space, scrolls */}
+            <div className="flex-1 min-h-0">
+              <CottleSchoolBriefCard className="h-full min-h-0 overflow-y-auto" />
+            </div>
           </div>
 
-          {/* Row 4: Quote | Joke | Fun Fact */}
-          <div className="grid grid-cols-3 gap-3 min-h-[120px]">
-            <QuoteCard quote={content?.quote ?? null} className="h-full" />
-            <JokeCard joke={content?.joke ?? null} className="h-full" />
-            <FunFactCard funFact={content?.funFact ?? null} className="h-full" />
-          </div>
+          {/* Right column */}
+          <div className="min-h-0 flex flex-col gap-3">
+            {/* Today + Rest of Week */}
+            <div className="grid grid-cols-2 gap-3 min-h-0 flex-1">
+              <TodayHeroCard items={upcomingItems} kioskMode hideWeather className="h-full overflow-auto" />
+              <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded className="h-full overflow-auto" />
+            </div>
 
-          {/* Row 5: Recharge | House Tasks */}
-          <div className="grid grid-cols-2 gap-3">
-            <RechargeQuickLaunch className="h-full overflow-auto" />
-            <HouseTasks className="h-full overflow-auto" />
+            {/* Quote | Joke | Fun Fact */}
+            <div className="grid grid-cols-3 gap-3 shrink-0">
+              <QuoteCard quote={content?.quote ?? null} className="h-full" />
+              <JokeCard joke={content?.joke ?? null} className="h-full" />
+              <FunFactCard funFact={content?.funFact ?? null} className="h-full" />
+            </div>
+
+            {/* Recharge | House Tasks */}
+            <div className="grid grid-cols-2 gap-3 shrink-0">
+              <RechargeQuickLaunch className="h-full overflow-auto" />
+              <HouseTasks className="h-full overflow-auto" />
+            </div>
           </div>
         </div>
       </div>
