@@ -263,11 +263,11 @@ export default function UnifiedHomePage() {
 
         {/* Row 2: Main content grid */}
         <div className="px-6 min-h-0 grid grid-rows-[auto_1fr_auto_auto] gap-3 pb-3">
-          {/* Top: School This Week + Family Board (side by side) */}
-          <div className="grid grid-cols-2 gap-3">
-            <CottleSchoolBriefCard className="overflow-auto" />
-            <FamilyBoardCard className="overflow-auto" />
-          </div>
+          {/* Top: Family Board (full width) */}
+          <FamilyBoardCard className="overflow-auto" />
+
+          {/* Cottle School Brief (full width) */}
+          <CottleSchoolBriefCard className="overflow-auto" />
 
           {/* Middle: Today's Schedule (1col) | Rest of Week (2col) */}
           <div className="grid grid-cols-3 gap-3 min-h-0">
@@ -377,10 +377,14 @@ export default function UnifiedHomePage() {
           <RestOfWeekCard items={upcomingItems} />
         </div>
 
-        {/* ── School + Family Board + House Tasks ────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <CottleSchoolBriefCard />
+        {/* ── Family Board (full width) ────────────────────── */}
+        <div className="mb-6">
           <FamilyBoardCard />
+        </div>
+
+        {/* ── Cottle School Brief + House Tasks ──────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <CottleSchoolBriefCard />
           <HouseTasks />
         </div>
       </div>
