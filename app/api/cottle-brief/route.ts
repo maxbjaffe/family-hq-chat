@@ -24,27 +24,40 @@ interface CottleBriefResponse {
   generatedAt: string;
 }
 
+function resolveChildren(raw: string[]): string[] {
+  const resolved: string[] = [];
+  for (const c of raw) {
+    const key = c.toLowerCase();
+    // "kids" or "all" maps to all three children
+    if (key === 'kids' || key === 'all' || key === 'family') {
+      return [...CHILDREN];
+    }
+    if (CHILDREN.includes(key)) {
+      resolved.push(key);
+    }
+  }
+  return resolved;
+}
+
 function buildByChild(items: Array<Record<string, unknown>>): Record<string, ChildBrief> {
   const byChild: Record<string, ChildBrief> = {};
 
   for (const item of items) {
-    const children = (item.children as string[]) || (item.child_relevance as string[]) || [];
+    const rawChildren = (item.children as string[]) || (item.child_relevance as string[]) || [];
+    const children = resolveChildren(rawChildren);
     const events = (item.events as Array<{ title: string; date?: string }>) || [];
     const actionItems = (item.action_items as Array<{ action: string; urgency: string }>) || [];
 
     for (const child of children) {
-      const key = child.toLowerCase();
-      if (!CHILDREN.includes(key)) continue;
-
-      if (!byChild[key]) {
-        byChild[key] = { events: [], actions: [] };
+      if (!byChild[child]) {
+        byChild[child] = { events: [], actions: [] };
       }
 
       for (const e of events) {
-        byChild[key].events.push({ title: e.title, date: e.date || '' });
+        byChild[child].events.push({ title: e.title, date: e.date || '' });
       }
       for (const a of actionItems) {
-        byChild[key].actions.push({ action: a.action, urgency: a.urgency });
+        byChild[child].actions.push({ action: a.action, urgency: a.urgency });
       }
     }
   }
