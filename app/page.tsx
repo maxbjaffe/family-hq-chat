@@ -20,7 +20,7 @@ import { RestOfWeekCard } from "@/components/home/RestOfWeekCard";
 import { RechargeQuickLaunch } from "@/components/home/RechargeQuickLaunch";
 import { FunStuffCarousel } from "@/components/home/FunStuffCarousel";
 import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
-import { SchoolThisWeekCard } from "@/components/home/SchoolThisWeekCard";
+import { CottleSchoolBriefCard } from "@/components/home/CottleSchoolBriefCard";
 import { WeatherCard } from "@/components/home/WeatherCard";
 import { QuoteCard, JokeCard, FunFactCard } from "@/components/home/ContentCards";
 
@@ -265,7 +265,7 @@ export default function UnifiedHomePage() {
         <div className="px-6 min-h-0 grid grid-rows-[auto_1fr_auto_auto] gap-3 pb-3">
           {/* Top: School This Week + Family Board (side by side) */}
           <div className="grid grid-cols-2 gap-3">
-            <SchoolThisWeekCard className="overflow-auto" />
+            <CottleSchoolBriefCard className="overflow-auto" />
             <FamilyBoardCard className="overflow-auto" />
           </div>
 
@@ -379,7 +379,7 @@ export default function UnifiedHomePage() {
 
         {/* ── School + Family Board + House Tasks ────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <SchoolThisWeekCard />
+          <CottleSchoolBriefCard />
           <FamilyBoardCard />
           <HouseTasks />
         </div>
