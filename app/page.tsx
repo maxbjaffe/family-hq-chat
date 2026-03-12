@@ -262,27 +262,27 @@ export default function UnifiedHomePage() {
         </div>
 
         {/* Row 2: Main content grid */}
-        <div className="px-6 min-h-0 grid grid-rows-[auto_1fr_auto_auto] gap-3 pb-3">
-          {/* Top: Family Board (full width) */}
+        <div className="px-6 min-h-0 grid grid-rows-[auto_1fr_auto_auto_auto] gap-3 pb-3">
+          {/* Row 1: Family Board (compact, auto height) */}
           <FamilyBoardCard className="overflow-auto" />
 
-          {/* Cottle School Brief (full width) */}
-          <CottleSchoolBriefCard className="overflow-auto" />
+          {/* Row 2: Cottle School Brief (flexible, scrollable) */}
+          <CottleSchoolBriefCard className="overflow-y-auto" />
 
-          {/* Middle: Today's Schedule (1col) | Rest of Week (2col) */}
+          {/* Row 3: Today's Schedule (1col) | Rest of Week (2col) */}
           <div className="grid grid-cols-3 gap-3 min-h-0">
             <TodayHeroCard items={upcomingItems} kioskMode hideWeather className="h-full overflow-auto" />
             <RestOfWeekCard items={upcomingItems} horizontal defaultExpanded className="col-span-2" />
           </div>
 
-          {/* Content: Quote | Joke | Fun Fact */}
+          {/* Row 4: Quote | Joke | Fun Fact */}
           <div className="grid grid-cols-3 gap-3 min-h-[120px]">
             <QuoteCard quote={content?.quote ?? null} className="h-full" />
             <JokeCard joke={content?.joke ?? null} className="h-full" />
             <FunFactCard funFact={content?.funFact ?? null} className="h-full" />
           </div>
 
-          {/* Bottom: Recharge | House Tasks */}
+          {/* Row 5: Recharge | House Tasks */}
           <div className="grid grid-cols-2 gap-3">
             <RechargeQuickLaunch className="h-full overflow-auto" />
             <HouseTasks className="h-full overflow-auto" />

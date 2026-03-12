@@ -149,7 +149,7 @@ export function CottleSchoolBriefCard({ className }: { className?: string }) {
   const totalActions = childNames.reduce((sum, c) => sum + (data?.byChild[c]?.actions.length || 0), 0);
 
   return (
-    <Card className={`bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 p-5 flex flex-col ${className ?? ''}`}>
+    <Card className={`bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 p-5 flex flex-col min-h-0 ${className ?? ''}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <button
@@ -189,7 +189,7 @@ export function CottleSchoolBriefCard({ className }: { className?: string }) {
 
       {/* Expanded content */}
       {expanded && (
-        <div className="mt-3 space-y-3 flex-1">
+        <div className="mt-3 space-y-3 flex-1 min-h-0 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="h-5 w-5 animate-spin text-emerald-400" />

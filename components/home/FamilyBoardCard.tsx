@@ -226,7 +226,7 @@ export function FamilyBoardCard({ className }: { className?: string }) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
             {items.map(item => {
               const logo = getLogoByType(item.icon_type);
               return (
@@ -234,12 +234,12 @@ export function FamilyBoardCard({ className }: { className?: string }) {
                   {/* Thumbnail — show logo instead of raw image */}
                   <button
                     onClick={() => handleClick(item)}
-                    className="w-full aspect-square rounded-md overflow-hidden bg-white border border-slate-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full aspect-[4/3] rounded-md overflow-hidden bg-white border border-slate-200 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     <img
                       src={logo.imagePath}
                       alt={logo.label}
-                      className="w-full h-full object-contain p-1"
+                      className="w-full h-full object-contain p-0.5"
                     />
                   </button>
 
@@ -262,12 +262,12 @@ export function FamilyBoardCard({ className }: { className?: string }) {
                         if (e.key === 'Enter') handleEditSave(item.id);
                         if (e.key === 'Escape') setEditingId(null);
                       }}
-                      className="mt-0.5 w-full text-[10px] px-1 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      className="mt-0.5 w-full text-xs px-1 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                     />
                   ) : (
                     <button
                       onClick={() => startEdit(item)}
-                      className="mt-0.5 w-full text-left text-[10px] text-slate-500 truncate hover:text-blue-600 flex items-center gap-0.5 min-h-[16px] leading-tight"
+                      className="mt-0.5 w-full text-left text-xs text-slate-500 truncate hover:text-blue-600 flex items-center gap-0.5 min-h-[16px] leading-tight"
                       title="Click to edit caption"
                     >
                       <span className="truncate">{item.title || 'Caption...'}</span>
