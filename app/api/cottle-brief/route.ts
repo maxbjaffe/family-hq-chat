@@ -55,51 +55,41 @@ function buildByChild(items: Array<Record<string, unknown>>): Record<string, Chi
 export async function GET(): Promise<NextResponse<CottleBriefResponse | { error: string }>> {
   const supabase = getSupabaseClient();
 
-  // Try to read from cached dashboard view
-  const { data: view } = await supabase
-    .from('radar_dashboard_views')
-    .select('cached_summary, cached_data, cached_at, summary_cached_at')
-    .eq('slug', 'school-brief')
-    .single();
-
-  if (view?.cached_data && view.cached_at) {
-    const cachedData = view.cached_data as { items?: Array<Record<string, unknown>>; totalCount?: number };
-    const summaryAge = view.summary_cached_at
-      ? Math.round((Date.now() - new Date(view.summary_cached_at).getTime()) / 60000)
-      : Infinity;
-
-    return NextResponse.json({
-      summary: view.cached_summary || null,
-      summaryAge,
-      byChild: buildByChild(cachedData.items || []),
-      itemCount: cachedData.totalCount || 0,
-      generatedAt: view.cached_at,
-    });
-  }
-
-  // Fallback: direct query of school extractions (no AI)
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 7);
 
-  const { data: extractions } = await supabase
-    .from('radar_school_extractions')
-    .select('id, subject, email_date, child_relevance, events, action_items')
-    .gte('email_date', cutoff.toISOString())
-    .is('archived_at', null)
-    .order('email_date', { ascending: false })
-    .limit(20);
+  // Fetch cached summary and live school extractions in parallel
+  const [viewRes, extractionsRes] = await Promise.all([
+    supabase
+      .from('radar_dashboard_views')
+      .select('cached_summary, cached_at, summary_cached_at')
+      .eq('slug', 'school-brief')
+      .single(),
+    supabase
+      .from('radar_school_extractions')
+      .select('id, subject, email_date, child_relevance, events, action_items')
+      .gte('email_date', cutoff.toISOString())
+      .is('archived_at', null)
+      .order('email_date', { ascending: false })
+      .limit(20),
+  ]);
 
-  const items = (extractions || []).map(row => ({
+  const view = viewRes.data;
+  const items = (extractionsRes.data || []).map(row => ({
     ...row,
     children: row.child_relevance,
   }));
 
+  const summaryAge = view?.summary_cached_at
+    ? Math.round((Date.now() - new Date(view.summary_cached_at).getTime()) / 60000)
+    : -1;
+
   return NextResponse.json({
-    summary: null,
-    summaryAge: Infinity,
+    summary: view?.cached_summary || null,
+    summaryAge,
     byChild: buildByChild(items as Array<Record<string, unknown>>),
     itemCount: items.length,
-    generatedAt: new Date().toISOString(),
+    generatedAt: view?.cached_at || new Date().toISOString(),
   });
 }
 
