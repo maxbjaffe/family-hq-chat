@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { getCalendarColor } from "@/lib/calendar-colors";
+import { ParentNutritionCard } from "@/components/nutrition/ParentNutritionCard";
 
 interface Task {
   id: string;
@@ -94,6 +95,9 @@ function ParentDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Kids for nutrition cards
+  const [kids, setKids] = useState<FamilyMember[]>([]);
+
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -119,6 +123,9 @@ function ParentDashboardContent() {
             setUserAvatar(currentUser.avatar_url);
           }
         }
+        // Extract kid members for nutrition cards
+        const kidMembers = members.filter((m) => m.role === "kid");
+        setKids(kidMembers);
       }
 
       // Now fetch everything else in parallel
@@ -713,6 +720,24 @@ function ParentDashboardContent() {
             </Card>
           </div>
         </div>
+
+        {/* Nutrition Today */}
+        {kids.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">
+              Nutrition Today
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {kids.map((kid) => (
+                <ParentNutritionCard
+                  key={kid.id}
+                  memberId={kid.id}
+                  kidName={kid.name.split(" ")[0]}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
