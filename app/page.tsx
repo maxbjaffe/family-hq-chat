@@ -77,8 +77,22 @@ function getTimeOfDayGreeting(): string {
   return "Evening";
 }
 
+interface NutritionState {
+  avatar_state: string;
+  protein_total: number;
+  veggie_total: number;
+  sugar_total: number;
+  water_total: number;
+  vitamin_total: number;
+}
+
+function getDefaultAvatarMode(): "checklist" | "nutrition" {
+  return new Date().getHours() >= 12 ? "nutrition" : "checklist";
+}
+
 export default function UnifiedHomePage() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [nutritionStates, setNutritionStates] = useState<Record<string, NutritionState> | undefined>(undefined);
   const [content, setContent] = useState<ContentData | null>(null);
   const [upcomingItems, setUpcomingItems] = useState<UpcomingItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +136,33 @@ export default function UnifiedHomePage() {
             }));
         }
 
-        setFamilyMembers([...kidsWithChecklists, ...pets]);
+        const allMembers = [...kidsWithChecklists, ...pets];
+        setFamilyMembers(allMembers);
+
+        // Fetch nutrition daily state for each kid (fire-and-forget style, non-blocking)
+        const kids = kidsWithChecklists as FamilyMember[];
+        if (kids.length > 0) {
+          Promise.all(
+            kids.map(async (kid) => {
+              try {
+                const res = await fetch(`/api/nutrition/state/${kid.id}`);
+                if (!res.ok) return null;
+                const data = await res.json();
+                return { memberId: kid.id, state: data.state as NutritionState };
+              } catch {
+                return null;
+              }
+            })
+          ).then((results) => {
+            const states: Record<string, NutritionState> = {};
+            for (const r of results) {
+              if (r) states[r.memberId] = r.state;
+            }
+            if (Object.keys(states).length > 0) {
+              setNutritionStates(states);
+            }
+          });
+        }
       }
 
       if (contentRes.ok) {
@@ -369,6 +409,8 @@ export default function UnifiedHomePage() {
           <FamilyAvatarRow
             members={familyMembers}
             allKidsComplete={allKidsComplete}
+            nutritionStates={nutritionStates}
+            defaultMode={getDefaultAvatarMode()}
           />
         </div>
 
