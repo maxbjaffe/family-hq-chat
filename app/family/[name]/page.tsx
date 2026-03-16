@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
+  Apple,
   Battery,
   Cake,
   Droplets,
@@ -334,7 +335,7 @@ export default function FamilyProfilePage() {
                 compact
               />
             </div>
-            {/* Recharge quick buttons */}
+            {/* Quick action buttons */}
             <div className="flex-shrink-0 mt-3 flex gap-2 justify-center">
               <Button
                 variant="outline"
@@ -343,6 +344,14 @@ export default function FamilyProfilePage() {
               >
                 <Battery className="h-5 w-5" />
                 Recharge
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/nutrition')}
+                className="min-h-[48px] text-base gap-2"
+              >
+                <Apple className="h-5 w-5" />
+                Nutrition
               </Button>
               <Button
                 variant="outline"

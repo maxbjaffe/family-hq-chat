@@ -8,7 +8,8 @@ import { SchoolCard } from './SchoolCard';
 import { ComingUpCard } from './ComingUpCard';
 import { KidSchoolTab } from '@/components/KidSchoolTab';
 import { RechargeMenu } from '@/components/recharge';
-import { Battery, ChevronDown, ChevronUp } from 'lucide-react';
+import { NutritionMenu } from '@/components/nutrition';
+import { Battery, Apple, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 interface KidProfileDashboardProps {
@@ -30,6 +31,7 @@ export function KidProfileDashboard({
 }: KidProfileDashboardProps) {
   const [schoolEventTitles, setSchoolEventTitles] = useState<string[]>([]);
   const [showRecharge, setShowRecharge] = useState(false);
+  const [showNutrition, setShowNutrition] = useState(false);
 
   // Get first name for matching
   const firstName = memberName.split(' ')[0];
@@ -104,6 +106,32 @@ export function KidProfileDashboard({
         {showRecharge && (
           <div className="border-t border-slate-200 p-4">
             <RechargeMenu childId={memberId} childName={firstName} />
+          </div>
+        )}
+      </Card>
+
+      {/* Nutrition Tracker */}
+      <Card className="overflow-hidden">
+        <button
+          onClick={() => setShowNutrition(!showNutrition)}
+          className="w-full flex items-center gap-3 p-4 min-h-[56px] cursor-pointer hover:bg-green-50/50 transition-colors"
+        >
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex-shrink-0">
+            <Apple className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="font-bold text-slate-800 text-base">Nutrition Tracker</h3>
+            <p className="text-sm text-slate-500">Track what you eat</p>
+          </div>
+          {showNutrition ? (
+            <ChevronUp className="h-5 w-5 text-slate-400" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-slate-400" />
+          )}
+        </button>
+        {showNutrition && (
+          <div className="border-t border-slate-200 p-4">
+            <NutritionMenu childId={memberId} childName={firstName} />
           </div>
         )}
       </Card>

@@ -18,6 +18,7 @@ import { TodayHeroCard } from "@/components/home/TodayHeroCard";
 import { FamilyAvatarRow } from "@/components/home/FamilyAvatarRow";
 import { RestOfWeekCard } from "@/components/home/RestOfWeekCard";
 import { RechargeQuickLaunch } from "@/components/home/RechargeQuickLaunch";
+import { NutritionQuickLaunch } from "@/components/home/NutritionQuickLaunch";
 import { FunStuffCarousel } from "@/components/home/FunStuffCarousel";
 import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
 import { CottleSchoolBriefCard } from "@/components/home/CottleSchoolBriefCard";
@@ -331,9 +332,10 @@ export default function UnifiedHomePage() {
               <FunFactCard funFact={content?.funFact ?? null} className="h-full" />
             </div>
 
-            {/* Recharge | House Tasks */}
-            <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
+            {/* Recharge | Nutrition | House Tasks */}
+            <div className="grid grid-cols-3 gap-3 flex-1 min-h-0">
               <RechargeQuickLaunch className="h-full overflow-auto" />
+              <NutritionQuickLaunch className="h-full overflow-auto" />
               <HouseTasks className="h-full overflow-auto" />
             </div>
           </div>
@@ -414,14 +416,15 @@ export default function UnifiedHomePage() {
           />
         </div>
 
-        {/* ── Daily Fun + Recharge (side by side) ─────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* ── Daily Fun + Recharge + Nutrition ─────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <FunStuffCarousel
             content={content}
             onRefresh={refreshContent}
             refreshing={refreshingContent}
           />
           <RechargeQuickLaunch />
+          <NutritionQuickLaunch />
         </div>
 
         {/* ── Rest of the Week (collapsible) ──────────────────── */}

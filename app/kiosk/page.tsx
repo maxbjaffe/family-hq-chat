@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Sparkles, RefreshCw, X, Loader2, Battery } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, RefreshCw, X, Loader2, Battery, Apple } from "lucide-react";
 import confetti from "canvas-confetti";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
 import { Clock, HeaderClock } from "@/components/Clock";
 import { Avatar } from "@/components/Avatar";
 import { RechargeMenu } from "@/components/recharge";
+import { NutritionMenu } from "@/components/nutrition";
 import { useKiosk } from "@/components/KioskProvider";
 
 // Celebration video URL
@@ -72,6 +73,7 @@ export default function KioskPage() {
   const [hasShownVideo, setHasShownVideo] = useState(false);
   const [togglingItems, setTogglingItems] = useState<Set<string>>(new Set());
   const [showRecharge, setShowRecharge] = useState(false);
+  const [showNutrition, setShowNutrition] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const loadData = useCallback(async () => {
@@ -362,6 +364,19 @@ export default function KioskPage() {
               <Battery className="h-4 w-4 mr-1" />
               Recharge
             </Button>
+            <Button
+              onClick={() => setShowNutrition((v) => !v)}
+              size="sm"
+              className={`min-h-[40px] ${
+                showNutrition
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0"
+                  : ""
+              }`}
+              variant={showNutrition ? "default" : "outline"}
+            >
+              <Apple className="h-4 w-4 mr-1" />
+              Nutrition
+            </Button>
           </div>
         </div>
 
@@ -371,6 +386,13 @@ export default function KioskPage() {
           {showRecharge && (
             <Card className="p-4 mb-3 bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200 flex-shrink-0">
               <RechargeMenu />
+            </Card>
+          )}
+
+          {/* Nutrition Menu (inline above columns) */}
+          {showNutrition && (
+            <Card className="p-4 mb-3 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 flex-shrink-0">
+              <NutritionMenu />
             </Card>
           )}
 
@@ -550,6 +572,18 @@ export default function KioskPage() {
                   <Battery className="h-5 w-5 mr-2" />
                   Recharge
                 </Button>
+                <Button
+                  onClick={() => setShowNutrition((v) => !v)}
+                  className={`min-h-[48px] ${
+                    showNutrition
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 hover:from-green-600 hover:to-emerald-600"
+                      : ""
+                  }`}
+                  variant={showNutrition ? "default" : "outline"}
+                >
+                  <Apple className="h-5 w-5 mr-2" />
+                  Nutrition
+                </Button>
               </div>
             </div>
           </div>
@@ -576,6 +610,13 @@ export default function KioskPage() {
         {showRecharge && (
           <Card className="p-6 mb-6 bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
             <RechargeMenu />
+          </Card>
+        )}
+
+        {/* Nutrition Menu */}
+        {showNutrition && (
+          <Card className="p-6 mb-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+            <NutritionMenu />
           </Card>
         )}
 
