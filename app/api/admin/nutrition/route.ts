@@ -74,32 +74,53 @@ export async function GET() {
 }
 
 // ---------------------------------------------------------------------------
-// DELETE — Remove a single food by id
+// DELETE — Remove one or more foods by id
+// Supports: ?id=single-id or JSON body { ids: ["id1", "id2", ...] }
 // ---------------------------------------------------------------------------
 
 export async function DELETE(request: NextRequest) {
   try {
-    const id = request.nextUrl.searchParams.get("id");
-    if (!id) {
+    const supabase = getFamilyDataClient();
+
+    // Check for single id in query param
+    const singleId = request.nextUrl.searchParams.get("id");
+
+    if (singleId) {
+      const { error } = await supabase
+        .from("nutrition_foods")
+        .delete()
+        .eq("id", singleId);
+
+      if (error) {
+        console.error("[Admin Nutrition] Delete error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ deleted: 1 });
+    }
+
+    // Bulk delete via JSON body
+    const body = await request.json().catch(() => null);
+    const ids = body?.ids as string[] | undefined;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json(
-        { error: "Missing id parameter" },
+        { error: "Provide ?id=... or JSON body { ids: [...] }" },
         { status: 400 }
       );
     }
 
-    const supabase = getFamilyDataClient();
-
     const { error } = await supabase
       .from("nutrition_foods")
       .delete()
-      .eq("id", id);
+      .in("id", ids);
 
     if (error) {
-      console.error("[Admin Nutrition] Delete error:", error);
+      console.error("[Admin Nutrition] Bulk delete error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ deleted: true });
+    return NextResponse.json({ deleted: ids.length });
   } catch (error) {
     console.error("[Admin Nutrition] Unexpected error in DELETE:", error);
     return NextResponse.json(

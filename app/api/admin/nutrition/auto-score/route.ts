@@ -83,9 +83,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (foods.length > 20) {
+    if (foods.length > 25) {
       return NextResponse.json(
-        { error: "Maximum 20 foods per request" },
+        { error: "Maximum 25 foods per request" },
         { status: 400 }
       );
     }
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
+      max_tokens: 4096,
       temperature: 0,
       system: SCORING_PROMPT,
       messages: [

@@ -12,6 +12,9 @@ import {
   Sparkles,
   Trash2,
   X,
+  Lightbulb,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +32,11 @@ interface NutritionFood {
   sugar_score: number;
   water_score: number;
   vitamin_score: number;
+}
+
+interface FoodSuggestion {
+  name: string;
+  meal_categories: string[];
 }
 
 interface ScoredResult {
@@ -73,9 +81,19 @@ export default function NutritionFoodManager() {
   const [newFoodName, setNewFoodName] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [scoring, setScoring] = useState(false);
-  const [lastScored, setLastScored] = useState<ScoredResult | null>(null);
+  const [lastScored, setLastScored] = useState<ScoredResult[]>([]);
 
-  // Delete
+  // Suggestions
+  const [suggestions, setSuggestions] = useState<FoodSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
+  const [bulkAdding, setBulkAdding] = useState(false);
+
+  // Bulk delete
+  const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Single delete
   const [deleting, setDeleting] = useState<string | null>(null);
 
   // -----------------------------------------------------------------------
@@ -132,7 +150,7 @@ export default function NutritionFoodManager() {
   }
 
   // -----------------------------------------------------------------------
-  // Add food with AI auto-scoring
+  // Add single food with AI auto-scoring
   // -----------------------------------------------------------------------
 
   async function handleAddFood() {
@@ -146,7 +164,6 @@ export default function NutritionFoodManager() {
       return;
     }
 
-    // Check for duplicate
     const existing = foods.find(
       (f) => f.name.toLowerCase() === name.toLowerCase()
     );
@@ -156,7 +173,7 @@ export default function NutritionFoodManager() {
     }
 
     setScoring(true);
-    setLastScored(null);
+    setLastScored([]);
 
     try {
       const res = await fetch("/api/admin/nutrition/auto-score", {
@@ -174,13 +191,13 @@ export default function NutritionFoodManager() {
       }
 
       const result = await res.json();
-      const scored = result.scored?.[0] as ScoredResult | undefined;
+      const scored = result.scored as ScoredResult[] | undefined;
 
-      if (scored?.id) {
+      if (scored?.[0]?.id) {
         setLastScored(scored);
         setNewFoodName("");
         setSelectedCategories([]);
-        toast.success(`Added "${scored.name}" with AI-generated scores`);
+        toast.success(`Added "${scored[0].name}" with AI-generated scores`);
         await loadFoods();
       } else {
         toast.error("Failed to insert food");
@@ -201,7 +218,98 @@ export default function NutritionFoodManager() {
   }
 
   // -----------------------------------------------------------------------
-  // Delete food
+  // Suggestions
+  // -----------------------------------------------------------------------
+
+  async function loadSuggestions() {
+    setLoadingSuggestions(true);
+    setSuggestions([]);
+    setSelectedSuggestions(new Set());
+
+    try {
+      const res = await fetch("/api/admin/nutrition/suggest");
+      if (!res.ok) {
+        toast.error("Failed to load suggestions");
+        return;
+      }
+      const data = await res.json();
+      setSuggestions(data.suggestions || []);
+    } catch (error) {
+      console.error("[NutritionFoodManager] Suggestion error:", error);
+      toast.error("Failed to load suggestions");
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  }
+
+  function toggleSuggestion(index: number) {
+    setSelectedSuggestions((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }
+
+  function selectAllSuggestions() {
+    if (selectedSuggestions.size === suggestions.length) {
+      setSelectedSuggestions(new Set());
+    } else {
+      setSelectedSuggestions(new Set(suggestions.map((_, i) => i)));
+    }
+  }
+
+  async function handleBulkAdd() {
+    if (selectedSuggestions.size === 0) {
+      toast.error("Select at least one food to add");
+      return;
+    }
+
+    const toAdd = Array.from(selectedSuggestions).map((i) => suggestions[i]);
+    setBulkAdding(true);
+    setLastScored([]);
+
+    try {
+      const res = await fetch("/api/admin/nutrition/auto-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ foods: toAdd }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        toast.error(err.error || "Bulk add failed");
+        return;
+      }
+
+      const result = await res.json();
+      const scored = result.scored as ScoredResult[] | undefined;
+
+      if (scored) {
+        setLastScored(scored);
+        const inserted = scored.filter((s) => s.id).length;
+        toast.success(`Added ${inserted} food${inserted !== 1 ? "s" : ""} with AI-generated scores`);
+
+        // Remove added suggestions from list
+        const addedNames = new Set(scored.filter((s) => s.id).map((s) => s.name.toLowerCase()));
+        setSuggestions((prev) => prev.filter((s) => !addedNames.has(s.name.toLowerCase())));
+        setSelectedSuggestions(new Set());
+
+        await loadFoods();
+      }
+    } catch (error) {
+      console.error("[NutritionFoodManager] Bulk add error:", error);
+      toast.error("Bulk add failed");
+    } finally {
+      setBulkAdding(false);
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Delete (single + bulk)
   // -----------------------------------------------------------------------
 
   async function handleDelete(food: NutritionFood) {
@@ -215,6 +323,11 @@ export default function NutritionFoodManager() {
       if (res.ok) {
         toast.success(`Deleted "${food.name}"`);
         setFoods((prev) => prev.filter((f) => f.id !== food.id));
+        setSelectedForDelete((prev) => {
+          const next = new Set(prev);
+          next.delete(food.id);
+          return next;
+        });
       } else {
         toast.error("Delete failed");
       }
@@ -222,6 +335,54 @@ export default function NutritionFoodManager() {
       toast.error("Delete failed");
     } finally {
       setDeleting(null);
+    }
+  }
+
+  function toggleDeleteSelect(id: string) {
+    setSelectedForDelete((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function selectAllForDelete() {
+    if (selectedForDelete.size === sortedFoods.length) {
+      setSelectedForDelete(new Set());
+    } else {
+      setSelectedForDelete(new Set(sortedFoods.map((f) => f.id)));
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedForDelete.size === 0) return;
+
+    const count = selectedForDelete.size;
+    if (!confirm(`Delete ${count} food${count !== 1 ? "s" : ""}? This cannot be undone.`)) return;
+
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/admin/nutrition", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedForDelete) }),
+      });
+
+      if (res.ok) {
+        toast.success(`Deleted ${count} food${count !== 1 ? "s" : ""}`);
+        setFoods((prev) => prev.filter((f) => !selectedForDelete.has(f.id)));
+        setSelectedForDelete(new Set());
+      } else {
+        toast.error("Bulk delete failed");
+      }
+    } catch {
+      toast.error("Bulk delete failed");
+    } finally {
+      setBulkDeleting(false);
     }
   }
 
@@ -263,7 +424,7 @@ export default function NutritionFoodManager() {
   }, [foods, sortField, sortDir]);
 
   // -----------------------------------------------------------------------
-  // Sort indicator
+  // Helpers
   // -----------------------------------------------------------------------
 
   function SortIcon({ field }: { field: SortField }) {
@@ -275,23 +436,21 @@ export default function NutritionFoodManager() {
     );
   }
 
-  // -----------------------------------------------------------------------
-  // Score badge colors
-  // -----------------------------------------------------------------------
-
   function scoreColor(score: number, isSugar: boolean = false) {
     if (isSugar) {
-      // Sugar: lower is better
       if (score === 0) return "bg-green-100 text-green-800";
       if (score === 1) return "bg-yellow-100 text-yellow-800";
       if (score === 2) return "bg-orange-100 text-orange-800";
       return "bg-red-100 text-red-800";
     }
-    // Others: higher is better
     if (score === 0) return "bg-slate-100 text-slate-500";
     if (score === 1) return "bg-blue-50 text-blue-700";
     if (score === 2) return "bg-blue-100 text-blue-800";
     return "bg-green-100 text-green-800";
+  }
+
+  function catLabel(cat: string) {
+    return cat.charAt(0).toUpperCase() + cat.slice(1);
   }
 
   // -----------------------------------------------------------------------
@@ -306,18 +465,33 @@ export default function NutritionFoodManager() {
           <div>
             <h3 className="font-medium text-lg">Nutrition Food Database</h3>
             <p className="text-sm text-slate-500">
-              {foods.length} foods &mdash; Scores are auto-generated using USDA
-              guidelines
+              {foods.length} foods &mdash; Scores auto-generated via USDA guidelines
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
             <Button
+              variant="outline"
               size="sm"
-              onClick={() => setShowAddForm(!showAddForm)}
+              onClick={loadSuggestions}
+              disabled={loadingSuggestions}
+            >
+              {loadingSuggestions ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Lightbulb className="h-4 w-4 mr-2" />
+              )}
+              Suggest Foods
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setShowAddForm(!showAddForm);
+                if (showAddForm) setLastScored([]);
+              }}
               variant={showAddForm ? "secondary" : "default"}
             >
               {showAddForm ? (
@@ -331,6 +505,106 @@ export default function NutritionFoodManager() {
         </div>
       </Card>
 
+      {/* Suggestions panel */}
+      {suggestions.length > 0 && (
+        <Card className="p-4 border-amber-200 bg-amber-50/30">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-amber-700">
+              <Lightbulb className="h-4 w-4" />
+              <span className="font-medium text-sm">
+                Suggested Foods &mdash; Common kid foods not yet in your database
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={selectAllSuggestions}
+                className="text-xs text-amber-700 hover:text-amber-900 underline"
+              >
+                {selectedSuggestions.size === suggestions.length ? "Deselect all" : "Select all"}
+              </button>
+              <button
+                onClick={() => {
+                  setSuggestions([]);
+                  setSelectedSuggestions(new Set());
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-4">
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => toggleSuggestion(i)}
+                disabled={bulkAdding}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
+                  selectedSuggestions.has(i)
+                    ? "bg-amber-600 text-white border-amber-600"
+                    : "bg-white text-slate-700 border-slate-200 hover:border-amber-400"
+                }`}
+              >
+                {selectedSuggestions.has(i) ? (
+                  <CheckSquare className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
+                ) : (
+                  <Square className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
+                )}
+                {s.name}
+                <span className="ml-1.5 text-xs opacity-70">
+                  ({s.meal_categories.map(catLabel).join(", ")})
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {selectedSuggestions.size > 0 && (
+            <Button
+              onClick={handleBulkAdd}
+              disabled={bulkAdding}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {bulkAdding ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Scoring {selectedSuggestions.size} food{selectedSuggestions.size !== 1 ? "s" : ""} with AI...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Add {selectedSuggestions.size} Selected Food{selectedSuggestions.size !== 1 ? "s" : ""}
+                </>
+              )}
+            </Button>
+          )}
+
+          {/* Show bulk add results */}
+          {lastScored.length > 1 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-medium text-amber-800">
+                Added {lastScored.filter((s) => s.id).length} foods:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {lastScored.filter((s) => s.id).map((s, i) => (
+                  <div key={i} className="p-2 bg-white rounded-lg border border-amber-100 flex items-center gap-2 text-sm">
+                    <span className="text-lg">{s.emoji}</span>
+                    <span className="font-medium">{s.name}</span>
+                    <div className="flex gap-1 ml-auto">
+                      <span className={`text-[10px] px-1 rounded ${scoreColor(s.protein_score)}`}>P:{s.protein_score}</span>
+                      <span className={`text-[10px] px-1 rounded ${scoreColor(s.veggie_score)}`}>V:{s.veggie_score}</span>
+                      <span className={`text-[10px] px-1 rounded ${scoreColor(s.sugar_score, true)}`}>S:{s.sugar_score}</span>
+                      <span className={`text-[10px] px-1 rounded ${scoreColor(s.water_score)}`}>W:{s.water_score}</span>
+                      <span className={`text-[10px] px-1 rounded ${scoreColor(s.vitamin_score)}`}>Vi:{s.vitamin_score}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* Add food form */}
       {showAddForm && (
         <Card className="p-4 border-purple-200 bg-purple-50/30">
@@ -338,8 +612,7 @@ export default function NutritionFoodManager() {
             <div className="flex items-center gap-2 text-purple-700">
               <Sparkles className="h-4 w-4" />
               <span className="font-medium text-sm">
-                AI Auto-Scoring &mdash; Scores are generated from USDA FoodData
-                Central guidelines for ages 4-13
+                AI Auto-Scoring &mdash; Scores generated from USDA FoodData Central (ages 4-13)
               </span>
             </div>
 
@@ -379,7 +652,7 @@ export default function NutritionFoodManager() {
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    {catLabel(cat)}
                   </button>
                 ))}
               </div>
@@ -404,48 +677,28 @@ export default function NutritionFoodManager() {
             </Button>
           </div>
 
-          {/* Show scoring result */}
-          {lastScored && (
+          {/* Show single add result */}
+          {lastScored.length === 1 && (
             <div className="mt-4 p-3 bg-white rounded-lg border border-purple-100">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">{lastScored.emoji}</span>
-                <span className="font-medium">{lastScored.name}</span>
-                {lastScored.id && (
+                <span className="text-xl">{lastScored[0].emoji}</span>
+                <span className="font-medium">{lastScored[0].name}</span>
+                {lastScored[0].id && (
                   <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                     Added
                   </span>
                 )}
               </div>
               <div className="flex gap-2 mb-2">
-                <span
-                  className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored.protein_score)}`}
-                >
-                  P:{lastScored.protein_score}
-                </span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored.veggie_score)}`}
-                >
-                  V:{lastScored.veggie_score}
-                </span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored.sugar_score, true)}`}
-                >
-                  S:{lastScored.sugar_score}
-                </span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored.water_score)}`}
-                >
-                  W:{lastScored.water_score}
-                </span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored.vitamin_score)}`}
-                >
-                  Vi:{lastScored.vitamin_score}
-                </span>
+                <span className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored[0].protein_score)}`}>P:{lastScored[0].protein_score}</span>
+                <span className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored[0].veggie_score)}`}>V:{lastScored[0].veggie_score}</span>
+                <span className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored[0].sugar_score, true)}`}>S:{lastScored[0].sugar_score}</span>
+                <span className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored[0].water_score)}`}>W:{lastScored[0].water_score}</span>
+                <span className={`text-xs px-2 py-0.5 rounded ${scoreColor(lastScored[0].vitamin_score)}`}>Vi:{lastScored[0].vitamin_score}</span>
               </div>
-              {lastScored.reasoning && (
+              {lastScored[0].reasoning && (
                 <p className="text-xs text-slate-500 italic">
-                  {lastScored.reasoning}
+                  {lastScored[0].reasoning}
                 </p>
               )}
             </div>
@@ -455,7 +708,24 @@ export default function NutritionFoodManager() {
 
       {/* Foods table */}
       <Card className="p-4 overflow-x-auto">
-        <h4 className="font-medium mb-3">All Foods ({sortedFoods.length})</h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-medium">All Foods ({sortedFoods.length})</h4>
+          {selectedForDelete.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+            >
+              {bulkDeleting ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Delete {selectedForDelete.size} Selected
+            </Button>
+          )}
+        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -463,12 +733,25 @@ export default function NutritionFoodManager() {
           </div>
         ) : sortedFoods.length === 0 ? (
           <p className="text-slate-500 text-center py-8">
-            No foods in the database. Add a food above to get started.
+            No foods in the database. Add a food above or use Suggest Foods.
           </p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-slate-500">
+                <th className="pb-2 pr-1 w-8">
+                  <button
+                    onClick={selectAllForDelete}
+                    className="text-slate-400 hover:text-slate-600 p-1"
+                    title={selectedForDelete.size === sortedFoods.length ? "Deselect all" : "Select all"}
+                  >
+                    {selectedForDelete.size === sortedFoods.length && sortedFoods.length > 0 ? (
+                      <CheckSquare className="h-4 w-4" />
+                    ) : (
+                      <Square className="h-4 w-4" />
+                    )}
+                  </button>
+                </th>
                 <th
                   className="pb-2 pr-2 cursor-pointer hover:text-slate-800 select-none"
                   onClick={() => handleSort("name")}
@@ -494,40 +777,35 @@ export default function NutritionFoodManager() {
                   title="Protein (0-3, higher = more protein)"
                   onClick={() => handleSort("protein_score")}
                 >
-                  P
-                  <SortIcon field="protein_score" />
+                  P<SortIcon field="protein_score" />
                 </th>
                 <th
                   className="pb-2 px-2 cursor-pointer hover:text-slate-800 select-none text-center"
                   title="Veggie/Fiber (0-3, higher = more fiber)"
                   onClick={() => handleSort("veggie_score")}
                 >
-                  V
-                  <SortIcon field="veggie_score" />
+                  V<SortIcon field="veggie_score" />
                 </th>
                 <th
                   className="pb-2 px-2 cursor-pointer hover:text-slate-800 select-none text-center"
                   title="Sugar (0-3, higher = more sugar = worse)"
                   onClick={() => handleSort("sugar_score")}
                 >
-                  S
-                  <SortIcon field="sugar_score" />
+                  S<SortIcon field="sugar_score" />
                 </th>
                 <th
                   className="pb-2 px-2 cursor-pointer hover:text-slate-800 select-none text-center"
                   title="Water (0-3, higher = more hydrating)"
                   onClick={() => handleSort("water_score")}
                 >
-                  W
-                  <SortIcon field="water_score" />
+                  W<SortIcon field="water_score" />
                 </th>
                 <th
                   className="pb-2 px-2 cursor-pointer hover:text-slate-800 select-none text-center"
                   title="Vitamins (0-3, higher = more micronutrients)"
                   onClick={() => handleSort("vitamin_score")}
                 >
-                  Vi
-                  <SortIcon field="vitamin_score" />
+                  Vi<SortIcon field="vitamin_score" />
                 </th>
                 <th className="pb-2 pl-2 text-center w-10"></th>
               </tr>
@@ -536,47 +814,49 @@ export default function NutritionFoodManager() {
               {sortedFoods.map((food) => (
                 <tr
                   key={food.id}
-                  className="border-b border-slate-100 hover:bg-slate-50"
+                  className={`border-b border-slate-100 hover:bg-slate-50 ${
+                    selectedForDelete.has(food.id) ? "bg-red-50/50" : ""
+                  }`}
                 >
-                  <td className="py-1.5 pr-2 font-medium">{food.name}</td>
-                  <td className="py-1.5 px-2 text-center text-lg">
-                    {food.emoji}
+                  <td className="py-1.5 pr-1">
+                    <button
+                      onClick={() => toggleDeleteSelect(food.id)}
+                      className="text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      {selectedForDelete.has(food.id) ? (
+                        <CheckSquare className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
+                    </button>
                   </td>
+                  <td className="py-1.5 pr-2 font-medium">{food.name}</td>
+                  <td className="py-1.5 px-2 text-center text-lg">{food.emoji}</td>
                   <td className="py-1.5 px-2 text-slate-500 text-xs">
                     {(food.meal_categories || []).join(", ")}
                   </td>
                   <td className="py-1.5 px-2 text-center">
-                    <span
-                      className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.protein_score)}`}
-                    >
+                    <span className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.protein_score)}`}>
                       {food.protein_score}
                     </span>
                   </td>
                   <td className="py-1.5 px-2 text-center">
-                    <span
-                      className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.veggie_score)}`}
-                    >
+                    <span className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.veggie_score)}`}>
                       {food.veggie_score}
                     </span>
                   </td>
                   <td className="py-1.5 px-2 text-center">
-                    <span
-                      className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.sugar_score, true)}`}
-                    >
+                    <span className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.sugar_score, true)}`}>
                       {food.sugar_score}
                     </span>
                   </td>
                   <td className="py-1.5 px-2 text-center">
-                    <span
-                      className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.water_score)}`}
-                    >
+                    <span className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.water_score)}`}>
                       {food.water_score}
                     </span>
                   </td>
                   <td className="py-1.5 px-2 text-center">
-                    <span
-                      className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.vitamin_score)}`}
-                    >
+                    <span className={`inline-block w-6 text-center rounded text-xs font-medium ${scoreColor(food.vitamin_score)}`}>
                       {food.vitamin_score}
                     </span>
                   </td>
