@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CheckSquare, Gamepad2, Maximize, MessageCircle, Battery } from "lucide-react";
+import { Home, CheckSquare, Gamepad2, Maximize, MessageCircle, Battery, Apple } from "lucide-react";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { SyncIndicator } from "./SyncIndicator";
 import { HeaderClock } from "./Clock";
@@ -28,6 +28,7 @@ const navItems = [
   { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
   { href: "/recharge", label: "Recharge", icon: Battery },
+  { href: "/nutrition", label: "Nutrition", icon: Apple },
   { href: "/games", label: "Breaktime", icon: Gamepad2 },
 ];
 
@@ -131,14 +132,14 @@ export function Navigation() {
       {/* Mobile Bottom Nav - larger touch targets */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-[100] safe-area-bottom">
         <div className="flex justify-around items-center py-1">
-          {navItems.slice(0, 5).map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[56px] rounded-xl transition-all ${
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-[48px] min-h-[56px] rounded-xl transition-all ${
                   active ? "text-purple-600" : "text-slate-500"
                 }`}
               >
