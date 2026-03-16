@@ -26,11 +26,13 @@ import {
   UserPlus,
   Eye,
   Dog,
+  Apple,
 } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "@/components/IconPicker";
 import { Avatar } from "@/components/Avatar";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import NutritionFoodManager from "@/components/admin/NutritionFoodManager";
 
 interface ChecklistItem {
   id: string;
@@ -83,7 +85,7 @@ interface AnalyticsSummary {
   top_queries: { query: string; count: number }[];
 }
 
-type Tab = "family" | "media" | "analytics" | "pet-content" | "main-content";
+type Tab = "family" | "media" | "analytics" | "pet-content" | "main-content" | "nutrition";
 type MediaCategory = "avatars" | "celebrations" | "icons" | "backgrounds" | "general";
 
 const MEDIA_CATEGORIES: { value: MediaCategory; label: string; icon: React.ElementType }[] = [
@@ -938,6 +940,13 @@ export default function AdminPage() {
           >
             <Sparkles className="h-4 w-4 mr-2" />
             Main Content
+          </Button>
+          <Button
+            variant={tab === "nutrition" ? "default" : "outline"}
+            onClick={() => setTab("nutrition")}
+          >
+            <Apple className="h-4 w-4 mr-2" />
+            Nutrition Foods
           </Button>
         </div>
 
@@ -1838,6 +1847,9 @@ export default function AdminPage() {
             )}
           </>
         )}
+
+        {/* Nutrition Foods Tab */}
+        {tab === "nutrition" && <NutritionFoodManager />}
       </div>
 
       {/* Confirmation Dialogs */}

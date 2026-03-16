@@ -1,0 +1,120 @@
+id,name,emoji,meal_categories,protein_score,veggie_score,sugar_score,water_score,vitamin_score
+a5f759bd-daac-4cf7-8535-5da7f4b01f1d,Acai Bowl,🫐,breakfast,1,2,2,2,3
+1ca0749b-daee-41eb-a91a-ce272b9a1cfa,Bacon,🥓,breakfast,2,0,0,0,1
+a77fbced-aae4-49bb-91e9-435412ebecd1,Bagel,🥯,breakfast,2,0,1,0,1
+890e962e-f545-4d3b-8d3c-5b0c2412b5fd,Bagel & Cream Cheese,🥯,breakfast,2,0,1,0,1
+6c14c876-4628-4d8b-a68e-893a8ea7d22e,Breakfast Burrito,🌯,breakfast,3,1,0,1,2
+84350d5e-8a1f-4a45-914b-8b4d1d461a99,French Toast,🍞,breakfast,2,0,2,0,1
+93c0275e-1dc4-459c-bfcc-4045dbb11699,Fried Egg,🍳,breakfast,2,0,0,0,2
+c545ba51-4be4-4823-a2f8-e9d74b9216c6,Hash Browns,🥔,breakfast,0,1,0,0,1
+65c6463d-c0ab-416c-ae2f-f51d5589a697,Healthy Cereal,🥣,breakfast,1,1,1,0,2
+1e84c74e-1b79-4e02-961a-8275634ad7f4,Oatmeal,🍜,breakfast,1,1,1,2,2
+e141179c-827c-4e19-944e-157102304cba,Overnight Oats,🥛,breakfast,2,1,1,1,2
+41c9ac17-f7f9-439f-9825-9a844e79aea6,Pancakes,🥞,breakfast,1,0,2,0,0
+efc891f7-6e12-448f-85c5-46c2772c22cd,Sausage,🌭,breakfast,2,0,0,0,1
+d761a5ca-de33-49d8-9be9-cceb35a544e0,Scrambled Eggs,🍳,breakfast,2,0,0,1,2
+e4ef3462-d802-47fd-970f-00d504b392d6,Smoothie Bowl,🥣,breakfast,1,2,2,2,3
+c448806e-9e6e-49a2-8fe8-214b0b2aafe3,Sugary Cereal,🥣,breakfast,0,0,3,0,1
+9d25cae5-a7a9-4bc1-a329-7c9d30b18aa0,Toast,🍞,breakfast,1,0,0,0,1
+1c4cfdd2-26d6-48da-89ed-14bb2497f83f,Waffles,🧇,breakfast,1,0,2,0,0
+17c8e9b0-1133-4ee1-b313-f0b6f3ba23f3,Banana,🍌,breakfast|snack,0,1,1,1,2
+0a8e8f9f-0e17-4096-b134-efad339e7fc3,Donut,🍩,breakfast|snack,1,0,3,0,0
+43cc8d1d-c359-4e2e-9376-54dc3194337a,Fruit Salad,🍓,breakfast|snack,0,2,1,2,3
+736a11ec-08ab-4452-921d-2f63899ad855,Granola Bar,🍫,breakfast|snack,1,1,2,0,1
+1e6e4a12-f0fa-41ee-bc27-5c8cfe4e06e5,Muffin,🧁,breakfast|snack,1,0,2,0,0
+2599394c-f0a8-42f3-9de0-74dfc5596dff,Pop-Tart,🍪,breakfast|snack,0,0,3,0,0
+da04ef3a-7667-4ebe-bd2a-9a5939b5ef90,Yogurt,🥛,breakfast|snack,2,0,1,1,2
+2655b9de-6306-4810-bf61-6ae8d6fdf16b,Yogurt Parfait,🍦,breakfast|snack,2,1,2,1,2
+a5c8bc57-2e3b-4ae8-ae83-f6eb2a3bc511,Baked Potato,🥔,dinner,1,1,0,1,2
+dd66bda0-89aa-462b-a46e-13b9bea50ae9,Bread Roll,🍞,dinner,1,0,0,0,0
+b8fcccd6-8392-4f84-9fbe-2f9319ade751,Broccoli,🥦,dinner,1,3,0,2,3
+d4c4d82f-d7db-4f4d-9d3e-b6ea80a884df,Burrito,🌯,dinner,3,1,0,1,2
+a3458ebe-64dc-4ff2-a186-8a8337e9dfee,Casserole,🍲,dinner,2,1,0,1,1
+aeb287a4-1f8d-4906-8e27-b85713b1a6ff,Chicken Breast,🍗,dinner,3,0,0,1,2
+47be2508-b1d1-448b-9ee6-f97e6623421e,Corn on the Cob,🌽,dinner,1,2,0,1,2
+cb630458-cc3d-4bfc-9d17-5ed30f56f007,Curry,🍛,dinner,2,2,0,2,2
+f2447c58-8dfa-4b95-bc57-6ca8c10de354,Fried Rice,🍚,dinner,1,1,0,1,1
+2b67f85f-be3b-4fb5-9060-df010fa8cf9d,Green Beans,🫘,dinner,0,2,0,2,2
+f38ab681-7f3b-4a4e-b95f-d58fc89b8167,Grilled Shrimp,🦐,dinner,3,0,0,1,2
+51d38a67-58a1-499b-8365-f57f6ed0dc40,Lasagna,🍝,dinner,3,1,1,1,1
+a1e65db5-9c94-4090-bfb1-82f70faf96eb,Mashed Potatoes,🥔,dinner,0,1,0,1,1
+fd97beee-1570-47a5-bc36-aa6b5fb87faa,Meatballs,🧆,dinner,3,0,0,1,1
+11532b1c-7f79-4dc5-9a81-caf2138e92ff,Pasta & Meatballs,🍝,dinner,3,1,1,1,1
+a49c92eb-8731-4037-8e52-b446c8ae26a1,Pork Chop,🍖,dinner,3,0,0,1,2
+17a47c3f-9789-4b24-bf4f-90d9a9d3abf6,Ramen,🍜,dinner,2,1,0,3,1
+f93db84b-e7b7-4058-8c0f-b69e46d8a391,Ribs,🍖,dinner,3,0,1,1,1
+c8119ba6-74e5-49c3-b21b-888dce72116e,Rice,🍚,dinner,1,0,0,1,0
+5522564f-4226-451c-a4a3-05b78da600c8,Roast Chicken,🍗,dinner,3,0,0,1,2
+eab0840e-6977-4a29-81df-d729fe919c33,Roasted Veggies,🥕,dinner,0,3,0,1,3
+2b536b8f-59fc-408f-bdbf-8ec00cfa7f95,Salmon,🐟,dinner,3,0,0,1,3
+143f3d27-b343-43e9-8a17-ae0031b3eae9,Steak,🥩,dinner,3,0,0,1,2
+61e5bc4a-0110-4aac-9045-e855bae89791,Stir Fry,🥘,dinner,2,3,0,2,3
+0bf43de8-d389-4e48-8f5f-1d05e5150138,Tacos,🌮,dinner,2,1,0,1,1
+cf517cd0-b703-426c-a9c6-5b94b4ee2885,Apple Juice,🍎,drink,0,0,2,2,1
+01cc50ef-8c82-44bd-a666-551f46a660b3,Capri Sun,🧃,drink,0,0,2,1,0
+a2e71911-dbaf-4d6e-a4a7-2696ecc18deb,Chocolate Milk,🥛,drink,2,0,2,2,2
+c9633980-a0e9-4d6f-b2b5-88f6de4f7096,Chocolate Shake,🥤,drink,2,0,3,1,1
+4b13a626-c44f-4615-b2cf-775971d5e63e,Coconut Water,🥥,drink,0,0,1,3,2
+faf9712a-14e1-4d79-abba-5280a062f087,Herbal Tea,🍵,drink,0,0,0,3,1
+72617f42-93b7-4137-871e-a5374616bf52,Hot Chocolate,☕,drink,1,0,2,2,1
+64b2b4ba-d253-43f3-9b57-471a2c3dd9ed,Iced Tea,🍵,drink,0,0,2,2,0
+84bbbb65-3c18-47c3-9c3d-939583f61f72,Juice Box,🧃,drink,0,0,2,2,1
+a7cd9ac8-f365-499d-949b-77a48b96f2d9,Lemon Water,🍋,drink,0,0,0,3,1
+61f2bac7-8ab6-480d-a01d-eb5c02a823aa,Lemonade,🍋,drink,0,0,2,2,1
+e0beabbc-d917-451a-a48c-6c7e97da4aed,Milk,🥛,drink,2,0,1,2,2
+acddd3b7-1df7-4d06-8752-42a8ff7d1084,Milkshake,🥤,drink,2,0,3,1,1
+e539898a-3e1c-4478-9625-9c8eb10b525b,Orange Juice,🍊,drink,0,0,2,2,3
+3bed1359-26f6-47c4-9c60-f60f41ae8ca1,Protein Shake,🥤,drink,3,0,1,2,2
+ec885e17-253d-43a0-9bca-c513fbe730f2,Smoothie,🥤,drink,1,2,2,2,3
+e7f7a58d-439e-4983-82ca-bf308603d36b,Soda,🥤,drink,0,0,3,1,0
+a3a5310b-61d0-4826-a101-b8a28af9a52d,Sparkling Water,🫗,drink,0,0,0,3,0
+98ad55b6-0ed5-4e78-a155-7fb32ccbb918,Sports Drink,🥤,drink,0,0,2,2,0
+516665aa-a15a-4489-bcfd-4030a488a5fa,Water,💧,drink,0,0,0,3,0
+8ac40bba-8c12-44d1-b1eb-ac51a359cbd0,BLT,🥪,lunch,2,1,0,1,1
+c22ad2d6-8bd5-4ff5-816e-04fb27994996,Chicken Salad,🥗,lunch,3,1,0,1,1
+4eb80294-16e8-4481-a99b-5814ba9917f2,Corn Dog,🌭,lunch,1,0,1,0,0
+c7dc479d-84fd-402d-b181-a8badca7a840,Grilled Cheese,🧀,lunch,2,0,0,0,1
+8bb88640-a7d4-4c44-892d-d733e20cc3fc,Ham Sandwich,🥪,lunch,2,1,0,1,1
+3eafca98-0f36-48bf-a23f-8de403c86aa9,Hot Dog,🌭,lunch,2,0,1,0,0
+08693d5d-a733-4d7a-8cb4-9ea8d34d313b,Lunchable,📦,lunch,1,0,2,0,0
+4d045f37-d421-47e5-ab44-01eff4495367,PB&J,🥪,lunch,2,0,2,0,1
+b5911cac-51eb-418f-847e-720c2286bead,Sub Sandwich,🥪,lunch,2,1,0,1,1
+0b708eb8-e953-4d45-ba48-9e4b8b25ecf1,Turkey Sandwich,🥪,lunch,3,1,0,1,1
+660df8ed-2378-43ad-85c2-b3f3dc91566d,Wrap,🌯,lunch,2,1,0,1,1
+0484f0af-5d4f-4d4a-b5da-10ceed626fce,Burger,🍔,lunch|dinner,3,1,1,1,1
+84b0fa0e-4b6d-4d0a-8b7d-7cb8f2234fdf,Cheese Pizza,🍕,lunch|dinner,2,1,1,1,1
+feb3deb2-9e13-481e-97cc-a72ca01817be,Chicken Nuggets,🍗,lunch|dinner,2,0,0,0,1
+45c8b223-a4fd-46e1-8137-4038ac7bcc54,Fish Sticks,🐟,lunch|dinner,2,0,0,0,1
+298f8ee0-f9c7-4e1e-b622-dfc32e749678,Mac & Cheese,🧀,lunch|dinner,2,0,0,1,1
+7378fb56-045b-4797-a47e-dac527095d64,Pasta with Sauce,🍝,lunch|dinner,1,1,1,1,1
+ab363c46-aee1-486b-98e9-73b6f87bd818,Pepperoni Pizza,🍕,lunch|dinner,2,0,1,1,1
+42a2b159-db09-4a62-95fc-64c6374ea152,Quesadilla,🫔,lunch|dinner,2,0,0,0,1
+8e7ef6e2-e5db-47c3-bdb1-f8033d575dc4,Rice & Beans,🍚,lunch|dinner,2,2,0,1,2
+84d8b669-829d-42b0-bbf8-f4fa68fdede3,Salad,🥗,lunch|dinner,1,3,0,2,3
+c05175b4-8cc7-4406-b61b-1e8e8fda8ee4,Soup,🍲,lunch|dinner,1,2,0,3,2
+0399e6b8-e197-4135-a453-a4ecb707a4cc,Sushi Roll,🍣,lunch|dinner,2,1,0,1,2
+2f4b2ceb-518e-43ab-b413-257740dfef48,Taco,🌮,lunch|dinner,2,1,0,1,1
+c0d79b25-ba76-46a5-9ff0-810fae056290,Hummus & Pita,🫘,lunch|snack,1,1,0,0,1
+11e92cf8-ca64-4814-ae8e-42e6fae1713a,Apple,🍎,snack,0,1,1,2,2
+dbaf42cc-e3b2-4214-8716-d528de9069db,Brownie,🍫,snack,1,0,3,0,0
+3b7cfa2e-4cc4-4114-a481-2ebbb8385eb7,Candy,🍬,snack,0,0,3,0,0
+54de402b-0ed3-480b-98e7-505bb36fbc3b,Carrots & Ranch,🥕,snack,0,2,0,2,3
+ca2a3abf-9734-444f-85cb-b1c34b0ce14c,Celery & PB,🫒,snack,1,2,0,2,1
+b162ef55-7481-4662-b2d9-4db1e799b4c8,Cheese Stick,🧀,snack,2,0,0,0,1
+bfa46790-fedc-496f-8cb8-4613c0f77d3b,Chips,🍟,snack,0,0,0,0,0
+d950baab-6144-4076-9a6f-56afd5041938,Cookies,🍪,snack,0,0,3,0,0
+f2250504-3f5b-49a4-a877-50960a7abce3,Crackers,🧇,snack,0,0,0,0,0
+c1379feb-1085-4c74-827e-bc64d704609f,Cupcake,🧁,snack,0,0,3,0,0
+9cb14fbf-6471-4b24-b2aa-91516031cb98,Fruit Snacks,🍓,snack,0,0,2,0,1
+c28e86a4-f42f-44ae-90d1-ebb221cb71bd,Goldfish,🐟,snack,0,0,0,0,0
+7f59b62c-5e6e-4396-9663-229f89c861dd,Grapes,🍇,snack,0,1,1,2,2
+86089b43-a7d5-421f-aa8d-4fb03c3f9ef7,Ice Cream,🍨,snack,1,0,3,1,1
+d2139b46-de02-41b9-8740-e3230a7b80d4,Jello,🍮,snack,0,0,2,1,0
+3730a423-2ecd-442c-ad1b-2db3b1eaa5e5,Orange,🍊,snack,0,1,1,2,3
+4146a9a9-eea5-46c6-9370-9130900ddf24,Popcorn,🍿,snack,1,1,0,0,0
+221ffa91-6edb-413a-b658-496d8e38573d,Popsicle,🍦,snack,0,0,2,1,0
+f31c1cc5-1306-4f7d-a521-0731f4c6f84a,Pretzels,🥨,snack,1,0,0,0,0
+e56d260c-f8ae-4d4a-ab52-81004da59147,Pudding,🍮,snack,1,0,2,1,1
+2bade932-9507-4173-a89f-482514f7247e,Rice Krispie Treat,🍰,snack,0,0,2,0,0
+e0f68575-feb1-4f19-abc2-c6082f1b9686,Strawberries,🍓,snack,0,1,1,2,3
+fb55d2c9-2dc7-4955-a741-74825c37b8ed,Trail Mix,🥜,snack,2,1,1,0,2
