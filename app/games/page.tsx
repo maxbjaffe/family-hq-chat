@@ -14,6 +14,8 @@ import {
   Shuffle,
   GitBranch,
   Layers,
+  Zap,
+  UtensilsCrossed,
 } from "lucide-react";
 import { useKiosk } from "@/components/KioskProvider";
 import { WordleGame } from "@/components/games/WordleGame";
@@ -23,11 +25,14 @@ import { WordSearchGame } from "@/components/games/WordSearchGame";
 import { AnagramsGame } from "@/components/games/AnagramsGame";
 import { WordLadderGame } from "@/components/games/WordLadderGame";
 import { MemoryMatchGame } from "@/components/games/MemoryMatchGame";
+import { FuelUpGame } from "@/components/games/FuelUpGame";
+import { FoodDetectiveGame } from "@/components/games/FoodDetectiveGame";
+import { MealBuilderGame } from "@/components/games/MealBuilderGame";
 import { DifficultySelect } from "@/components/games/DifficultySelect";
 
 type Difficulty = "easy" | "medium" | "hard";
 
-type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe" | "wordsearch" | "anagrams" | "wordladder" | "memorymatch";
+type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe" | "wordsearch" | "anagrams" | "wordladder" | "memorymatch" | "fuelup" | "fooddetective" | "mealbuilder";
 
 const games = [
   {
@@ -94,6 +99,30 @@ const games = [
     color: "from-amber-500 to-orange-500",
     bgColor: "from-amber-50 to-orange-50",
   },
+  {
+    id: "fuelup" as const,
+    name: "Fuel Up!",
+    description: "Power up your avatar with food!",
+    icon: Zap,
+    color: "from-yellow-500 to-orange-500",
+    bgColor: "from-yellow-50 to-orange-50",
+  },
+  {
+    id: "fooddetective" as const,
+    name: "Food Detective",
+    description: "Test your nutrition knowledge!",
+    icon: Search,
+    color: "from-teal-500 to-green-500",
+    bgColor: "from-teal-50 to-green-50",
+  },
+  {
+    id: "mealbuilder" as const,
+    name: "Meal Builder",
+    description: "Build balanced meals!",
+    icon: UtensilsCrossed,
+    color: "from-purple-500 to-pink-500",
+    bgColor: "from-purple-50 to-pink-50",
+  },
 ];
 
 export default function GamesPage() {
@@ -104,6 +133,9 @@ export default function GamesPage() {
   const [anagramsDifficulty, setAnagramsDifficulty] = useState<Difficulty | null>(null);
   const [wordLadderDifficulty, setWordLadderDifficulty] = useState<Difficulty | null>(null);
   const [memoryMatchDifficulty, setMemoryMatchDifficulty] = useState<Difficulty | null>(null);
+  const [fuelUpDifficulty, setFuelUpDifficulty] = useState<Difficulty | null>(null);
+  const [foodDetectiveDifficulty, setFoodDetectiveDifficulty] = useState<Difficulty | null>(null);
+  const [mealBuilderDifficulty, setMealBuilderDifficulty] = useState<Difficulty | null>(null);
 
   const { isKioskMode, isEmbedded } = useKiosk();
   const isWideMode = isKioskMode || isEmbedded;
@@ -115,6 +147,9 @@ export default function GamesPage() {
     if (activeGame === "anagrams") setAnagramsDifficulty(null);
     if (activeGame === "wordladder") setWordLadderDifficulty(null);
     if (activeGame === "memorymatch") setMemoryMatchDifficulty(null);
+    if (activeGame === "fuelup") setFuelUpDifficulty(null);
+    if (activeGame === "fooddetective") setFoodDetectiveDifficulty(null);
+    if (activeGame === "mealbuilder") setMealBuilderDifficulty(null);
   };
 
   // Shared game rendering
@@ -196,6 +231,45 @@ export default function GamesPage() {
           <MemoryMatchGame difficulty={memoryMatchDifficulty} />
         )
       )}
+      {activeGame === "fuelup" && (
+        fuelUpDifficulty === null ? (
+          <DifficultySelect
+            gameName="Fuel Up!"
+            onSelect={(difficulty) => setFuelUpDifficulty(difficulty)}
+          />
+        ) : (
+          <FuelUpGame
+            difficulty={fuelUpDifficulty}
+            onChangeDifficulty={() => setFuelUpDifficulty(null)}
+          />
+        )
+      )}
+      {activeGame === "fooddetective" && (
+        foodDetectiveDifficulty === null ? (
+          <DifficultySelect
+            gameName="Food Detective"
+            onSelect={(difficulty) => setFoodDetectiveDifficulty(difficulty)}
+          />
+        ) : (
+          <FoodDetectiveGame
+            difficulty={foodDetectiveDifficulty}
+            onChangeDifficulty={() => setFoodDetectiveDifficulty(null)}
+          />
+        )
+      )}
+      {activeGame === "mealbuilder" && (
+        mealBuilderDifficulty === null ? (
+          <DifficultySelect
+            gameName="Meal Builder"
+            onSelect={(difficulty) => setMealBuilderDifficulty(difficulty)}
+          />
+        ) : (
+          <MealBuilderGame
+            difficulty={mealBuilderDifficulty}
+            onChangeDifficulty={() => setMealBuilderDifficulty(null)}
+          />
+        )
+      )}
     </>
   );
 
@@ -261,9 +335,9 @@ export default function GamesPage() {
           <p className="text-slate-600 text-sm">Pick a game and have fun!</p>
         </div>
 
-        {/* Row 2: 4x2 grid */}
-        <div className="px-6 pb-4 min-h-0">
-          <div className="grid grid-cols-4 grid-rows-2 gap-4 h-full">
+        {/* Row 2: scrollable game grid */}
+        <div className="px-6 pb-4 min-h-0 overflow-auto">
+          <div className="grid grid-cols-4 gap-3 auto-rows-fr">
             {games.map((game) => renderGameCard(game, true))}
           </div>
         </div>
