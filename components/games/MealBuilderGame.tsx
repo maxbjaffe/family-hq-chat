@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { RotateCcw } from "lucide-react";
+import { METER_CONFIG } from "@/lib/nutrition/constants";
 import { FOOD_DATABASE, type FoodSeedItem } from "@/lib/nutrition/food-data";
 import type {
   NutritionFood,
@@ -104,6 +105,8 @@ export function MealBuilderGame({
   const [tray, setTray] = useState<NutritionFood[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [won, setWon] = useState(false);
+  const [aiReportCard, setAiReportCard] = useState<string | null>(null);
+  const [loadingAi, setLoadingAi] = useState(false);
 
   const initGame = useCallback(() => {
     const mt = MEAL_TYPES[Math.floor(Math.random() * MEAL_TYPES.length)];
@@ -115,6 +118,8 @@ export function MealBuilderGame({
     setTray([]);
     setSubmitted(false);
     setWon(false);
+    setAiReportCard(null);
+    setLoadingAi(false);
   }, []);
 
   useEffect(() => {
@@ -153,14 +158,41 @@ export function MealBuilderGame({
   };
 
   const handleSubmit = () => {
+    const didWin = STATE_RANK[avatarState] >= STATE_RANK[cfg.target];
     setSubmitted(true);
-    setWon(STATE_RANK[avatarState] >= STATE_RANK[cfg.target]);
+    setWon(didWin);
+
+    // Fetch AI meal report card
+    setLoadingAi(true);
+    fetch("/api/nutrition/education", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "meal-analysis",
+        mealType,
+        foods: tray.map((f) => f.name),
+        avatarState,
+        won: didWin,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => setAiReportCard(data.analysis))
+      .catch(() => {
+        setAiReportCard(
+          didWin
+            ? "Great meal! You built a balanced plate that would keep you feeling energized!"
+            : "Nice try! Mixing in more protein and veggies would make this meal more balanced."
+        );
+      })
+      .finally(() => setLoadingAi(false));
   };
 
   const handleRetry = () => {
     setTray([]);
     setSubmitted(false);
     setWon(false);
+    setAiReportCard(null);
+    setLoadingAi(false);
   };
 
   const getStars = () => {
@@ -245,6 +277,23 @@ export function MealBuilderGame({
         </div>
       </div>
 
+      {/* Hint bar — Easy mode, 2+ foods on tray */}
+      {cfg.showHints && !submitted && tray.length >= 2 && (() => {
+        const lowMeters = (['protein', 'veggie', 'water', 'vitamin'] as const).filter(
+          (k) => pct[k] < 30
+        );
+        if (lowMeters.length === 0) return null;
+        const lowestKey = lowMeters.reduce((a, b) => (pct[a] < pct[b] ? a : b));
+        const meterInfo = METER_CONFIG[lowestKey];
+        return (
+          <div className="w-full bg-amber-50 border border-amber-200 rounded-xl p-3">
+            <p className="text-sm text-amber-800">
+              {"\u{1F4A1}"} <span className="font-semibold">Tip:</span> Your {meterInfo.label.toLowerCase()} meter is low — look for foods with the {meterInfo.emoji} icon!
+            </p>
+          </div>
+        );
+      })()}
+
       {/* Food pool */}
       {!submitted && (
         <div className="w-full">
@@ -282,11 +331,17 @@ export function MealBuilderGame({
           <p className="font-bold text-red-600 mb-1">
             Not quite balanced enough!
           </p>
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-slate-600 mb-3">
             Your avatar needs to reach{" "}
             <span className="font-bold capitalize">{cfg.target}</span> state.
-            Try different foods!
           </p>
+          {loadingAi ? (
+            <p className="text-xs text-slate-400 mb-3 animate-pulse">Getting meal feedback...</p>
+          ) : aiReportCard ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-left">
+              <p className="text-sm text-amber-800">{"\u{1F4A1}"} {aiReportCard}</p>
+            </div>
+          ) : null}
           <button
             onClick={handleRetry}
             className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 min-h-[48px]"
@@ -314,7 +369,7 @@ export function MealBuilderGame({
               {"\u2B50".repeat(getStars())}
               {"\u2606".repeat(3 - getStars())}
             </div>
-            <div className="space-y-1 text-slate-600 mb-6">
+            <div className="space-y-1 text-slate-600 mb-4">
               <p>
                 Foods used: <span className="font-bold">{tray.length}</span>
               </p>
@@ -323,6 +378,13 @@ export function MealBuilderGame({
                 <span className="font-bold capitalize">{avatarState}</span>
               </p>
             </div>
+            {loadingAi ? (
+              <p className="text-xs text-slate-400 mb-4 animate-pulse">Grading your meal...</p>
+            ) : aiReportCard ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-left">
+                <p className="text-sm text-green-800">{"\u{1F31F}"} {aiReportCard}</p>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-3">
               <button
                 onClick={initGame}

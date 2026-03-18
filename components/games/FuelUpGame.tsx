@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { RotateCcw, Lightbulb } from "lucide-react";
 import { FOOD_DATABASE, type FoodSeedItem } from "@/lib/nutrition/food-data";
+import { FOOD_FACTS } from "@/lib/nutrition/food-facts";
 import type {
   NutritionFood,
   MeterValues,
@@ -162,7 +163,12 @@ export function FuelUpGame({
   const [isLost, setIsLost] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [factToast, setFactToast] = useState<string | null>(null);
+  const [pickedFoodNames, setPickedFoodNames] = useState<string[]>([]);
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [loadingAi, setLoadingAi] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const factTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const avatarState = calculateAvatarState(currentTotals);
   const pct = toPercentages(currentTotals);
@@ -180,7 +186,12 @@ export function FuelUpGame({
     setIsLost(false);
     setShowHint(false);
     setGameStarted(false);
+    setFactToast(null);
+    setPickedFoodNames([]);
+    setAiExplanation(null);
+    setLoadingAi(false);
     if (timerRef.current) clearInterval(timerRef.current);
+    if (factTimerRef.current) clearTimeout(factTimerRef.current);
   }, [cfg]);
 
   useEffect(() => {
@@ -225,7 +236,17 @@ export function FuelUpGame({
     setCurrentTotals(newTotals);
     setPicksUsed((p) => p + 1);
     setPickedIds((prev) => new Set(prev).add(food.id));
+    setPickedFoodNames((prev) => [...prev, food.name]);
     setShowHint(false);
+
+    // Show food fact toast
+    const facts = FOOD_FACTS[food.name];
+    if (facts?.length) {
+      const fact = facts[Math.floor(Math.random() * facts.length)];
+      setFactToast(fact);
+      if (factTimerRef.current) clearTimeout(factTimerRef.current);
+      factTimerRef.current = setTimeout(() => setFactToast(null), 3000);
+    }
 
     const newState = calculateAvatarState(newTotals);
 
@@ -239,6 +260,35 @@ export function FuelUpGame({
       if (timerRef.current) clearInterval(timerRef.current);
     }
   };
+
+  // Fetch AI explanation on win/loss
+  useEffect(() => {
+    if (!isWon && !isLost) return;
+    if (pickedFoodNames.length === 0) return;
+
+    setLoadingAi(true);
+    fetch("/api/nutrition/education", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "food-analysis",
+        foods: pickedFoodNames,
+        won: isWon,
+        difficulty,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => setAiExplanation(data.analysis))
+      .catch(() => {
+        // Fallback already handled by API route, but handle network failure
+        setAiExplanation(
+          isWon
+            ? "Great food choices! You powered up your avatar with a balanced mix of nutrients!"
+            : "Good try! Look for foods with more protein and veggies next time to boost your avatar."
+        );
+      })
+      .finally(() => setLoadingAi(false));
+  }, [isWon, isLost, pickedFoodNames, difficulty]);
 
   // Hints using getPowerUpSuggestions
   const hints = useMemo(() => {
@@ -300,6 +350,16 @@ export function FuelUpGame({
         </div>
       </div>
 
+      {/* Food fact toast */}
+      {factToast && (
+        <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <p className="text-sm text-blue-800">
+            <span className="font-bold">{"\u{1F4A1}"} Did you know? </span>
+            {factToast}
+          </p>
+        </div>
+      )}
+
       {/* Hint button */}
       {cfg.showHint && !isWon && !isLost && picksUsed < cfg.maxPicks && (
         <button
@@ -356,12 +416,19 @@ export function FuelUpGame({
           <p className="font-bold text-red-600 mb-1">
             {timeLeft === 0 ? "Time's up!" : "Out of picks!"}
           </p>
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-slate-600 mb-3">
             Your avatar reached{" "}
             <span className="capitalize font-bold">{avatarState}</span> but
             needed{" "}
             <span className="capitalize font-bold">{cfg.target}</span>.
           </p>
+          {loadingAi ? (
+            <p className="text-xs text-slate-400 mb-3 animate-pulse">Thinking about your picks...</p>
+          ) : aiExplanation ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-left">
+              <p className="text-sm text-amber-800">{"\u{1F4A1}"} {aiExplanation}</p>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-3">
             <button
               onClick={initGame}
@@ -397,7 +464,7 @@ export function FuelUpGame({
               {"\u2B50".repeat(getStars())}
               {"\u2606".repeat(3 - getStars())}
             </div>
-            <div className="space-y-1 text-slate-600 mb-6">
+            <div className="space-y-1 text-slate-600 mb-4">
               <p>
                 Picks used:{" "}
                 <span className="font-bold">
@@ -409,6 +476,13 @@ export function FuelUpGame({
                 <span className="font-bold capitalize">{avatarState}</span>
               </p>
             </div>
+            {loadingAi ? (
+              <p className="text-xs text-slate-400 mb-4 animate-pulse">Analyzing your picks...</p>
+            ) : aiExplanation ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-left">
+                <p className="text-sm text-green-800">{"\u{1F31F}"} {aiExplanation}</p>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-3">
               <button
                 onClick={initGame}

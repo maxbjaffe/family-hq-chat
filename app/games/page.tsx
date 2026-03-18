@@ -26,7 +26,7 @@ import { AnagramsGame } from "@/components/games/AnagramsGame";
 import { WordLadderGame } from "@/components/games/WordLadderGame";
 import { MemoryMatchGame } from "@/components/games/MemoryMatchGame";
 import { FuelUpGame } from "@/components/games/FuelUpGame";
-import { FoodDetectiveGame } from "@/components/games/FoodDetectiveGame";
+import { NutritionIQGame } from "@/components/games/NutritionIQGame";
 import { MealBuilderGame } from "@/components/games/MealBuilderGame";
 import { DifficultySelect } from "@/components/games/DifficultySelect";
 
@@ -109,8 +109,8 @@ const games = [
   },
   {
     id: "fooddetective" as const,
-    name: "Food Detective",
-    description: "Test your nutrition knowledge!",
+    name: "Nutrition IQ",
+    description: "Learn how food powers your body!",
     icon: Search,
     color: "from-teal-500 to-green-500",
     bgColor: "from-teal-50 to-green-50",
@@ -247,11 +247,11 @@ export default function GamesPage() {
       {activeGame === "fooddetective" && (
         foodDetectiveDifficulty === null ? (
           <DifficultySelect
-            gameName="Food Detective"
+            gameName="Nutrition IQ"
             onSelect={(difficulty) => setFoodDetectiveDifficulty(difficulty)}
           />
         ) : (
-          <FoodDetectiveGame
+          <NutritionIQGame
             difficulty={foodDetectiveDifficulty}
             onChangeDifficulty={() => setFoodDetectiveDifficulty(null)}
           />
