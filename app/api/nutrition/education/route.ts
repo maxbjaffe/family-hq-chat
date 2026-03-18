@@ -4,6 +4,7 @@ import type {
   EducationRequest,
   EducationQuestion,
   EducationDifficulty,
+  NutritionFact,
 } from "@/lib/nutrition/education-types";
 
 // ---------------------------------------------------------------------------
@@ -25,7 +26,7 @@ function getClient(): Anthropic {
 // Quiz generation
 // ---------------------------------------------------------------------------
 
-const DIFFICULTY_PROMPT: Record<EducationDifficulty, string> = {
+const QUIZ_DIFFICULTY_PROMPT: Record<EducationDifficulty, string> = {
   easy: `Target age 5-7. Use simple cause-and-effect language. Each question has exactly 2 answer choices. Use only question categories: how_you_feel, best_pick, body_science. Keep explanations short (1-2 sentences) and use simple words.`,
   medium: `Target age 7-9. Use comparisons and real-life scenarios. Each question has exactly 3 answer choices. Use all 6 question categories. Explanations can be 2-3 sentences.`,
   hard: `Target age 9-12. Use real science terms (nutrients, vitamins, minerals, carbohydrates). Each question has exactly 4 answer choices. Use all 6 question categories. Explanations should teach real nutrition science in 2-3 sentences.`,
@@ -33,14 +34,20 @@ const DIFFICULTY_PROMPT: Record<EducationDifficulty, string> = {
 
 async function generateQuiz(
   difficulty: EducationDifficulty,
-  count: number
+  count: number,
+  recentPrompts: string[]
 ): Promise<EducationQuestion[]> {
   const client = getClient();
+
+  const avoidSection =
+    recentPrompts.length > 0
+      ? `\n\nIMPORTANT — AVOID REPEATING these recently asked questions. Generate completely NEW and DIFFERENT questions:\n${recentPrompts.map((p) => `- "${p}"`).join("\n")}`
+      : "";
 
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 4096,
-    temperature: 0.8,
+    temperature: 0.9,
     system: `You are a fun nutrition educator for kids. Generate quiz questions that teach how food affects your body, energy, mood, and health.
 
 Question categories:
@@ -51,7 +58,7 @@ Question categories:
 - "true_false_plus": A nutrition claim with a nuanced answer
 - "sugar_detective": Identify hidden sugars in "healthy" foods
 
-${DIFFICULTY_PROMPT[difficulty]}
+${QUIZ_DIFFICULTY_PROMPT[difficulty]}
 
 Respond with ONLY valid JSON, no markdown fences. Format:
 {
@@ -72,11 +79,12 @@ IMPORTANT:
 - Every question MUST have an explanation — the explanation IS the education
 - Use foods kids actually know and eat
 - Make wrong answers plausible but clearly wrong when explained
-- Vary the correct answer position — don't always make it the first option`,
+- Vary the correct answer position — don't always make it the first option
+- Generate FRESH, CREATIVE questions every time — avoid common/obvious questions${avoidSection}`,
     messages: [
       {
         role: "user",
-        content: `Generate ${count} nutrition quiz questions at ${difficulty} difficulty. Mix up the question categories for variety.`,
+        content: `Generate ${count} nutrition quiz questions at ${difficulty} difficulty. Mix up the question categories for variety. Be creative and surprising!`,
       },
     ],
   });
@@ -89,62 +97,73 @@ IMPORTANT:
 }
 
 // ---------------------------------------------------------------------------
-// Food analysis (Fuel Up win/loss)
+// Nutrition facts generation
 // ---------------------------------------------------------------------------
 
-async function analyzeFoods(
-  foods: string[],
-  won: boolean,
-  difficulty: string
-): Promise<string> {
+const FACTS_DIFFICULTY_PROMPT: Record<EducationDifficulty, string> = {
+  easy: `Target age 5-7. Use very simple words and short sentences. Focus on fun, surprising, relatable facts. Relate to things kids care about: energy for playing, growing taller, feeling happy. Use playful analogies.`,
+  medium: `Target age 7-9. Use comparisons and real-world examples. Include "did you know" style facts about food science, body systems, and nutrition myths. Can use slightly more detail.`,
+  hard: `Target age 9-12. Include real science — cell biology, specific nutrients, chemical processes, evolutionary food facts. Use proper terminology but still make it engaging and mind-blowing.`,
+};
+
+async function generateFacts(
+  difficulty: EducationDifficulty,
+  count: number,
+  recentTitles: string[]
+): Promise<NutritionFact[]> {
   const client = getClient();
+
+  const avoidSection =
+    recentTitles.length > 0
+      ? `\n\nIMPORTANT — AVOID REPEATING these recently shown facts. Generate completely NEW and DIFFERENT facts:\n${recentTitles.map((t) => `- "${t}"`).join("\n")}`
+      : "";
 
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 256,
-    temperature: 0.7,
-    system: `You are a fun, encouraging nutrition coach for kids ages 5-12. Keep responses to 2-3 short sentences. Use simple language. Reference specific foods the kid picked and explain HOW they help (or don't help) the body.`,
-    messages: [
-      {
-        role: "user",
-        content: won
-          ? `The kid won the Fuel Up game on ${difficulty} difficulty by picking these foods: ${foods.join(", ")}. Explain why these were great picks and how they power up the body. Be enthusiastic!`
-          : `The kid lost the Fuel Up game on ${difficulty} difficulty. They picked: ${foods.join(", ")}. Give encouraging coaching about what they could improve — mention specific nutrients they were missing (protein, veggies, water, or vitamins) and suggest better picks. Stay positive!`,
-      },
-    ],
-  });
+    max_tokens: 4096,
+    temperature: 0.9,
+    system: `You generate fun, surprising, and educational nutrition facts for kids. Each fact should teach something genuinely interesting about food, the human body, or nutrition science.
 
-  return response.content[0].type === "text" ? response.content[0].text : "";
+Categories to rotate through:
+- "Body Power": How your body uses food (muscles, brain, bones, immune system)
+- "Food Secrets": Surprising things about everyday foods
+- "Sugar Spy": Hidden sugars and sneaky marketing
+- "Nature's Science": How food grows, why food has color, animal nutrition
+- "Myth Buster": Common food beliefs that are wrong (or partly wrong)
+- "World Foods": Interesting nutrition facts from around the world
+
+${FACTS_DIFFICULTY_PROMPT[difficulty]}
+
+Respond with ONLY valid JSON, no markdown fences. Format:
+{
+  "facts": [
+    {
+      "emoji": "single relevant emoji",
+      "title": "short catchy title (5-8 words)",
+      "body": "the fact explanation (2-4 sentences)",
+      "category": "Body Power"
+    }
+  ]
 }
 
-// ---------------------------------------------------------------------------
-// Meal analysis (Meal Builder report card)
-// ---------------------------------------------------------------------------
-
-async function analyzeMeal(
-  mealType: string,
-  foods: string[],
-  avatarState: string,
-  won: boolean
-): Promise<string> {
-  const client = getClient();
-
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 256,
-    temperature: 0.7,
-    system: `You are a fun, encouraging nutrition coach for kids ages 5-12. Keep responses to 2-3 short sentences. Use simple language. Explain how specific foods in the meal work together (or don't) to fuel the body.`,
+IMPORTANT:
+- Each fact should be genuinely surprising or "mind-blowing" — not obvious
+- Vary the categories for a good mix
+- Titles should be catchy and make kids want to read more
+- Keep facts accurate — no made-up statistics${avoidSection}`,
     messages: [
       {
         role: "user",
-        content: won
-          ? `The kid built a great ${mealType}! They chose: ${foods.join(", ")}. Their avatar reached "${avatarState}" state. Explain why this meal is balanced and how it would make them feel. Be enthusiastic!`
-          : `The kid's ${mealType} wasn't quite balanced. They chose: ${foods.join(", ")}. Their avatar is at "${avatarState}" state but needs better. Give encouraging coaching — explain what's missing and suggest a specific swap to improve the meal. Stay positive!`,
+        content: `Generate ${count} amazing nutrition facts at ${difficulty} difficulty. Make them surprising and fun! Mix up the categories.`,
       },
     ],
   });
 
-  return response.content[0].type === "text" ? response.content[0].text : "";
+  const responseText =
+    response.content[0].type === "text" ? response.content[0].text : "";
+
+  const parsed = JSON.parse(responseText);
+  return parsed.facts as NutritionFact[];
 }
 
 // ---------------------------------------------------------------------------
@@ -191,6 +210,49 @@ const FALLBACK_QUESTIONS: Record<EducationDifficulty, EducationQuestion[]> = {
 };
 
 // ---------------------------------------------------------------------------
+// Fallback static facts
+// ---------------------------------------------------------------------------
+
+const FALLBACK_FACTS: Record<EducationDifficulty, NutritionFact[]> = {
+  easy: [
+    { emoji: "\u{1F9E0}", title: "Your Brain Runs on Water!", body: "Your brain is about 75% water. When you drink a glass of water, your brain actually works faster! That's why you feel more awake after drinking water in the morning.", category: "Body Power" },
+    { emoji: "\u{1F34C}", title: "Bananas Are Nature's Energy Bar", body: "Bananas have natural sugar AND potassium, which helps your muscles work. That's why tennis players eat bananas between games!", category: "Food Secrets" },
+    { emoji: "\u{1F955}", title: "Carrots Help You See in the Dark", body: "Well, not exactly in the dark — but carrots have vitamin A which keeps your eyes healthy and helps you see better in dim light!", category: "Myth Buster" },
+    { emoji: "\u{1F353}", title: "Strawberries Have More Vitamin C Than Oranges", body: "Surprise! One cup of strawberries has MORE vitamin C than one orange. Vitamin C helps your body fight off colds and heal cuts.", category: "Food Secrets" },
+    { emoji: "\u{1F4AA}", title: "Protein Builds Your Muscles While You Sleep", body: "When you eat protein foods like chicken or eggs, your body uses them to build and repair muscles — especially while you're sleeping!", category: "Body Power" },
+    { emoji: "\u{1F36C}", title: "Sugar Hides in Ketchup!", body: "One tablespoon of ketchup has about 1 teaspoon of sugar in it. Sugar sneaks into lots of foods you wouldn't expect!", category: "Sugar Spy" },
+    { emoji: "\u{1F966}", title: "Broccoli Has More Protein Than You Think", body: "A cup of broccoli actually has protein in it! It also has vitamin C, vitamin K, and lots of fiber. It's like a tiny superfood tree!", category: "Food Secrets" },
+    { emoji: "\u{1F30D}", title: "Kids in Japan Eat Seaweed for Snack", body: "In Japan, kids eat dried seaweed sheets as a snack. Seaweed has tons of vitamins and minerals from the ocean!", category: "World Foods" },
+    { emoji: "\u{1F9B4}", title: "Milk Makes Your Bones Grow", body: "Your bones are growing every single day! Milk, cheese, and yogurt have calcium — the building block your bones need to grow tall and strong.", category: "Body Power" },
+    { emoji: "\u{1F34E}", title: "An Apple a Day Really Does Help!", body: "Apples have fiber that feeds the good bacteria in your tummy. Those good bacteria help you digest food and stay healthy!", category: "Body Power" },
+  ],
+  medium: [
+    { emoji: "\u{1F9EC}", title: "Your Gut Has Its Own Brain", body: "Your digestive system has over 100 million nerve cells — scientists call it your 'second brain.' The foods you eat actually affect your mood because of this gut-brain connection!", category: "Body Power" },
+    { emoji: "\u{1F36B}", title: "Dark Chocolate Is Actually Healthy", body: "Dark chocolate (70%+ cocoa) has antioxidants called flavonoids that are good for your heart. But milk chocolate has too much sugar to get the benefit — it's all about the cocoa!", category: "Myth Buster" },
+    { emoji: "\u{1F33D}", title: "Corn Is Actually a Grain, Not a Vegetable", body: "Even though we eat it like a veggie, corn is technically a grain — just like wheat and rice. That's why it has more carbs than most vegetables!", category: "Food Secrets" },
+    { emoji: "\u{1F957}", title: "Spinach Makes Your Brain Faster", body: "Spinach is packed with iron, which helps carry oxygen to your brain. More oxygen = faster thinking! That's why Popeye was so strong (and smart).", category: "Body Power" },
+    { emoji: "\u{1F36F}", title: "Honey Never Goes Bad — Ever", body: "Scientists found 3,000-year-old honey in Egyptian pyramids that was still edible! Honey has natural antibacterial properties. But it still has lots of sugar, so it's a treat, not an everyday food.", category: "Nature's Science" },
+    { emoji: "\u{1F963}", title: "'Whole Grain' Labels Can Be Tricky", body: "A product can say 'made with whole grains' even if only a tiny bit is whole grain. Look for 'whole wheat' as the FIRST ingredient on the label to know it's really healthy.", category: "Sugar Spy" },
+    { emoji: "\u{1F347}", title: "Frozen Fruit Is Just As Healthy As Fresh", body: "Frozen fruits and vegetables are picked at peak ripeness and flash-frozen, which locks in the nutrients. Fresh produce at the store may have been sitting for days, losing vitamins!", category: "Myth Buster" },
+    { emoji: "\u{1F41F}", title: "Fish Makes You Smarter — Seriously", body: "Fish like salmon have omega-3 fatty acids (DHA) that literally build the membranes of your brain cells. Studies show kids who eat fish regularly score higher on memory tests!", category: "Body Power" },
+    { emoji: "\u{1F1EE}\u{1F1F3}", title: "Turmeric Is India's Secret Weapon", body: "In India, golden milk (milk with turmeric) has been used for thousands of years. Turmeric contains curcumin, a powerful anti-inflammatory that helps your body heal faster.", category: "World Foods" },
+    { emoji: "\u{1F4A7}", title: "You Lose Water Just by Breathing", body: "Every time you breathe out, you lose a tiny bit of water vapor. Over a day, you can lose about 2 cups of water just from breathing! That's one reason you need to drink water even on cold days.", category: "Body Power" },
+  ],
+  hard: [
+    { emoji: "\u{1F9EC}", title: "Your Microbiome Has More Cells Than You", body: "Your gut contains around 38 trillion bacteria — more than the 30 trillion human cells in your body. These microbes help digest food, produce vitamins K and B12, and even influence your immune system. Eating fiber feeds the beneficial bacteria.", category: "Body Power" },
+    { emoji: "\u{1F9EA}", title: "Vitamin C Changes Iron's Chemical Form", body: "Non-heme iron (from plants) is in the Fe3+ form, which your body can't absorb well. Vitamin C acts as a reducing agent, converting it to Fe2+ — a form your intestines can absorb 3-6x more efficiently. That's why nutritionists pair spinach with citrus!", category: "Nature's Science" },
+    { emoji: "\u{1F4A5}", title: "Capsaicin Tricks Your Brain Into Feeling Heat", body: "Spicy peppers contain capsaicin, which binds to TRPV1 receptors — the same receptors that detect actual heat. Your brain releases endorphins in response, creating a natural 'high.' This is why some people get addicted to spicy food!", category: "Food Secrets" },
+    { emoji: "\u{1F9C0}", title: "Cheese Is Basically Concentrated Milk", body: "It takes about 10 pounds of milk to make 1 pound of cheese. The casein proteins in milk coagulate when acid or enzymes are added, trapping fat and calcium in a solid matrix. That's why cheese has 10x the calcium density of milk!", category: "Nature's Science" },
+    { emoji: "\u{1F4C8}", title: "The Glycemic Index Explains Sugar Crashes", body: "Foods with a high glycemic index (GI) like white bread (GI: 75) cause rapid blood glucose spikes. Your pancreas releases a burst of insulin to compensate, which can overshoot, causing hypoglycemia — the 'crash.' Low-GI foods like oatmeal (GI: 55) provide steadier energy.", category: "Body Power" },
+    { emoji: "\u{1F30E}", title: "Quinoa Was NASA's Space Food Pick", body: "NASA studied quinoa as a potential crop for long-duration space missions because it's one of the few plant foods that's a 'complete protein' — containing all 9 essential amino acids. The Incas called it 'the mother of all grains' 5,000 years ago.", category: "World Foods" },
+    { emoji: "\u{1F9C3}", title: "Juice Companies Legally Add Back 'Flavor Packs'", body: "To make juice consistent year-round, companies strip oxygen from juice (removing flavor), then add engineered 'flavor packs' — essentially perfume made from orange byproducts. It's still '100% juice' technically, but it's been heavily processed.", category: "Sugar Spy" },
+    { emoji: "\u{1F9E0}", title: "Your Brain Burns 20% of Your Daily Calories", body: "Despite being only 2% of your body weight, your brain consumes about 20% of your total energy — roughly 400-500 calories per day. It runs almost exclusively on glucose, which is why you feel foggy when you skip meals.", category: "Body Power" },
+    { emoji: "\u{1F344}", title: "Mushrooms Make Vitamin D in Sunlight", body: "Like humans, mushrooms produce vitamin D when exposed to UV light. Place store-bought mushrooms gill-side-up in sunlight for 30 minutes, and their vitamin D content can increase by 800%! They're one of the only non-animal food sources of vitamin D.", category: "Nature's Science" },
+    { emoji: "\u{1F1EF}\u{1F1F5}", title: "Japan's School Lunches Are Nutritionally Engineered", body: "Japanese school lunches are designed by professional nutritionists to provide exactly 1/3 of a child's daily nutrients. Students serve each other, eat in classrooms, and clean up — it's considered part of food education ('shokuiku').", category: "World Foods" },
+  ],
+};
+
+// ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 
@@ -199,9 +261,9 @@ export async function POST(request: Request) {
     const body = (await request.json()) as EducationRequest;
 
     if (body.type === "quiz") {
-      const { difficulty, count } = body;
+      const { difficulty, count, recentPrompts = [] } = body;
       try {
-        const questions = await generateQuiz(difficulty, count);
+        const questions = await generateQuiz(difficulty, count, recentPrompts);
         return NextResponse.json({ questions });
       } catch (error) {
         console.error("[Education] Quiz generation failed, using fallback:", error);
@@ -210,31 +272,15 @@ export async function POST(request: Request) {
       }
     }
 
-    if (body.type === "food-analysis") {
-      const { foods, won, difficulty } = body;
+    if (body.type === "facts") {
+      const { difficulty, count, recentTitles = [] } = body;
       try {
-        const analysis = await analyzeFoods(foods, won, difficulty);
-        return NextResponse.json({ analysis });
+        const facts = await generateFacts(difficulty, count, recentTitles);
+        return NextResponse.json({ facts });
       } catch (error) {
-        console.error("[Education] Food analysis failed, using fallback:", error);
-        const analysis = won
-          ? `Great food choices! ${foods.join(", ")} gave your body a balanced mix of nutrients to feel strong and energized!`
-          : `Good try! Next time, look for foods with more protein and veggies to power up your avatar. You've got this!`;
-        return NextResponse.json({ analysis });
-      }
-    }
-
-    if (body.type === "meal-analysis") {
-      const { mealType, foods, avatarState, won } = body;
-      try {
-        const analysis = await analyzeMeal(mealType, foods, avatarState, won);
-        return NextResponse.json({ analysis });
-      } catch (error) {
-        console.error("[Education] Meal analysis failed, using fallback:", error);
-        const analysis = won
-          ? `Awesome ${mealType}! ${foods.join(", ")} make a well-balanced meal that would keep you feeling great all day!`
-          : `Nice try on your ${mealType}! Try mixing in more protein and veggies next time for a more balanced meal. You're learning!`;
-        return NextResponse.json({ analysis });
+        console.error("[Education] Facts generation failed, using fallback:", error);
+        const fallback = FALLBACK_FACTS[difficulty].slice(0, count);
+        return NextResponse.json({ facts: fallback });
       }
     }
 

@@ -14,8 +14,7 @@ import {
   Shuffle,
   GitBranch,
   Layers,
-  Zap,
-  UtensilsCrossed,
+  Sparkles,
 } from "lucide-react";
 import { useKiosk } from "@/components/KioskProvider";
 import { WordleGame } from "@/components/games/WordleGame";
@@ -25,14 +24,13 @@ import { WordSearchGame } from "@/components/games/WordSearchGame";
 import { AnagramsGame } from "@/components/games/AnagramsGame";
 import { WordLadderGame } from "@/components/games/WordLadderGame";
 import { MemoryMatchGame } from "@/components/games/MemoryMatchGame";
-import { FuelUpGame } from "@/components/games/FuelUpGame";
 import { NutritionIQGame } from "@/components/games/NutritionIQGame";
-import { MealBuilderGame } from "@/components/games/MealBuilderGame";
+import { NutritionFactsGame } from "@/components/games/NutritionFactsGame";
 import { DifficultySelect } from "@/components/games/DifficultySelect";
 
 type Difficulty = "easy" | "medium" | "hard";
 
-type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe" | "wordsearch" | "anagrams" | "wordladder" | "memorymatch" | "fuelup" | "fooddetective" | "mealbuilder";
+type GameType = "menu" | "doodle" | "wordle" | "hangman" | "tictactoe" | "wordsearch" | "anagrams" | "wordladder" | "memorymatch" | "nutritioniq" | "nutritionfacts";
 
 const games = [
   {
@@ -100,28 +98,20 @@ const games = [
     bgColor: "from-amber-50 to-orange-50",
   },
   {
-    id: "fuelup" as const,
-    name: "Fuel Up!",
-    description: "Power up your avatar with food!",
-    icon: Zap,
-    color: "from-yellow-500 to-orange-500",
-    bgColor: "from-yellow-50 to-orange-50",
-  },
-  {
-    id: "fooddetective" as const,
+    id: "nutritioniq" as const,
     name: "Nutrition IQ",
-    description: "Learn how food powers your body!",
+    description: "Test how food powers your body!",
     icon: Search,
     color: "from-teal-500 to-green-500",
     bgColor: "from-teal-50 to-green-50",
   },
   {
-    id: "mealbuilder" as const,
-    name: "Meal Builder",
-    description: "Build balanced meals!",
-    icon: UtensilsCrossed,
-    color: "from-purple-500 to-pink-500",
-    bgColor: "from-purple-50 to-pink-50",
+    id: "nutritionfacts" as const,
+    name: "Nutrition Facts",
+    description: "Mind-blowing food science!",
+    icon: Sparkles,
+    color: "from-orange-500 to-pink-500",
+    bgColor: "from-orange-50 to-pink-50",
   },
 ];
 
@@ -133,9 +123,8 @@ export default function GamesPage() {
   const [anagramsDifficulty, setAnagramsDifficulty] = useState<Difficulty | null>(null);
   const [wordLadderDifficulty, setWordLadderDifficulty] = useState<Difficulty | null>(null);
   const [memoryMatchDifficulty, setMemoryMatchDifficulty] = useState<Difficulty | null>(null);
-  const [fuelUpDifficulty, setFuelUpDifficulty] = useState<Difficulty | null>(null);
-  const [foodDetectiveDifficulty, setFoodDetectiveDifficulty] = useState<Difficulty | null>(null);
-  const [mealBuilderDifficulty, setMealBuilderDifficulty] = useState<Difficulty | null>(null);
+  const [nutritionIQDifficulty, setNutritionIQDifficulty] = useState<Difficulty | null>(null);
+  const [nutritionFactsDifficulty, setNutritionFactsDifficulty] = useState<Difficulty | null>(null);
 
   const { isKioskMode, isEmbedded } = useKiosk();
   const isWideMode = isKioskMode || isEmbedded;
@@ -147,9 +136,8 @@ export default function GamesPage() {
     if (activeGame === "anagrams") setAnagramsDifficulty(null);
     if (activeGame === "wordladder") setWordLadderDifficulty(null);
     if (activeGame === "memorymatch") setMemoryMatchDifficulty(null);
-    if (activeGame === "fuelup") setFuelUpDifficulty(null);
-    if (activeGame === "fooddetective") setFoodDetectiveDifficulty(null);
-    if (activeGame === "mealbuilder") setMealBuilderDifficulty(null);
+    if (activeGame === "nutritioniq") setNutritionIQDifficulty(null);
+    if (activeGame === "nutritionfacts") setNutritionFactsDifficulty(null);
   };
 
   // Shared game rendering
@@ -231,42 +219,29 @@ export default function GamesPage() {
           <MemoryMatchGame difficulty={memoryMatchDifficulty} />
         )
       )}
-      {activeGame === "fuelup" && (
-        fuelUpDifficulty === null ? (
-          <DifficultySelect
-            gameName="Fuel Up!"
-            onSelect={(difficulty) => setFuelUpDifficulty(difficulty)}
-          />
-        ) : (
-          <FuelUpGame
-            difficulty={fuelUpDifficulty}
-            onChangeDifficulty={() => setFuelUpDifficulty(null)}
-          />
-        )
-      )}
-      {activeGame === "fooddetective" && (
-        foodDetectiveDifficulty === null ? (
+      {activeGame === "nutritioniq" && (
+        nutritionIQDifficulty === null ? (
           <DifficultySelect
             gameName="Nutrition IQ"
-            onSelect={(difficulty) => setFoodDetectiveDifficulty(difficulty)}
+            onSelect={(difficulty) => setNutritionIQDifficulty(difficulty)}
           />
         ) : (
           <NutritionIQGame
-            difficulty={foodDetectiveDifficulty}
-            onChangeDifficulty={() => setFoodDetectiveDifficulty(null)}
+            difficulty={nutritionIQDifficulty}
+            onChangeDifficulty={() => setNutritionIQDifficulty(null)}
           />
         )
       )}
-      {activeGame === "mealbuilder" && (
-        mealBuilderDifficulty === null ? (
+      {activeGame === "nutritionfacts" && (
+        nutritionFactsDifficulty === null ? (
           <DifficultySelect
-            gameName="Meal Builder"
-            onSelect={(difficulty) => setMealBuilderDifficulty(difficulty)}
+            gameName="Nutrition Facts"
+            onSelect={(difficulty) => setNutritionFactsDifficulty(difficulty)}
           />
         ) : (
-          <MealBuilderGame
-            difficulty={mealBuilderDifficulty}
-            onChangeDifficulty={() => setMealBuilderDifficulty(null)}
+          <NutritionFactsGame
+            difficulty={nutritionFactsDifficulty}
+            onChangeDifficulty={() => setNutritionFactsDifficulty(null)}
           />
         )
       )}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { RotateCcw, Brain } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { RotateCcw, Brain, ChevronRight } from "lucide-react";
 import type {
   EducationQuestion,
   EducationDifficulty,
@@ -25,6 +25,28 @@ const LOADING_MESSAGES = [
   "Peeling back the science...",
 ];
 
+const HISTORY_KEY = "nutritioniq-history";
+const MAX_HISTORY = 50;
+
+function getRecentPrompts(): string[] {
+  try {
+    const stored = localStorage.getItem(HISTORY_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePrompts(prompts: string[]) {
+  try {
+    const existing = getRecentPrompts();
+    const combined = [...prompts, ...existing].slice(0, MAX_HISTORY);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(combined));
+  } catch {
+    // localStorage not available
+  }
+}
+
 export function NutritionIQGame({
   difficulty,
   onChangeDifficulty,
@@ -40,7 +62,6 @@ export function NutritionIQGame({
   const [loadingMsg] = useState(
     () => LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)]
   );
-  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cfg = DIFFICULTY_CONFIG[difficulty];
 
@@ -53,7 +74,8 @@ export function NutritionIQGame({
     setIsComplete(false);
     setCorrectCount(0);
     setIsLoading(true);
-    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+
+    const recentPrompts = getRecentPrompts();
 
     try {
       const res = await fetch("/api/nutrition/education", {
@@ -63,15 +85,17 @@ export function NutritionIQGame({
           type: "quiz",
           difficulty,
           count: cfg.questionCount,
+          recentPrompts: recentPrompts.slice(0, 30),
         }),
       });
       const data = await res.json();
       if (data.questions?.length) {
         setQuestions(data.questions);
+        // Save new prompts to history
+        savePrompts(data.questions.map((q: EducationQuestion) => q.prompt));
       }
     } catch (error) {
       console.error("[NutritionIQ] Failed to fetch questions:", error);
-      // API route already returns fallback on error, but handle network failure
     }
 
     setIsLoading(false);
@@ -79,9 +103,6 @@ export function NutritionIQGame({
 
   useEffect(() => {
     initGame();
-    return () => {
-      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-    };
   }, [initGame]);
 
   const question = questions[current];
@@ -98,19 +119,17 @@ export function NutritionIQGame({
       setScore((s) => Math.max(0, s - cfg.wrongPenalty));
     }
 
-    // Always show explanation — the explanation IS the education
     setShowingExplanation(true);
+  };
 
-    // Auto-advance after 3 seconds (explanation reading time)
-    advanceTimerRef.current = setTimeout(() => {
-      if (current + 1 >= questions.length) {
-        setIsComplete(true);
-      } else {
-        setCurrent((c) => c + 1);
-        setSelected(null);
-        setShowingExplanation(false);
-      }
-    }, 3000);
+  const handleNext = () => {
+    if (current + 1 >= questions.length) {
+      setIsComplete(true);
+    } else {
+      setCurrent((c) => c + 1);
+      setSelected(null);
+      setShowingExplanation(false);
+    }
   };
 
   const getStars = () => {
@@ -120,7 +139,6 @@ export function NutritionIQGame({
     return 1;
   };
 
-  // Pick 3 key facts from the questions the player got right (or all explanations)
   const getLearnedFacts = () => {
     return questions
       .filter((_, i) => i < current + 1)
@@ -325,6 +343,17 @@ export function NutritionIQGame({
             </span>
             {question.explanation}
           </div>
+        )}
+
+        {/* Next button — appears after answering */}
+        {showingExplanation && (
+          <button
+            onClick={handleNext}
+            className="mt-4 flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-xl font-semibold hover:opacity-90 active:scale-[0.98] min-h-[48px] transition-all"
+          >
+            {current + 1 >= questions.length ? "See Results" : "Next Question"}
+            <ChevronRight className="w-5 h-5" />
+          </button>
         )}
       </div>
 

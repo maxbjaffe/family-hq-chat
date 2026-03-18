@@ -19,30 +19,30 @@ export interface EducationQuestion {
   explanation: string;
 }
 
+export interface NutritionFact {
+  emoji: string;
+  title: string;
+  body: string;
+  category: string;
+}
+
 // API request types — discriminated union on `type`
 
 export interface QuizRequest {
   type: 'quiz';
   difficulty: EducationDifficulty;
   count: number;
+  recentPrompts?: string[];
 }
 
-export interface FoodAnalysisRequest {
-  type: 'food-analysis';
-  foods: string[];
-  won: boolean;
-  difficulty: string;
+export interface FactsRequest {
+  type: 'facts';
+  difficulty: EducationDifficulty;
+  count: number;
+  recentTitles?: string[];
 }
 
-export interface MealAnalysisRequest {
-  type: 'meal-analysis';
-  mealType: string;
-  foods: string[];
-  avatarState: string;
-  won: boolean;
-}
-
-export type EducationRequest = QuizRequest | FoodAnalysisRequest | MealAnalysisRequest;
+export type EducationRequest = QuizRequest | FactsRequest;
 
 // API response types
 
@@ -50,6 +50,6 @@ export interface QuizResponse {
   questions: EducationQuestion[];
 }
 
-export interface AnalysisResponse {
-  analysis: string;
+export interface FactsResponse {
+  facts: NutritionFact[];
 }
