@@ -253,6 +253,60 @@ const FALLBACK_FACTS: Record<EducationDifficulty, NutritionFact[]> = {
 };
 
 // ---------------------------------------------------------------------------
+// Server-side dedup — Haiku sometimes ignores "avoid these" instructions
+// ---------------------------------------------------------------------------
+
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function isDuplicate(candidate: string, recentList: string[]): boolean {
+  const norm = normalize(candidate);
+  return recentList.some((r) => {
+    const rNorm = normalize(r);
+    // Exact match or one contains the other (catches minor rewording)
+    return norm === rNorm || norm.includes(rNorm) || rNorm.includes(norm);
+  });
+}
+
+function dedupeQuestions(
+  questions: EducationQuestion[],
+  recentPrompts: string[],
+  difficulty: EducationDifficulty,
+  targetCount: number
+): EducationQuestion[] {
+  if (recentPrompts.length === 0) return questions.slice(0, targetCount);
+
+  const filtered = questions.filter((q) => !isDuplicate(q.prompt, recentPrompts));
+
+  if (filtered.length >= targetCount) return filtered.slice(0, targetCount);
+
+  // Backfill from fallbacks that also aren't in recent
+  const fallbacks = FALLBACK_QUESTIONS[difficulty].filter(
+    (q) => !isDuplicate(q.prompt, recentPrompts) && !isDuplicate(q.prompt, filtered.map((f) => f.prompt))
+  );
+  return [...filtered, ...fallbacks].slice(0, targetCount);
+}
+
+function dedupeFacts(
+  facts: NutritionFact[],
+  recentTitles: string[],
+  difficulty: EducationDifficulty,
+  targetCount: number
+): NutritionFact[] {
+  if (recentTitles.length === 0) return facts.slice(0, targetCount);
+
+  const filtered = facts.filter((f) => !isDuplicate(f.title, recentTitles));
+
+  if (filtered.length >= targetCount) return filtered.slice(0, targetCount);
+
+  const fallbacks = FALLBACK_FACTS[difficulty].filter(
+    (f) => !isDuplicate(f.title, recentTitles) && !isDuplicate(f.title, filtered.map((x) => x.title))
+  );
+  return [...filtered, ...fallbacks].slice(0, targetCount);
+}
+
+// ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 
@@ -263,11 +317,13 @@ export async function POST(request: Request) {
     if (body.type === "quiz") {
       const { difficulty, count, recentPrompts = [] } = body;
       try {
-        const questions = await generateQuiz(difficulty, count, recentPrompts);
+        // Ask for extra to compensate for dedup filtering
+        const raw = await generateQuiz(difficulty, Math.min(count + 4, 15), recentPrompts);
+        const questions = dedupeQuestions(raw, recentPrompts, difficulty, count);
         return NextResponse.json({ questions });
       } catch (error) {
         console.error("[Education] Quiz generation failed, using fallback:", error);
-        const fallback = FALLBACK_QUESTIONS[difficulty].slice(0, count);
+        const fallback = dedupeQuestions(FALLBACK_QUESTIONS[difficulty], recentPrompts, difficulty, count);
         return NextResponse.json({ questions: fallback });
       }
     }
@@ -275,11 +331,12 @@ export async function POST(request: Request) {
     if (body.type === "facts") {
       const { difficulty, count, recentTitles = [] } = body;
       try {
-        const facts = await generateFacts(difficulty, count, recentTitles);
+        const raw = await generateFacts(difficulty, Math.min(count + 4, 15), recentTitles);
+        const facts = dedupeFacts(raw, recentTitles, difficulty, count);
         return NextResponse.json({ facts });
       } catch (error) {
         console.error("[Education] Facts generation failed, using fallback:", error);
-        const fallback = FALLBACK_FACTS[difficulty].slice(0, count);
+        const fallback = dedupeFacts(FALLBACK_FACTS[difficulty], recentTitles, difficulty, count);
         return NextResponse.json({ facts: fallback });
       }
     }
