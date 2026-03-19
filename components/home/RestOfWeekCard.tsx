@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Calendar, ChevronDown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { getCalendarColor } from '@/lib/calendar-colors';
+import { FAMILY_TIMEZONE } from '@/lib/constants';
 import Link from 'next/link';
 
 export interface UpcomingItem {
@@ -23,7 +24,7 @@ interface RestOfWeekCardProps {
   className?: string;
 }
 
-const TZ = 'America/New_York';
+const TZ = FAMILY_TIMEZONE;
 
 function toEasternDateString(date: Date): string {
   return date.toLocaleDateString('en-CA', { timeZone: TZ });

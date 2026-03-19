@@ -44,7 +44,7 @@ export function useInactivityTimer({
     setSecondsRemaining(warningSeconds);
 
     // Clear existing timers
-    if (timerRef.current) clearTimeout(timerRef.current);
+    if (timerRef.current) clearInterval(timerRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
   }, [warningSeconds]);
 
@@ -106,7 +106,7 @@ export function useInactivityTimer({
       events.forEach((event) => {
         window.removeEventListener(event, handleActivity);
       });
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, [

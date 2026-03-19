@@ -44,6 +44,18 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const futureLimit = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const updatedAt = new Date().toISOString();
+
+    // Collect all events for batch upsert
+    const eventsToUpsert: {
+      event_id: string;
+      title: string;
+      start_time: string;
+      end_time: string | null;
+      calendar_name: string;
+      location: string | null;
+      updated_at: string;
+    }[] = [];
 
     for (const vevent of vevents) {
       try {
@@ -72,40 +84,21 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
 
               // Only sync if within our date range
               if (occurrenceStart >= now && occurrenceStart <= futureLimit) {
-                // Create unique ID for this occurrence
                 const occurrenceUid = `${baseUid}_${occurrenceStart.toISOString()}`;
-
-                // Calculate end time based on duration
                 let occurrenceEnd: Date | null = null;
                 if (duration) {
                   occurrenceEnd = new Date(occurrenceStart.getTime() + duration.toSeconds() * 1000);
                 }
 
-                // Delete existing event first to handle updates properly
-              // (upsert onConflict only works if event_id has a unique constraint)
-              await supabase
-                .from('cached_calendar_events')
-                .delete()
-                .eq('event_id', occurrenceUid);
-
-              const { error } = await supabase
-                .from('cached_calendar_events')
-                .insert({
+                eventsToUpsert.push({
                   event_id: occurrenceUid,
                   title: summary,
                   start_time: occurrenceStart.toISOString(),
                   end_time: occurrenceEnd?.toISOString() || null,
                   calendar_name: feed.name,
-                  location: location,
-                  updated_at: new Date().toISOString(),
+                  location,
+                  updated_at: updatedAt,
                 });
-
-                if (error) {
-                  console.error(`Error syncing recurring event ${summary}:`, error);
-                  errors++;
-                } else {
-                  synced++;
-                }
               }
 
               next = iterator.next();
@@ -116,42 +109,56 @@ export async function syncCalendarFeed(feed: CalendarFeed): Promise<{ synced: nu
             errors++;
           }
         } else {
-          // Non-recurring event - original logic
+          // Non-recurring event
           const startDate = event.startDate?.toJSDate();
           const endDate = event.endDate?.toJSDate();
 
           // Skip events outside our date range
           if (!startDate || startDate < now || startDate > futureLimit) continue;
 
-          // Delete existing event first to handle updates properly
-          // (upsert onConflict only works if event_id has a unique constraint)
-          await supabase
-            .from('cached_calendar_events')
-            .delete()
-            .eq('event_id', baseUid);
-
-          const { error } = await supabase
-            .from('cached_calendar_events')
-            .insert({
-              event_id: baseUid,
-              title: summary,
-              start_time: startDate.toISOString(),
-              end_time: endDate?.toISOString() || null,
-              calendar_name: feed.name,
-              location: location,
-              updated_at: new Date().toISOString(),
-            });
-
-          if (error) {
-            console.error(`Error syncing event ${summary}:`, error);
-            errors++;
-          } else {
-            synced++;
-          }
+          eventsToUpsert.push({
+            event_id: baseUid,
+            title: summary,
+            start_time: startDate.toISOString(),
+            end_time: endDate?.toISOString() || null,
+            calendar_name: feed.name,
+            location,
+            updated_at: updatedAt,
+          });
         }
       } catch (eventError) {
         console.error(`Error processing event:`, eventError);
         errors++;
+      }
+    }
+
+    // Batch delete existing events for this calendar, then batch insert
+    // This is much faster than individual delete+insert per event
+    if (eventsToUpsert.length > 0) {
+      const eventIds = eventsToUpsert.map((e) => e.event_id);
+
+      // Delete in batches of 200 (Supabase .in() limit)
+      for (let i = 0; i < eventIds.length; i += 200) {
+        const batch = eventIds.slice(i, i + 200);
+        await supabase
+          .from('cached_calendar_events')
+          .delete()
+          .in('event_id', batch);
+      }
+
+      // Insert in batches of 200
+      for (let i = 0; i < eventsToUpsert.length; i += 200) {
+        const batch = eventsToUpsert.slice(i, i + 200);
+        const { error } = await supabase
+          .from('cached_calendar_events')
+          .insert(batch);
+
+        if (error) {
+          console.error(`Error batch inserting events for ${feed.name}:`, error);
+          errors += batch.length;
+        } else {
+          synced += batch.length;
+        }
       }
     }
   } catch (fetchError) {

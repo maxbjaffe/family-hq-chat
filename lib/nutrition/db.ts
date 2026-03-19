@@ -4,6 +4,7 @@
 // Uses the shared family data client (singleton lazy-init).
 
 import { getFamilyDataClient } from '@/lib/supabase';
+import { FAMILY_TIMEZONE } from '@/lib/constants';
 import { calculateAvatarState } from '@/lib/nutrition/engine';
 import { WATER_PER_GLASS } from '@/lib/nutrition/constants';
 import type {
@@ -22,7 +23,7 @@ import type {
 function getLocalDateString(): string {
   const now = new Date();
   const est = new Date(
-    now.toLocaleString('en-US', { timeZone: 'America/New_York' })
+    now.toLocaleString('en-US', { timeZone: FAMILY_TIMEZONE })
   );
   if (est.getHours() < 2) {
     est.setDate(est.getDate() - 1);

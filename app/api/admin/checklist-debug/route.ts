@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getFamilyDataClient } from "@/lib/supabase";
+import { FAMILY_TIMEZONE } from "@/lib/constants";
 
 export async function GET() {
   const supabase = getFamilyDataClient();
@@ -7,14 +8,14 @@ export async function GET() {
   // Get today's date in EST (same logic as the main code)
   const now = new Date();
   const hourFormatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
+    timeZone: FAMILY_TIMEZONE,
     hour: "numeric",
     hour12: false,
   });
   const hour = parseInt(hourFormatter.format(now));
 
   const dateFormatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
+    timeZone: FAMILY_TIMEZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

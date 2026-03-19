@@ -79,24 +79,26 @@ export async function getSystemPrompt(): Promise<string> {
     const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     const [calendarResult, emailInsights, capabilityProfile] = await Promise.all([
-      supabase
-        .from('cached_calendar_events')
-        .select('id, title, start_time, end_time, calendar_name, location')
-        .gte('start_time', now)
-        .lte('start_time', weekFromNow)
-        .order('start_time'),
-      analyzeEmailInsights(supabase),
+      Promise.resolve(
+        supabase
+          .from('cached_calendar_events')
+          .select('id, title, start_time, end_time, calendar_name, location')
+          .gte('start_time', now)
+          .lte('start_time', weekFromNow)
+          .order('start_time')
+      ).catch(() => null),
+      analyzeEmailInsights(supabase).catch(() => null),
       calculateFamilyCapability(supabase).catch(() => null),
     ]);
 
-    const events = calendarResult.data;
+    const events = calendarResult?.data ?? null;
     if (events && events.length > 0) {
       const analysis = analyzeWeek(events);
       const formatted = formatAnalysisForPrompt(analysis);
       calendarSection = `\n\n## This Week\n${formatted}`;
     }
 
-    if (emailInsights.stats.totalItems > 0) {
+    if (emailInsights && emailInsights.stats.totalItems > 0) {
       const formatted = formatEmailInsightsForPrompt(emailInsights);
       if (formatted) emailSection = `\n\n${formatted}`;
     }

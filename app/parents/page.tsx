@@ -234,17 +234,50 @@ function ParentDashboardContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages, { role: "user", content: userMessage }],
-          userId: isMax ? "max" : "alex",
+          message: userMessage,
+          history: messages,
+          user: {
+            id: isMax ? "max" : "alex",
+            name: userName,
+            role: "admin",
+          },
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.response },
-        ]);
+      if (response.ok && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let assistantText = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const payload = line.slice(6);
+            if (payload === "[DONE]") continue;
+
+            try {
+              const event = JSON.parse(payload);
+              if (event.type === "text") {
+                assistantText += event.content;
+              }
+            } catch {
+              // skip unparseable SSE lines
+            }
+          }
+        }
+
+        if (assistantText) {
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: assistantText },
+          ]);
+        }
         // Refresh data after chat in case tasks/priorities changed
         fetchData();
       }
@@ -394,6 +427,7 @@ function ParentDashboardContent() {
               type="submit"
               disabled={chatLoading || !chatInput.trim()}
               className="min-h-[52px] px-6 bg-gradient-to-r from-purple-500 to-blue-500"
+              aria-label="Send message"
             >
               <Send className="h-5 w-5" />
             </Button>
@@ -446,6 +480,7 @@ function ParentDashboardContent() {
               onClick={handleRefresh}
               disabled={refreshing}
               className="min-h-[48px] min-w-[48px]"
+              aria-label="Refresh data"
             >
               {refreshing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -655,6 +690,7 @@ function ParentDashboardContent() {
                     size="sm"
                     onClick={() => setChatExpanded(true)}
                     className="text-slate-500 hover:text-slate-700"
+                    aria-label="Expand chat to full screen"
                   >
                     <Maximize2 className="h-4 w-4" />
                   </Button>
@@ -713,6 +749,7 @@ function ParentDashboardContent() {
                   type="submit"
                   disabled={chatLoading || !chatInput.trim()}
                   className="min-h-[48px] min-w-[48px] bg-gradient-to-r from-purple-500 to-blue-500"
+                  aria-label="Send message"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
+import { FAMILY_TIMEZONE } from "./constants";
 
 // User auth types
 export interface User {
@@ -108,7 +109,7 @@ function getLocalDateString(): string {
 
   // Get current hour in EST
   const hourFormatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
+    timeZone: FAMILY_TIMEZONE,
     hour: "numeric",
     hour12: false,
   });
@@ -116,7 +117,7 @@ function getLocalDateString(): string {
 
   // Get date in EST
   const dateFormatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
+    timeZone: FAMILY_TIMEZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -139,7 +140,7 @@ function getLocalDateString(): string {
 function getLocalDayOfWeek(): number {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
-    timeZone: "America/New_York",
+    timeZone: FAMILY_TIMEZONE,
     weekday: "short",
   };
   const dayName = new Intl.DateTimeFormat("en-US", options).format(now);
@@ -159,7 +160,7 @@ function getLocalDayOfWeek(): number {
 function getLocalDayAbbrev(): string {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
-    timeZone: "America/New_York",
+    timeZone: FAMILY_TIMEZONE,
     weekday: "short",
   };
   return new Intl.DateTimeFormat("en-US", options).format(now).toLowerCase();
@@ -358,7 +359,7 @@ export async function getChecklistForMember(memberId: string): Promise<{
     .eq("member_id", memberId)
     .eq("completion_date", today);
 
-  console.log("[getChecklistForMember] Fetched completions:", { memberId, today, count: completions?.length, error: completionsError });
+
 
   const completedItemIds = new Set(completions?.map((c) => c.item_id) || []);
 
@@ -386,7 +387,6 @@ export async function toggleMemberChecklistItem(
   const supabase = getFamilyDataClient();
   const today = getLocalDateString();
 
-  console.log("[toggleMemberChecklistItem] Called with:", { memberId, itemId, isCurrentlyCompleted, today });
 
   if (isCurrentlyCompleted) {
     // Remove completion
@@ -399,8 +399,6 @@ export async function toggleMemberChecklistItem(
 
     if (error) {
       console.error("[toggleMemberChecklistItem] Delete error:", error);
-    } else {
-      console.log("[toggleMemberChecklistItem] Delete success, count:", count);
     }
 
     return !error;
@@ -415,7 +413,7 @@ export async function toggleMemberChecklistItem(
       .maybeSingle();
 
     if (existing) {
-      console.log("[toggleMemberChecklistItem] Completion already exists:", existing.id);
+
       return true;
     }
 
@@ -429,14 +427,14 @@ export async function toggleMemberChecklistItem(
     if (error) {
       // Check if it's a duplicate key error (race condition) - that's actually OK
       if (error.code === '23505') {
-        console.log("[toggleMemberChecklistItem] Duplicate key - completion already exists");
+
         return true;
       }
       console.error("[toggleMemberChecklistItem] Insert error:", error);
       return false;
     }
 
-    console.log("[toggleMemberChecklistItem] Insert success:", data);
+
     return true;
   }
 }

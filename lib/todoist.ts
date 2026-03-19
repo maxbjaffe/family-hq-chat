@@ -25,6 +25,30 @@ interface TodoistListResponse<T> {
   next_cursor: string | null;
 }
 
+function todoistErrorMessage(status: number, action: string): string {
+  if (status === 401 || status === 403) return 'Todoist token expired or invalid — re-add in settings';
+  if (status === 429) return 'Todoist rate limited — try again in a moment';
+  if (status >= 500) return 'Todoist is temporarily down — try again later';
+  return `Todoist ${action} failed (${status})`;
+}
+
+async function todoistFetch(url: string, init: RequestInit, action: string): Promise<Response> {
+  let response = await fetch(url, init);
+
+  // Retry once on 429 with backoff
+  if (response.status === 429) {
+    const retryAfter = parseInt(response.headers.get('Retry-After') || '2', 10);
+    await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
+    response = await fetch(url, init);
+  }
+
+  if (!response.ok) {
+    throw new Error(todoistErrorMessage(response.status, action));
+  }
+
+  return response;
+}
+
 async function getToken(userId?: string): Promise<string> {
   // For MVP, use env var. Later: look up from user's integrations in Supabase
   const token = process.env.TODOIST_API_TOKEN;
@@ -35,14 +59,10 @@ async function getToken(userId?: string): Promise<string> {
 export async function getTasks(userId?: string): Promise<TodoistTask[]> {
   const token = await getToken(userId);
 
-  const response = await fetch(`${TODOIST_API_URL}/tasks`, {
+  const response = await todoistFetch(`${TODOIST_API_URL}/tasks`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Todoist API error: ${response.status}`);
-  }
+  }, 'get tasks');
 
   const data: TodoistListResponse<TodoistTask> = await response.json();
   return data.results;
@@ -51,14 +71,10 @@ export async function getTasks(userId?: string): Promise<TodoistTask[]> {
 export async function getProjects(userId?: string): Promise<TodoistProject[]> {
   const token = await getToken(userId);
 
-  const response = await fetch(`${TODOIST_API_URL}/projects`, {
+  const response = await todoistFetch(`${TODOIST_API_URL}/projects`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Todoist API error: ${response.status}`);
-  }
+  }, 'get projects');
 
   const data: TodoistListResponse<TodoistProject> = await response.json();
   return data.results;
@@ -76,18 +92,14 @@ export async function createTask(
 ): Promise<TodoistTask> {
   const token = await getToken(userId);
 
-  const response = await fetch(`${TODOIST_API_URL}/tasks`, {
+  const response = await todoistFetch(`${TODOIST_API_URL}/tasks`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Todoist create error: ${response.status}`);
-  }
+  }, 'create task');
 
   return response.json();
 }
@@ -95,14 +107,10 @@ export async function createTask(
 export async function completeTask(taskId: string, userId?: string): Promise<void> {
   const token = await getToken(userId);
 
-  const response = await fetch(`${TODOIST_API_URL}/tasks/${taskId}/close`, {
+  await todoistFetch(`${TODOIST_API_URL}/tasks/${taskId}/close`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Todoist complete error: ${response.status}`);
-  }
+  }, 'complete task');
 }
 
 export async function updateTask(
@@ -117,18 +125,14 @@ export async function updateTask(
 ): Promise<TodoistTask> {
   const token = await getToken(userId);
 
-  const response = await fetch(`${TODOIST_API_URL}/tasks/${taskId}`, {
+  const response = await todoistFetch(`${TODOIST_API_URL}/tasks/${taskId}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Todoist update error: ${response.status}`);
-  }
+  }, 'update task');
 
   return response.json();
 }
@@ -136,12 +140,8 @@ export async function updateTask(
 export async function deleteTask(taskId: string, userId?: string): Promise<void> {
   const token = await getToken(userId);
 
-  const response = await fetch(`${TODOIST_API_URL}/tasks/${taskId}`, {
+  await todoistFetch(`${TODOIST_API_URL}/tasks/${taskId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Todoist delete error: ${response.status}`);
-  }
+  }, 'delete task');
 }

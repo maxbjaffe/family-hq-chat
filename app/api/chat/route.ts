@@ -166,12 +166,15 @@ export async function POST(request: NextRequest) {
 
     // Create SSE stream for agentic responses
     const encoder = new TextEncoder();
+    const MAX_ITERATIONS = 10;
     const stream = new ReadableStream({
       async start(controller) {
         try {
           let continueLoop = true;
+          let iterations = 0;
 
-          while (continueLoop) {
+          while (continueLoop && iterations < MAX_ITERATIONS) {
+            iterations++;
             const response = await anthropic.messages.create({
               model: "claude-sonnet-4-20250514",
               max_tokens: 1500,

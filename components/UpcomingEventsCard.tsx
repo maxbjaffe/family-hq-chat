@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Calendar, Loader2, GraduationCap, AlertCircle, Mail } from 'lucide-react';
 import { getCalendarColor } from '@/lib/calendar-colors';
+import { FAMILY_TIMEZONE } from '@/lib/constants';
 import Link from 'next/link';
 
 interface UpcomingItem {
@@ -28,7 +29,7 @@ const TYPE_STYLES: Record<UpcomingItem['type'], { bg: string; border: string; te
 };
 
 function getDayKey(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  return new Date(dateStr).toLocaleDateString('en-CA', { timeZone: FAMILY_TIMEZONE });
 }
 
 function getDayLabel(dateStr: string): string {

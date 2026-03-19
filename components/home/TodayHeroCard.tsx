@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { getCalendarColor } from '@/lib/calendar-colors';
+import { FAMILY_TIMEZONE } from '@/lib/constants';
 import Link from 'next/link';
 
 interface UpcomingItem {
@@ -42,11 +43,11 @@ interface TodayHeroCardProps {
 }
 
 function getTodayStr(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  return new Date().toLocaleDateString('en-CA', { timeZone: FAMILY_TIMEZONE });
 }
 
 function isToday(dateStr: string): boolean {
-  const eventDay = new Date(dateStr).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  const eventDay = new Date(dateStr).toLocaleDateString('en-CA', { timeZone: FAMILY_TIMEZONE });
   return eventDay === getTodayStr();
 }
 
@@ -54,7 +55,7 @@ function formatTime(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
-    timeZone: 'America/New_York',
+    timeZone: FAMILY_TIMEZONE,
   });
 }
 

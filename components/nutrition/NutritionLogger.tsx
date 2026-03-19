@@ -170,8 +170,8 @@ export function NutritionLogger({ memberId, kidName, onBack }: NutritionLoggerPr
           mealCategory: activeTab,
         }),
       });
-    } catch {
-      // silent fail — state will refresh anyway
+    } catch (error) {
+      console.error("Failed to log food:", error);
     }
 
     setSelectedFood(null);
@@ -188,8 +188,8 @@ export function NutritionLogger({ memberId, kidName, onBack }: NutritionLoggerPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ memberId }),
       });
-    } catch {
-      // silent fail
+    } catch (error) {
+      console.error("Failed to log water:", error);
     }
 
     loadState();

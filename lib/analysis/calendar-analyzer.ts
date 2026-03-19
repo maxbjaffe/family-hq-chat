@@ -6,6 +6,8 @@
  * free blocks, family time gaps, and weekly summaries.
  */
 
+import { FAMILY_TIMEZONE } from '../constants';
+
 // Accepts the raw shape from cached_calendar_events table
 export interface CalendarEventInput {
   id: string;
@@ -73,11 +75,11 @@ const STRESS_EVENT_THRESHOLD = 3;
 // --- Helpers ---
 
 function toISODate(d: Date): string {
-  return d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); // YYYY-MM-DD
+  return d.toLocaleDateString('en-CA', { timeZone: FAMILY_TIMEZONE }); // YYYY-MM-DD
 }
 
 function toDayName(d: Date): string {
-  return d.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/New_York' });
+  return d.toLocaleDateString('en-US', { weekday: 'long', timeZone: FAMILY_TIMEZONE });
 }
 
 function toTimeString(d: Date): string {
@@ -85,7 +87,7 @@ function toTimeString(d: Date): string {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-    timeZone: 'America/New_York',
+    timeZone: FAMILY_TIMEZONE,
   });
 }
 
@@ -444,7 +446,7 @@ export function formatAnalysisForPrompt(analysis: CalendarAnalysis): string {
     const dayNames = [...new Set(weekendFamilyTime.map((b) => {
       return new Date(b.date + 'T12:00:00').toLocaleDateString('en-US', {
         weekday: 'long',
-        timeZone: 'America/New_York',
+        timeZone: FAMILY_TIMEZONE,
       });
     }))];
     sections.push(`Family time available: ${dayNames.join(', ')}`);
@@ -491,7 +493,7 @@ export function formatAnalysisForStandup(analysis: CalendarAnalysis): string {
     for (const c of analysis.conflicts) {
       const dayName = new Date(c.date + 'T12:00:00').toLocaleDateString('en-US', {
         weekday: 'short',
-        timeZone: 'America/New_York',
+        timeZone: FAMILY_TIMEZONE,
       });
       const type = c.type === 'overlap' ? 'overlaps with' : 'tight transition to';
       lines.push(`• ${dayName}: ${c.events[0]} ${type} ${c.events[1]}`);
@@ -507,14 +509,14 @@ export function formatAnalysisForStandup(analysis: CalendarAnalysis): string {
     for (const block of evenings) {
       const dayName = new Date(block.date + 'T12:00:00').toLocaleDateString('en-US', {
         weekday: 'long',
-        timeZone: 'America/New_York',
+        timeZone: FAMILY_TIMEZONE,
       });
       lines.push(`• ${dayName} evening (${toDisplayTime(block.start)}-${toDisplayTime(block.end)})`);
     }
     for (const block of weekendDays) {
       const dayName = new Date(block.date + 'T12:00:00').toLocaleDateString('en-US', {
         weekday: 'long',
-        timeZone: 'America/New_York',
+        timeZone: FAMILY_TIMEZONE,
       });
       lines.push(`• ${dayName} (open day)`);
     }

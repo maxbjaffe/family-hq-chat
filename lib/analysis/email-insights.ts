@@ -8,6 +8,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { FAMILY_TIMEZONE } from '../constants';
 
 // --- Output types ---
 
@@ -274,7 +275,7 @@ function formatShortDate(d: Date): string {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-    timeZone: 'America/New_York',
+    timeZone: FAMILY_TIMEZONE,
   });
 }
 

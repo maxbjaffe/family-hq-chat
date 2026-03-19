@@ -6,6 +6,7 @@ import {
   Loader2,
   RotateCcw,
 } from "lucide-react";
+import Image from "next/image";
 import { useKiosk } from "@/components/KioskProvider";
 import { Button } from "@/components/ui/button";
 import { Clock } from "@/components/Clock";
@@ -15,7 +16,7 @@ import { HouseTasks } from "@/components/HouseTasks";
 import { QuickChatWidget } from "@/components/QuickChatWidget";
 import { ParentsButton } from "@/components/ParentsButton";
 import { TodayHeroCard } from "@/components/home/TodayHeroCard";
-import { FamilyAvatarRow } from "@/components/home/FamilyAvatarRow";
+import { FamilyAvatarRow, type FamilyMember } from "@/components/home/FamilyAvatarRow";
 import { RestOfWeekCard } from "@/components/home/RestOfWeekCard";
 import { RechargeQuickLaunch } from "@/components/home/RechargeQuickLaunch";
 import { NutritionQuickLaunch } from "@/components/home/NutritionQuickLaunch";
@@ -24,20 +25,6 @@ import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
 import { CottleSchoolBriefCard } from "@/components/home/CottleSchoolBriefCard";
 import { WeatherCard } from "@/components/home/WeatherCard";
 import { QuoteCard, JokeCard, FunFactCard } from "@/components/home/ContentCards";
-
-interface FamilyMember {
-  id: string;
-  name: string;
-  role: "admin" | "adult" | "kid" | "pet";
-  avatar_url: string | null;
-  has_checklist: boolean;
-  stats?: {
-    total: number;
-    completed: number;
-    remaining: number;
-    isComplete: boolean;
-  };
-}
 
 interface ContentData {
   joke: {
@@ -162,6 +149,8 @@ export default function UnifiedHomePage() {
             if (Object.keys(states).length > 0) {
               setNutritionStates(states);
             }
+          }).catch((error) => {
+            console.error("Failed to fetch nutrition states:", error);
           });
         }
       }
@@ -177,7 +166,8 @@ export default function UnifiedHomePage() {
       }
 
       endSync(true);
-    } catch {
+    } catch (error) {
+      console.error("Failed to load data:", error);
       endSync(false);
     }
     setLoading(false);
@@ -198,8 +188,8 @@ export default function UnifiedHomePage() {
             setContent(data);
           }
         }
-      } catch {
-        // Silent fail on background refresh
+      } catch (error) {
+        console.error("Content poll failed:", error);
       }
     }, 60000);
     return () => clearInterval(interval);
@@ -226,8 +216,8 @@ export default function UnifiedHomePage() {
           quoteNextRefresh: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
         });
       }
-    } catch {
-      // Silent fail
+    } catch (error) {
+      console.error("Content refresh failed:", error);
     }
     setRefreshingContent(false);
   }
@@ -281,6 +271,7 @@ export default function UnifiedHomePage() {
                   onClick={refreshData}
                   disabled={refreshing}
                   className="min-h-[48px] min-w-[48px]"
+                  aria-label="Refresh data"
                 >
                   {refreshing ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -294,6 +285,7 @@ export default function UnifiedHomePage() {
                   onClick={() => window.location.reload()}
                   className="min-h-[48px] min-w-[48px]"
                   title="Reload page"
+                  aria-label="Reload page"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
@@ -351,9 +343,11 @@ export default function UnifiedHomePage() {
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            <img
+            <Image
               src="/Images/JaffeFamilyHubLogo.PNG"
               alt="Jaffe Family Hub"
+              width={80}
+              height={80}
               className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover shadow-xl border-2 border-white"
             />
             <div>
@@ -381,6 +375,7 @@ export default function UnifiedHomePage() {
                 onClick={refreshData}
                 disabled={refreshing}
                 className="min-h-[48px] min-w-[48px]"
+                aria-label="Refresh data"
               >
                 {refreshing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -394,6 +389,7 @@ export default function UnifiedHomePage() {
                 onClick={() => window.location.reload()}
                 className="min-h-[48px] min-w-[48px]"
                 title="Reload page"
+                aria-label="Reload page"
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>

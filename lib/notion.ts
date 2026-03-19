@@ -11,7 +11,7 @@ const ASSETS_DB_ID = "a2965033-3736-40e3-8df9-3c0a364d6eb5";
 const ACCOUNTS_DB_ID = "939921db-95bc-463e-8de9-1f218fe2b84f";
 
 // Simple in-memory cache for Notion data
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour (invalidateCache() available for manual refresh)
 let cachedData: string | null = null;
 let cacheTimestamp: number = 0;
 
@@ -237,7 +237,7 @@ export function invalidateCache(): void {
   cacheTimestamp = 0;
 }
 
-// Keep old exports for backward compatibility
+// Used by family-info-agent.ts for structured people lookups
 export async function fetchPeopleAndProviders() {
   const records = await queryDatabase(PEOPLE_DB_ID);
   return records.map((props) => ({
@@ -251,22 +251,4 @@ export async function fetchPeopleAndProviders() {
     website: extractProperty(props["Website"]),
     location: extractProperty(props["Location"]),
   }));
-}
-
-export function formatPeopleForContext(people: { name: string; type: string | null; familyMembers: string[]; organization: string | null; phone: string | null; email: string | null; notes: string | null; website: string | null; location: string | null }[]): string {
-  return people
-    .map((p) => {
-      const lines = [`Name: ${p.name}`];
-      if (p.type) lines.push(`Type: ${p.type}`);
-      if (p.familyMembers.length > 0)
-        lines.push(`Family Members: ${p.familyMembers.join(", ")}`);
-      if (p.organization) lines.push(`Organization: ${p.organization}`);
-      if (p.phone) lines.push(`Phone: ${p.phone}`);
-      if (p.email) lines.push(`Email: ${p.email}`);
-      if (p.location) lines.push(`Location: ${p.location}`);
-      if (p.notes) lines.push(`Notes: ${p.notes}`);
-      if (p.website) lines.push(`Website: ${p.website}`);
-      return lines.join("\n");
-    })
-    .join("\n\n---\n\n");
 }
