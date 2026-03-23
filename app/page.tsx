@@ -23,6 +23,7 @@ import { NutritionQuickLaunch } from "@/components/home/NutritionQuickLaunch";
 import { FunStuffCarousel } from "@/components/home/FunStuffCarousel";
 import { FamilyBoardCard } from "@/components/home/FamilyBoardCard";
 import { CottleSchoolBriefCard } from "@/components/home/CottleSchoolBriefCard";
+import { SportsWidget } from "@/components/home/SportsWidget";
 import { WeatherCard } from "@/components/home/WeatherCard";
 import { QuoteCard, JokeCard, FunFactCard } from "@/components/home/ContentCards";
 
@@ -437,6 +438,11 @@ export default function UnifiedHomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <CottleSchoolBriefCard />
           <HouseTasks />
+        </div>
+
+        {/* ── Sports Widget ──────────────────────────────────── */}
+        <div className="mb-6">
+          <SportsWidget />
         </div>
       </div>
 
