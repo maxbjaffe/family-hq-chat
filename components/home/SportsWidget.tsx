@@ -23,6 +23,14 @@ interface NextGame {
   isRivalry: boolean;
 }
 
+interface TeamStandingRecord {
+  wins: number;
+  losses: number;
+  ties?: number;
+  pct: string;
+  divisionRank: number;
+}
+
 interface TeamSummary {
   name: string;
   league: string;
@@ -31,6 +39,7 @@ interface TeamSummary {
   nextGame: NextGame | null;
   news: { headline: string; summary: string }[];
   watercooler: string;
+  record?: TeamStandingRecord;
 }
 
 interface EventSummary {
@@ -67,6 +76,12 @@ function formatRelativeDate(dateStr: string): string {
     return d.toLocaleDateString("en-US", { weekday: "short" });
   }
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function ordinal(n: number): string {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const mod100 = n % 100;
+  return n + (suffixes[(mod100 - 20) % 10] || suffixes[mod100] || suffixes[0]);
 }
 
 // ---------------------------------------------------------------------------
@@ -183,6 +198,17 @@ export function SportsWidget({ className }: SportsWidgetProps) {
               </>
             ) : (
               <span className="text-slate-400">Offseason</span>
+            )}
+
+            {team.record && (team.record.wins > 0 || team.record.losses > 0) && (
+              <>
+                <span className="text-slate-300">|</span>
+                <span className="text-slate-500 text-xs">
+                  {team.record.wins}-{team.record.losses}
+                  {team.record.ties ? `-${team.record.ties}` : ""}
+                  {" "}({team.record.pct}) {ordinal(team.record.divisionRank)}
+                </span>
+              </>
             )}
 
             {team.nextGame && (
