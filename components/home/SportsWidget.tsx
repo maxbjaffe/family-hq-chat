@@ -29,6 +29,8 @@ interface TeamStandingRecord {
   ties?: number;
   pct: string;
   divisionRank: number;
+  division?: string;
+  gamesBack?: number | null;
 }
 
 interface TeamSummary {
