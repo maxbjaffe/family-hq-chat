@@ -18,6 +18,15 @@
           "value": "microphone=(self)"
         }
       ]
+    },
+    {
+      "source": "/jarvis",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "microphone=(self)"
+        }
+      ]
     }
   ]
 }
