@@ -30,7 +30,6 @@ const navItems = [
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
   { href: "/recharge", label: "Recharge", icon: Battery },
   { href: "/games", label: "Breaktime", icon: Gamepad2 },
-  { href: "/jarvis", label: "Jarvis", icon: Mic },
 ];
 
 function sortMembers(a: FamilyMember, b: FamilyMember): number {
@@ -233,6 +232,25 @@ export function KioskSidebar() {
               isActive={pathname.startsWith(`/family/${member.name.toLowerCase()}`)}
             />
           ))}
+
+          {/* Jarvis — avatar-sized button below family members */}
+          <Link
+            href="/jarvis"
+            className={`flex flex-col items-center gap-1 rounded-xl p-2 transition-all ${
+              pathname.startsWith("/jarvis")
+                ? "bg-purple-100 ring-2 ring-purple-400"
+                : "hover:bg-slate-100"
+            }`}
+          >
+            <div className="relative w-[72px] h-[72px]">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
+                  <Mic className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+            <span className="font-bold text-xs text-slate-700 leading-tight">Jarvis</span>
+          </Link>
         </div>
 
         {/* Bottom nav icons */}
