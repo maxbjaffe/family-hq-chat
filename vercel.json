@@ -8,5 +8,16 @@
       "path": "/api/cron/refresh-content",
       "schedule": "*/15 5-23 * * *"
     }
+  ],
+  "headers": [
+    {
+      "source": "/kiosk",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "microphone=(self)"
+        }
+      ]
+    }
   ]
 }

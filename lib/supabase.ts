@@ -810,6 +810,19 @@ export async function getRecentRechargeSession(
   return data as RechargeSession | null;
 }
 
+export async function getFamilyMemberById(memberId: string): Promise<FamilyMember | null> {
+  const supabase = getFamilyDataClient();
+
+  const { data, error } = await supabase
+    .from("family_members")
+    .select("id, name, role, pin_hash, avatar_url, has_checklist, created_at")
+    .eq("id", memberId)
+    .single();
+
+  if (error || !data) return null;
+  return data as FamilyMember;
+}
+
 export async function getKidMembers(): Promise<FamilyMember[]> {
   const supabase = getFamilyDataClient();
 

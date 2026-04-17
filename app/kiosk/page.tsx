@@ -13,6 +13,10 @@ import { Avatar } from "@/components/Avatar";
 import { RechargeMenu } from "@/components/recharge";
 import { NutritionMenu } from "@/components/nutrition";
 import { useKiosk } from "@/components/KioskProvider";
+import { useKioskJarvis } from "@/hooks/useKioskJarvis";
+import { VoiceMicButton } from "@/components/kiosk/VoiceMicButton";
+import { VoiceProfilePicker } from "@/components/kiosk/VoiceProfilePicker";
+import { VoiceResponseOverlay } from "@/components/kiosk/VoiceResponseOverlay";
 
 // Celebration video URL
 const CELEBRATION_VIDEO_URL =
@@ -74,7 +78,9 @@ export default function KioskPage() {
   const [togglingItems, setTogglingItems] = useState<Set<string>>(new Set());
   const [showRecharge, setShowRecharge] = useState(false);
   const [showNutrition, setShowNutrition] = useState(false);
+  const [voiceMemberId, setVoiceMemberId] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const jarvis = useKioskJarvis(voiceMemberId);
 
   const loadData = useCallback(async () => {
     startSync();
@@ -104,6 +110,20 @@ export default function KioskPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Refresh checklist data after Jarvis finishes speaking (may have toggled items)
+  const prevJarvisState = useRef(jarvis.state);
+  useEffect(() => {
+    if (prevJarvisState.current === 'speaking' && jarvis.state === 'idle') {
+      loadData();
+    }
+    prevJarvisState.current = jarvis.state;
+  }, [jarvis.state, loadData]);
+
+  // Resolve selected voice member name
+  const voiceMemberName = voiceMemberId
+    ? members.find((m) => m.id === voiceMemberId)?.name || 'kiddo'
+    : 'kiddo';
 
   // Check if all members are complete
   const allComplete =
@@ -293,6 +313,25 @@ export default function KioskPage() {
     </>
   );
 
+  // Shared voice components for both layouts
+  const voiceUI = (
+    <>
+      <VoiceMicButton
+        state={jarvis.state}
+        onTap={jarvis.startListening}
+        onCancel={jarvis.cancel}
+        disabled={!voiceMemberId}
+      />
+      <VoiceResponseOverlay
+        state={jarvis.state}
+        transcript={jarvis.transcript}
+        responseText={jarvis.responseText}
+        error={jarvis.error}
+        memberName={voiceMemberName}
+      />
+    </>
+  );
+
   // ── Kiosk layout: 3-column side-by-side ──
   if (isWideMode) {
     return (
@@ -324,6 +363,11 @@ export default function KioskPage() {
                 Everyone&apos;s Ready!
               </span>
             )}
+            <VoiceProfilePicker
+              members={members}
+              selectedId={voiceMemberId}
+              onSelect={setVoiceMemberId}
+            />
           </div>
           <div className="flex items-center gap-2">
             <HeaderClock />
@@ -504,6 +548,7 @@ export default function KioskPage() {
             </div>
           )}
         </div>
+        {voiceUI}
       </div>
     );
   }
@@ -511,6 +556,7 @@ export default function KioskPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 relative overflow-hidden">
       {overlays}
+      {voiceUI}
 
       <div className="container mx-auto px-4 py-6 max-w-6xl relative z-10">
         {/* Header */}
