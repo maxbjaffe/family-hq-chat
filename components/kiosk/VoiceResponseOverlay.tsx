@@ -21,7 +21,7 @@ export function VoiceResponseOverlay({
   if (state === 'idle' && !error) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center pointer-events-none">
+    <div className="fixed inset-x-0 bottom-44 md:bottom-24 z-[110] flex justify-center pointer-events-none">
       <div className="mx-4 max-w-lg w-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 p-4 pointer-events-auto">
         {/* State indicator */}
         <div className="flex items-center gap-2 mb-2">

@@ -580,6 +580,11 @@ export default function KioskPage() {
                   })}
                 </p>
               </div>
+              <VoiceProfilePicker
+                members={members}
+                selectedId={voiceMemberId}
+                onSelect={setVoiceMemberId}
+              />
             </div>
             <div className="flex flex-col items-end gap-2">
               <Clock size="md" className="hidden md:block" />
