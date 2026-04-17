@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CheckSquare, Battery, Gamepad2, CheckCircle2 } from "lucide-react";
+import { Home, CheckSquare, Battery, Gamepad2, CheckCircle2, Mic } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 
@@ -30,6 +30,7 @@ const navItems = [
   { href: "/kiosk", label: "Checklists", icon: CheckSquare },
   { href: "/recharge", label: "Recharge", icon: Battery },
   { href: "/games", label: "Breaktime", icon: Gamepad2 },
+  { href: "/jarvis", label: "Jarvis", icon: Mic },
 ];
 
 function sortMembers(a: FamilyMember, b: FamilyMember): number {

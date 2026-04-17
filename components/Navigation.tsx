@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CheckSquare, Gamepad2, Maximize, MessageCircle, Battery, Apple } from "lucide-react";
+import { Home, CheckSquare, Gamepad2, Maximize, MessageCircle, Battery, Apple, Mic } from "lucide-react";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { SyncIndicator } from "./SyncIndicator";
 import { HeaderClock } from "./Clock";
@@ -30,6 +30,7 @@ const navItems = [
   { href: "/recharge", label: "Recharge", icon: Battery },
   { href: "/nutrition", label: "Nutrition", icon: Apple },
   { href: "/games", label: "Breaktime", icon: Gamepad2 },
+  { href: "/jarvis", label: "Jarvis", icon: Mic },
 ];
 
 // Secret exit: tap logo 5 times in 3 seconds
