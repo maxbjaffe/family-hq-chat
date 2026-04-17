@@ -7,7 +7,9 @@ import { FamilyMember } from '@/lib/agents/types';
 
 export async function POST(req: NextRequest) {
   try {
-    const { command, memberId } = await req.json();
+    const { command, memberId, history } = await req.json();
+    const conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> =
+      Array.isArray(history) ? history : [];
 
     if (!command || typeof command !== 'string') {
       return NextResponse.json({ error: 'command is required' }, { status: 400 });
@@ -52,11 +54,20 @@ export async function POST(req: NextRequest) {
     // Fallback to Haiku for general questions
     const anthropic = new Anthropic({ apiKey: process.env.CLAUDE_API_KEY });
 
+    // Build messages with conversation history for continuity
+    const messages = [
+      ...conversationHistory.map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
+      { role: 'user' as const, content: command },
+    ];
+
     const message = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 200,
       system: getKidVoiceSystemPrompt(memberName),
-      messages: [{ role: 'user', content: command }],
+      messages,
     });
 
     const responseText =

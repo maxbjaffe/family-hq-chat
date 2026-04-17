@@ -23,6 +23,7 @@ export function useKioskJarvis(memberId: string | null): UseKioskJarvisReturn {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const abortRef = useRef(false);
   const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const conversationRef = useRef<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
 
   const getAudioContext = useCallback(async () => {
     if (!audioContextRef.current) {
@@ -88,11 +89,18 @@ export function useKioskJarvis(memberId: string | null): UseKioskJarvisReturn {
       setTranscript(command);
       setError(null);
 
+      // Add user message to conversation history
+      conversationRef.current.push({ role: 'user', content: command });
+
       try {
         const res = await fetch('/api/jarvis/command', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ command, memberId }),
+          body: JSON.stringify({
+            command,
+            memberId,
+            history: conversationRef.current.slice(0, -1), // everything before this message
+          }),
         });
 
         if (abortRef.current) return;
@@ -101,15 +109,21 @@ export function useKioskJarvis(memberId: string | null): UseKioskJarvisReturn {
         const text = data.response || "I didn't catch that.";
         setResponseText(text);
 
+        // Add assistant response to conversation history
+        conversationRef.current.push({ role: 'assistant', content: text });
+
+        // Keep history manageable (last 10 turns)
+        if (conversationRef.current.length > 20) {
+          conversationRef.current = conversationRef.current.slice(-20);
+        }
+
         setState('speaking');
         await speakText(text);
 
         if (abortRef.current) return;
 
-        // Return to idle after speaking
+        // Return to idle but keep transcript/response visible
         setState('idle');
-        setTranscript('');
-        setResponseText('');
       } catch (e) {
         console.error('Command error:', e);
         setError('Something went wrong. Try again?');
@@ -134,8 +148,6 @@ export function useKioskJarvis(memberId: string | null): UseKioskJarvisReturn {
 
     abortRef.current = false;
     setError(null);
-    setTranscript('');
-    setResponseText('');
 
     const recognition = new SpeechRecognitionCtor();
     recognition.continuous = false;
@@ -198,6 +210,7 @@ export function useKioskJarvis(memberId: string | null): UseKioskJarvisReturn {
     setTranscript('');
     setResponseText('');
     setError(null);
+    conversationRef.current = [];
   }, []);
 
   // Cleanup on unmount
