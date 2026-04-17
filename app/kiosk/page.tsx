@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Sparkles, RefreshCw, X, Loader2, Battery, Apple } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, RefreshCw, X, Loader2, Battery, Apple, Mic, Volume2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { SyncIndicator, startSync, endSync } from "@/components/SyncIndicator";
@@ -316,19 +316,81 @@ export default function KioskPage() {
   // Shared voice components for both layouts
   const voiceUI = (
     <>
-      <VoiceMicButton
-        state={jarvis.state}
-        onTap={jarvis.startListening}
-        onCancel={jarvis.cancel}
-        disabled={!voiceMemberId}
-      />
-      <VoiceResponseOverlay
-        state={jarvis.state}
-        transcript={jarvis.transcript}
-        responseText={jarvis.responseText}
-        error={jarvis.error}
-        memberName={voiceMemberName}
-      />
+      {/* Inline mic button */}
+      <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-3">
+        <button
+          onClick={jarvis.state !== 'idle' ? jarvis.cancel : jarvis.startListening}
+          disabled={!voiceMemberId}
+          className={`
+            w-16 h-16 rounded-full shadow-lg flex items-center justify-center
+            transition-all active:scale-95
+            ${jarvis.state === 'listening'
+              ? 'bg-red-500 text-white animate-pulse shadow-red-300'
+              : jarvis.state === 'processing'
+                ? 'bg-amber-500 text-white shadow-amber-300'
+                : jarvis.state === 'speaking'
+                  ? 'bg-blue-500 text-white shadow-blue-300'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl'
+            }
+            ${!voiceMemberId ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          `}
+          aria-label={jarvis.state !== 'idle' ? 'Cancel' : 'Start voice command'}
+        >
+          {jarvis.state === 'listening' && <Mic className="h-7 w-7" />}
+          {jarvis.state === 'processing' && <Loader2 className="h-7 w-7 animate-spin" />}
+          {jarvis.state === 'speaking' && <Volume2 className="h-7 w-7" />}
+          {jarvis.state === 'idle' && <Mic className="h-7 w-7" />}
+        </button>
+        {jarvis.state !== 'idle' && (
+          <button
+            onClick={jarvis.cancel}
+            className="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shadow hover:bg-slate-300 transition-colors"
+            aria-label="Cancel"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+      {/* Inline response overlay */}
+      {(jarvis.state !== 'idle' || jarvis.error) && (
+        <div className="fixed inset-x-0 bottom-44 md:bottom-24 z-[110] flex justify-center pointer-events-none">
+          <div className="mx-4 max-w-lg w-full bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 p-4 pointer-events-auto">
+            <div className="flex items-center gap-2 mb-2">
+              {jarvis.state === 'listening' && (
+                <>
+                  <Mic className="h-4 w-4 text-red-500 animate-pulse" />
+                  <span className="text-sm font-medium text-red-600">Listening to {voiceMemberName}...</span>
+                </>
+              )}
+              {jarvis.state === 'processing' && (
+                <>
+                  <Loader2 className="h-4 w-4 text-amber-500 animate-spin" />
+                  <span className="text-sm font-medium text-amber-600">Thinking...</span>
+                </>
+              )}
+              {jarvis.state === 'speaking' && (
+                <>
+                  <Volume2 className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm font-medium text-blue-600">Jarvis</span>
+                </>
+              )}
+            </div>
+            {jarvis.transcript && (
+              <p className="text-slate-700 text-sm mb-1">
+                <span className="font-semibold">{voiceMemberName}:</span> {jarvis.transcript}
+              </p>
+            )}
+            {jarvis.responseText && (jarvis.state === 'speaking' || jarvis.state === 'processing') && (
+              <p className="text-blue-700 text-sm">
+                <span className="font-semibold">Jarvis:</span> {jarvis.responseText}
+              </p>
+            )}
+            {jarvis.error && jarvis.state === 'idle' && (
+              <p className="text-red-600 text-sm">{jarvis.error}</p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 
