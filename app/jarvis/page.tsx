@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Mic, Loader2, Volume2, X, ArrowLeft } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Mic, Loader2, SkipForward, X, ArrowLeft } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { useKioskJarvis } from "@/hooks/useKioskJarvis";
 
@@ -122,12 +122,14 @@ export default function JarvisPage() {
               </div>
             </div>
 
-            {/* Mic button */}
+            {/* Mic button — skip during speaking, cancel during listening/processing */}
             <button
               onClick={
-                jarvis.state !== "idle"
-                  ? jarvis.cancel
-                  : jarvis.startListening
+                jarvis.state === "speaking"
+                  ? jarvis.skip
+                  : jarvis.state !== "idle"
+                    ? jarvis.cancel
+                    : jarvis.startListening
               }
               className={`
                 w-24 h-24 rounded-full shadow-2xl flex items-center justify-center
@@ -150,7 +152,7 @@ export default function JarvisPage() {
                 <Loader2 className="h-10 w-10 animate-spin" />
               )}
               {jarvis.state === "speaking" && (
-                <Volume2 className="h-10 w-10" />
+                <SkipForward className="h-10 w-10" />
               )}
               {jarvis.state === "idle" && <Mic className="h-10 w-10" />}
             </button>
@@ -160,7 +162,7 @@ export default function JarvisPage() {
               {jarvis.state === "idle" && "Tap the mic and say something"}
               {jarvis.state === "listening" && "Listening..."}
               {jarvis.state === "processing" && "Thinking..."}
-              {jarvis.state === "speaking" && "Speaking..."}
+              {jarvis.state === "speaking" && "Speaking... tap to skip"}
             </p>
 
             {/* Transcript + Response */}
