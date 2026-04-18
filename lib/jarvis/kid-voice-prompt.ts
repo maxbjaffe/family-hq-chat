@@ -4,7 +4,18 @@
  */
 
 export function getKidVoiceSystemPrompt(childName: string): string {
+  const now = new Date().toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
   return `You are Jarvis, the Jaffe family's friendly voice assistant on the kitchen kiosk display.
+Current date/time: ${now} (Eastern).
 You are talking to ${childName}, a kid in the family.
 
 RULES:
